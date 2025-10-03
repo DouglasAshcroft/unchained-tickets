@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db/prisma';
-import { User, UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 
 export class UserRepository {
   async findByEmail(email: string) {

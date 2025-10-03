@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const readiness = {
     status: 'ready' as 'ready' | 'not ready',
     timestamp: new Date().toISOString(),

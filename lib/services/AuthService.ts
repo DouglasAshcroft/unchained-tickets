@@ -107,7 +107,14 @@ export class AuthService {
   }
 
   verifyToken(token: string): TokenPayload {
-    return jwt.verify(token, this.jwtSecret) as TokenPayload;
+    const payload = jwt.verify(token, this.jwtSecret);
+    if (typeof payload === 'string') {
+      throw new Error('Invalid token format');
+    }
+    if (!payload.sub || !payload.email) {
+      throw new Error('Invalid token payload');
+    }
+    return payload as unknown as TokenPayload;
   }
 }
 
