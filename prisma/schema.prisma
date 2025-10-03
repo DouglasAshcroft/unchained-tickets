@@ -1,0 +1,364 @@
+// Prisma schema for Unchained, mapped from the ERD in
+// Unchained/backend/server/database/README_DB.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  fan
+  artist
+  venue
+  admin
+}
+
+enum TicketStatus {
+  reserved
+  minted
+  transferred
+  refunded
+  canceled
+  used
+  revoked
+}
+
+enum PaymentStatus {
+  initiated
+  authorized
+  settled
+  failed
+  refunded
+  canceled
+}
+
+enum PaymentMethod {
+  fiat_stripe
+  usdc_onchain
+  eth_onchain
+  promo
+}
+
+enum EventStatus {
+  draft
+  published
+  canceled
+  completed
+}
+
+enum ScanResult {
+  valid
+  duplicate
+  revoked
+  expired
+  unknown
+}
+
+// Core auth/users
+model User {
+  id         Int       @id @default(autoincrement())
+  name       String?
+  email      String    @unique @db.Citext
+  role       UserRole  @default(fan)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relations
+  credentials AuthCredential[]
+  sessions    Session[]
+  wallets     UserWallet[]
+  userRoles   UserRoleLink[]
+  artists     Artist[]        @relation("ArtistOwner")
+  venues      Venue[]         @relation("VenueOwner")
+  tickets     Ticket[]
+  scans       TicketScan[]    @relation("Scanner")
+  payments    Payment[]
+}
+
+model AuthCredential {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  provider   String    // e.g., 'password', 'oauth:google', 'siwe'
+  identifier String?   // external id or email for the provider
+  secret     String?   // password hash or provider secret
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    Int
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// RBAC
+model Role {
+  id              Int              @id @default(autoincrement())
+  name            String           @unique
+  rolePermissions RolePermission[]
+  userRoles       UserRoleLink[]
+}
+
+model Permission {
+  id              Int              @id @default(autoincrement())
+  name            String           @unique
+  rolePermissions RolePermission[]
+}
+
+model UserRoleLink {
+  userId Int
+  roleId Int
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       Int
+  permissionId Int
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+// Wallets
+model Wallet {
+  id        Int          @id @default(autoincrement())
+  chain     String
+  address   String       @unique
+  createdAt DateTime     @default(now())
+
+  users     UserWallet[]
+  mints     NFTMint[]
+  waitlistSignups WaitlistSignup[]
+}
+
+model UserWallet {
+  userId    Int
+  walletId  Int
+  isPrimary Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@id([userId, walletId])
+}
+
+// Domain: artists, venues, events
+model Artist {
+  id           Int           @id @default(autoincrement())
+  ownerUserId  Int?
+  name         String
+  slug         String        @unique
+  genre        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  owner        User?         @relation("ArtistOwner", fields: [ownerUserId], references: [id])
+  events       Event[]       @relation("PrimaryArtist")
+  eventLinks   EventArtist[]
+
+  // Performance indexes
+  @@index([name])            // For text search
+  @@index([genre])           // For genre filtering
+}
+
+model Venue {
+  id            Int       @id @default(autoincrement())
+  ownerUserId   Int?
+  name          String
+  slug          String    @unique
+  city          String?
+  state         String?
+  capacity      Int?
+  addressLine1  String?
+  addressLine2  String?
+  postalCode    String?
+  latitude      Decimal?  @db.Decimal(9, 6)
+  longitude     Decimal?  @db.Decimal(9, 6)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  owner         User?     @relation("VenueOwner", fields: [ownerUserId], references: [id])
+  events        Event[]
+  clicks        VenueClick[]
+
+  // Performance indexes
+  @@index([name])            // For text search
+  @@index([city])            // For location filtering
+  @@index([state])           // For state filtering
+  @@index([city, state])     // Composite for location searches
+}
+
+model Event {
+  id              Int           @id @default(autoincrement())
+  title           String
+  startsAt        DateTime
+  endsAt          DateTime?
+  venueId         Int
+  artistId        Int?
+  posterImageUrl  String?
+  externalLink    String?
+  mapsLink        String?
+  status          EventStatus   @default(draft)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  venue           Venue         @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  primaryArtist   Artist?       @relation("PrimaryArtist", fields: [artistId], references: [id])
+  artists         EventArtist[]
+  tickets         Ticket[]
+
+  // Performance indexes
+  @@index([title])           // For text search
+  @@index([startsAt])        // For date ordering and filtering
+  @@index([status])          // For status filtering
+  @@index([venueId])         // For venue lookups
+  @@index([artistId])        // For artist lookups
+  @@index([startsAt, status]) // Composite for active events
+}
+
+model EventArtist {
+  eventId  Int
+  artistId Int
+  isPrimary Boolean @default(false)
+  sortOrder Int?
+
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  artist  Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, artistId])
+}
+
+// Tickets
+model Ticket {
+  id           String       @id @default(cuid())
+  eventId      Int
+  userId       Int?
+  status       TicketStatus @default(reserved)
+  priceCents   Int?
+  currency     String?      @default("USD")
+  seatSection  String?
+  seatRow      String?
+  seat         String?
+  qrHash       String?      @unique
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  event        Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id])
+  scans        TicketScan[]
+  payments     Payment[]
+  mints        NFTMint[]
+
+  @@unique([eventId, seatSection, seatRow, seat])
+  // Performance indexes
+  @@index([eventId])         // For event ticket lookups
+  @@index([userId])          // For user ticket lookups
+  @@index([status])          // For status filtering
+  @@index([eventId, status]) // Composite for event ticket status
+}
+
+model TicketScan {
+  id            Int         @id @default(autoincrement())
+  ticketId      String
+  scannerUserId Int?
+  scannedAt     DateTime    @default(now())
+  result        ScanResult
+  createdAt     DateTime    @default(now())
+
+  ticket        Ticket      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  scanner       User?       @relation("Scanner", fields: [scannerUserId], references: [id])
+}
+
+// Payments
+model Payment {
+  id          String        @id @default(cuid())
+  userId      Int?
+  ticketId    String?
+  amountCents Int
+  currency    String
+  method      PaymentMethod
+  status      PaymentStatus
+  externalId  String?       // Stripe PI id or onchain tx id
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  user        User?         @relation(fields: [userId], references: [id])
+  ticket      Ticket?       @relation(fields: [ticketId], references: [id])
+}
+
+// NFTs
+model NFTContract {
+  id        Int       @id @default(autoincrement())
+  chain     String
+  address   String    @unique
+  name      String?
+  symbol    String?
+  createdAt DateTime  @default(now())
+
+  mints     NFTMint[]
+}
+
+model NFTMint {
+  id             String     @id @default(cuid())
+  ticketId       String
+  contractId     Int
+  tokenId        String
+  txHash         String?    @unique
+  mintedAt       DateTime?
+  ownerWalletId  Int?
+  createdAt      DateTime   @default(now())
+
+  ticket    Ticket     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  contract  NFTContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  owner     Wallet?    @relation(fields: [ownerWalletId], references: [id])
+
+  @@unique([contractId, tokenId])
+}
+
+// Growth / waitlist
+model WaitlistSignup {
+  id             Int       @id @default(autoincrement())
+  email          String    @unique @db.Citext
+  referralCode   String?   @unique
+  referredByCode String?
+  rewards        Int       @default(0)
+  walletId       Int?
+  notes          String?
+  confirmedAt    DateTime?
+  createdAt      DateTime  @default(now())
+
+  wallet         Wallet?   @relation(fields: [walletId], references: [id])
+}
+
+// Analytics
+model VenueClick {
+  id        Int      @id @default(autoincrement())
+  venueId   Int
+  url       String
+  ip        String?
+  userAgent String?
+  referrer  String?
+  clickedAt DateTime @default(now())
+
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+}

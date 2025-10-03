@@ -6,26 +6,53 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "db:push": "prisma db push",
+    "db:seed": "prisma db seed"
   },
   "dependencies": {
     "@coinbase/onchainkit": "latest",
+    "@prisma/client": "^6.16.3",
     "@tanstack/react-query": "^5.81.5",
+    "bcrypt": "^6.0.0",
+    "clsx": "^2.1.1",
+    "jsonwebtoken": "^9.0.2",
     "next": "^15.5.4",
     "qr": "^0.5.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "viem": "^2.31.6",
-    "wagmi": "^2.16.3"
+    "wagmi": "^2.16.3",
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@next/eslint-plugin-next": "^15.3.4",
+    "@tailwindcss/postcss": "^4.1.14",
+    "@tailwindcss/typography": "^0.5.19",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/bcrypt": "^6.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.0.4",
+    "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
-    "typescript": "^5"
+    "jsdom": "^27.0.0",
+    "postcss": "^8.5.6",
+    "prisma": "^6.16.3",
+    "tailwindcss": "^4.1.14",
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }
