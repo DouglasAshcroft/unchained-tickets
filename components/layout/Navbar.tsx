@@ -5,7 +5,7 @@ import { ConnectWallet } from '@coinbase/onchainkit/wallet';
 import { useAuth } from '@/lib/hooks/useAuth';
 
 export function Navbar() {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return (
     <nav className="sticky top-0 z-50 bg-[var(--background)] border-b border-white/10 backdrop-blur-sm">

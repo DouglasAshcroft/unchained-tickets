@@ -57,7 +57,7 @@ export const useAuth = create<AuthState>((set) => ({
     try {
       const { user } = await api.getCurrentUser();
       set({ user, isAuthenticated: true, isLoading: false });
-    } catch (error) {
+    } catch {
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },

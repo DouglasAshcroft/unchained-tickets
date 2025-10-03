@@ -31,9 +31,9 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     if (this.token) {
@@ -132,4 +132,7 @@ class ApiClient {
   }
 }
 
-export const api = new ApiClient(API_BASE_URL);
+const apiClient = new ApiClient(API_BASE_URL);
+
+export { apiClient as api };
+export default apiClient;
