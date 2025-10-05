@@ -22,7 +22,14 @@ export class AuthService {
   private jwtSecret: string;
 
   constructor() {
-    this.jwtSecret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+    const secret = process.env.JWT_SECRET;
+    if (!secret || secret.length < 32) {
+      throw new Error(
+        '🔒 JWT_SECRET environment variable is required and must be at least 32 characters.\n' +
+        '   Generate a secure secret with: openssl rand -base64 32'
+      );
+    }
+    this.jwtSecret = secret;
   }
 
   async register(userData: RegisterData) {

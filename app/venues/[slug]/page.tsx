@@ -27,7 +27,7 @@ export default function VenueDetailPage({ params }: PageProps) {
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
-          <div className="animate-pulse text-lg text-gray-400">Loading venue...</div>
+          <div className="animate-pulse text-lg text-grit-300">Loading venue...</div>
         </main>
         <Footer />
       </div>
@@ -59,17 +59,17 @@ export default function VenueDetailPage({ params }: PageProps) {
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
-        <Link href="/events" className="inline-flex items-center text-blue-400 hover:text-blue-300 mb-6">
-          ← Back to Events
+        <Link href="/venues" className="inline-flex items-center text-acid-400 hover:brightness-110 mb-6 transition-all">
+          ← Back to Venues
         </Link>
 
         {/* Venue Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+          <h1 className="brand-heading text-4xl font-bold mb-3 bg-gradient-to-r from-resistance-500 via-hack-green to-acid-400 bg-clip-text text-transparent">
             {venue.name}
           </h1>
 
-          <div className="flex flex-wrap gap-4 text-gray-300">
+          <div className="flex flex-wrap gap-4 text-grit-300">
             {venue.city && venue.state && (
               <div className="flex items-center gap-2">
                 <span className="text-xl">📍</span>
@@ -85,7 +85,7 @@ export default function VenueDetailPage({ params }: PageProps) {
           </div>
 
           {venue.description && (
-            <p className="mt-4 text-gray-400 max-w-3xl">{venue.description}</p>
+            <p className="mt-4 text-grit-400 max-w-3xl">{venue.description}</p>
           )}
 
           {venue.address && (
@@ -94,7 +94,7 @@ export default function VenueDetailPage({ params }: PageProps) {
                 href={`https://maps.google.com/?q=${encodeURIComponent(venue.address)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/5 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 hover:border-acid-400/50 hover:bg-acid-400/10 transition-colors"
               >
                 📍 Get Directions
               </a>
@@ -116,7 +116,7 @@ export default function VenueDetailPage({ params }: PageProps) {
             </div>
           ) : (
             <Card className="text-center py-12">
-              <p className="text-gray-400">No upcoming events at this venue.</p>
+              <p className="text-grit-400">No upcoming events at this venue.</p>
               <Link href="/events" className="mt-4 inline-block">
                 <Button>Browse All Events</Button>
               </Link>

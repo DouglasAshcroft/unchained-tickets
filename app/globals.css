@@ -1,57 +1,204 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Self-hosted fonts for optimal performance */
+@font-face {
+  font-family: 'Special Elite';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/special-elite.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/inter.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Tailwind v4 Theme Configuration - Unchained Brand Colors */
+@theme {
+  /* Resistance Red - Primary brand color */
+  --color-resistance-50: #fef2f2;
+  --color-resistance-100: #fee2e2;
+  --color-resistance-200: #fecaca;
+  --color-resistance-300: #fca5a5;
+  --color-resistance-400: #f87171;
+  --color-resistance-500: #e04545;
+  --color-resistance-600: #dc2626;
+  --color-resistance-700: #b91c1c;
+  --color-resistance-800: #991b1b;
+  --color-resistance-900: #7f1d1d;
+  --color-resistance-red: #e04545;
+
+  /* Ink - Dark backgrounds & light text */
+  --color-ink-900: #0b0b0c;
+  --color-ink-800: #121316;
+  --color-ink-700: #1a1b1e;
+  --color-ink-100: #f2f0ea;
+
+  /* Bone - Light text */
+  --color-bone-100: #f2f0ea;
+
+  /* Grit - Neutral grays */
+  --color-grit-500: #5e6166;
+  --color-grit-400: #7a7d80;
+  --color-grit-300: #9ca3af;
+
+  /* Signal - Alert red */
+  --color-signal-500: #e33b3b;
+
+  /* Acid - Neon green accent */
+  --color-acid-400: #a6ff47;
+
+  /* Cobalt - Blue accent */
+  --color-cobalt-500: #3f73ff;
+
+  /* Background levels */
+  --color-bg-0: #0b0c0e;
+  --color-bg-1: #14161a;
+
+  /* Named accent colors */
+  --color-hack-green: #a6ff47;
+  --color-neon-green: #c4ff00;
+  --color-accent-red: #e04545;
+  --color-accent-teal: #5ab0a9;
+  --color-accent-neon: #c4ff00;
+
+  /* Font families */
+  --font-heading: 'Special Elite', monospace;
+  --font-body: 'Inter', sans-serif;
+}
 
 @layer base {
-  :root {
-    --background: #09090b;
-    --foreground: #fafafa;
+  /* Dark mode (default) */
+  :root,
+  .dark {
+    --bg-primary: #0b0c0e;
+    --bg-secondary: #121316;
+    --bg-tertiary: #1a1b1e;
+    --text-primary: #f2f0ea;
+    --text-secondary: #9ca3af;
+    --border-color: rgba(94, 97, 102, 0.3);
+    --card-bg: rgba(18, 19, 22, 0.8);
   }
 
-  html,
-  body {
-    max-width: 100vw;
-    overflow-x: hidden;
+  /* Light mode */
+  .light {
+    --bg-primary: #f5f5f0;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e8e8e3;
+    --text-primary: #1a1b1e;
+    --text-secondary: #5e6166;
+    --border-color: rgba(94, 97, 102, 0.2);
+    --card-bg: rgba(255, 255, 255, 0.95);
+
+    /* Adjust colors for light mode - inverted backgrounds */
+    --color-ink-900: #f5f5f0;
+    --color-ink-800: #ffffff;
+    --color-ink-700: #e8e8e3;
+
+    /* Adjust text colors for light mode - inverted */
+    --color-bone-100: #1a1b1e;
+    --color-bone-50: #2a2b2e;
+
+    /* Adjust neutral grays for light mode */
+    --color-grit-300: #5e6166;
+    --color-grit-400: #4a4d50;
+    --color-grit-500: #3a3d40;
+
+    /* Tone down neon green for light mode (better contrast) */
+    --color-acid-400: #5a9e2a;
+    --color-hack-green: #5a9e2a;
+    --color-neon-green: #6bb02a;
+    --color-accent-neon: #6bb02a;
   }
 
   body {
-    color: var(--foreground);
-    background: var(--background);
-    font-family: var(--font-inter), sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: Inter, system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  code {
-    background-color: rgba(0, 0, 0, 0.05);
-    border-radius: 6px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    font-family: var(--font-source-code-pro), monospace;
-    font-size: 0.875rem;
-    padding: 0.25rem 0.5rem calc(0.25rem + 2px);
+  /* Special Elite for all headings - CRITICAL for punk aesthetic */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Special Elite', monospace;
   }
 
-  @media (prefers-color-scheme: dark) {
-    code {
-      background-color: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
+  /* Accessible focus rings with acid-green */
+  :where(a, button, input, textarea, select, [tabindex]):focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--bg-primary),
+      0 0 0 4px #a6ff47;
   }
+}
 
-  * {
-    box-sizing: border-box;
+@layer utilities {
+  /* Screen reader only utility for accessibility */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
     padding: 0;
-    margin: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
 
-  a {
-    color: inherit;
-    text-decoration: none;
+  /* Brand heading utility - Special Elite with punk styling */
+  .brand-heading {
+    font-family: 'Special Elite', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
 
-  @media (prefers-color-scheme: dark) {
-    html {
-      color-scheme: dark;
-    }
+  /* Noise overlay for gritty texture */
+  .noise-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .noise-overlay > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Torn edge effect for sections */
+  .torn-edge {
+    position: relative;
+  }
+
+  .torn-edge::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 10px;
+    background:
+      radial-gradient(8px 8px at 8px 4px, transparent 55%, #000 56%),
+      radial-gradient(8px 8px at 24px 6px, transparent 55%, #000 56%),
+      radial-gradient(8px 8px at 40px 4px, transparent 55%, #000 56%),
+      linear-gradient(#000, #000);
+    background-size:
+      32px 10px,
+      32px 10px,
+      32px 10px,
+      100% 10px;
+    background-repeat: repeat-x;
+    filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.6));
   }
 }

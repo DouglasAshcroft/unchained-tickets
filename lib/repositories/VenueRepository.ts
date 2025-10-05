@@ -13,6 +13,25 @@ export class VenueRepository {
       take: limit,
     });
   }
+
+  async findAll(filters?: { location?: string; minCapacity?: number }) {
+    return await prisma.venue.findMany({
+      where: {
+        ...(filters?.location && {
+          location: { contains: filters.location, mode: 'insensitive' },
+        }),
+        ...(filters?.minCapacity && {
+          capacity: { gte: filters.minCapacity },
+        }),
+      },
+      include: {
+        events: {
+          select: { id: true },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
 }
 
 export const venueRepository = new VenueRepository();

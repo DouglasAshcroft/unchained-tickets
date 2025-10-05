@@ -27,7 +27,7 @@ export default function ArtistDetailPage({ params }: PageProps) {
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
-          <div className="animate-pulse text-lg text-gray-400">Loading artist...</div>
+          <div className="animate-pulse text-lg text-grit-300">Loading artist...</div>
         </main>
         <Footer />
       </div>
@@ -41,9 +41,9 @@ export default function ArtistDetailPage({ params }: PageProps) {
         <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
           <Card className="text-center py-12">
             <h2 className="text-2xl font-bold mb-4">Artist Not Found</h2>
-            <p className="text-gray-400 mb-6">This artist could not be found.</p>
-            <Link href="/events">
-              <Button>Back to Events</Button>
+            <p className="text-grit-400 mb-6">This artist could not be found.</p>
+            <Link href="/artists">
+              <Button>Back to Artists</Button>
             </Link>
           </Card>
         </main>
@@ -59,17 +59,17 @@ export default function ArtistDetailPage({ params }: PageProps) {
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
-        <Link href="/events" className="inline-flex items-center text-blue-400 hover:text-blue-300 mb-6">
-          ← Back to Events
+        <Link href="/artists" className="inline-flex items-center text-acid-400 hover:brightness-110 mb-6 transition-all">
+          ← Back to Artists
         </Link>
 
         {/* Artist Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+          <h1 className="brand-heading text-4xl font-bold mb-3 bg-gradient-to-r from-resistance-500 via-hack-green to-acid-400 bg-clip-text text-transparent">
             {artist.name}
           </h1>
 
-          <div className="flex flex-wrap gap-4 text-gray-300">
+          <div className="flex flex-wrap gap-4 text-grit-300">
             {artist.genre && (
               <div className="flex items-center gap-2">
                 <span className="text-xl">🎵</span>
@@ -82,7 +82,7 @@ export default function ArtistDetailPage({ params }: PageProps) {
                   href={artist.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300"
+                  className="inline-flex items-center gap-2 text-acid-400 hover:brightness-110 transition-all"
                 >
                   🌐 Website
                 </a>
@@ -91,7 +91,7 @@ export default function ArtistDetailPage({ params }: PageProps) {
           </div>
 
           {artist.bio && (
-            <p className="mt-4 text-gray-400 max-w-3xl">{artist.bio}</p>
+            <p className="mt-4 text-grit-400 max-w-3xl">{artist.bio}</p>
           )}
 
           {/* Social Links */}
@@ -102,7 +102,7 @@ export default function ArtistDetailPage({ params }: PageProps) {
                   href={artist.spotifyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-lg border border-white/10 hover:border-green-500/50 hover:bg-green-500/10 transition-colors"
+                  className="px-4 py-2 rounded-lg border border-white/10 hover:border-hack-green/50 hover:bg-hack-green/10 transition-colors"
                 >
                   🎧 Spotify
                 </a>
@@ -112,7 +112,7 @@ export default function ArtistDetailPage({ params }: PageProps) {
                   href={`https://instagram.com/${artist.instagramHandle}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-lg border border-white/10 hover:border-pink-500/50 hover:bg-pink-500/10 transition-colors"
+                  className="px-4 py-2 rounded-lg border border-white/10 hover:border-resistance-500/50 hover:bg-resistance-500/10 transition-colors"
                 >
                   📷 Instagram
                 </a>
@@ -122,7 +122,7 @@ export default function ArtistDetailPage({ params }: PageProps) {
                   href={`https://twitter.com/${artist.twitterHandle}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-lg border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/10 transition-colors"
+                  className="px-4 py-2 rounded-lg border border-white/10 hover:border-cobalt-500/50 hover:bg-cobalt-500/10 transition-colors"
                 >
                   🐦 Twitter
                 </a>
@@ -145,7 +145,7 @@ export default function ArtistDetailPage({ params }: PageProps) {
             </div>
           ) : (
             <Card className="text-center py-12">
-              <p className="text-gray-400">No upcoming shows for this artist.</p>
+              <p className="text-grit-400">No upcoming shows for this artist.</p>
               <Link href="/events" className="mt-4 inline-block">
                 <Button>Browse All Events</Button>
               </Link>

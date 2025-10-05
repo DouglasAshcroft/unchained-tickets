@@ -126,6 +126,40 @@ class ApiClient {
     return this.request<{ results: any[] }>(`/api/search?q=${encodeURIComponent(query)}`);
   }
 
+  // Get all searchable data for client-side fuzzy search
+  async getAllSearchableData() {
+    const [events, venues, artists] = await Promise.all([
+      this.getEvents(),
+      this.request<any[]>('/api/venues'),
+      this.request<any[]>('/api/artists'),
+    ]);
+
+    return {
+      events: events.map((e: any) => ({
+        type: 'event' as const,
+        id: e.id,
+        title: e.title,
+        venue: e.venue?.name || '',
+        startsAt: e.startsAt,
+      })),
+      venues: venues.map((v: any) => ({
+        type: 'venue' as const,
+        id: v.id,
+        name: v.name,
+        slug: v.slug,
+        city: v.city,
+        state: v.state,
+      })),
+      artists: artists.map((a: any) => ({
+        type: 'artist' as const,
+        id: a.id,
+        name: a.name,
+        slug: a.slug,
+        genre: a.genre,
+      })),
+    };
+  }
+
   // Health check
   async healthCheck() {
     return this.request<any>('/api/health');

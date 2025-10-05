@@ -13,6 +13,22 @@ export class ArtistRepository {
       take: limit,
     });
   }
+
+  async findAll(filters?: { genre?: string }) {
+    return await prisma.artist.findMany({
+      where: {
+        ...(filters?.genre && {
+          genre: { contains: filters.genre, mode: 'insensitive' },
+        }),
+      },
+      include: {
+        events: {
+          select: { id: true },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
 }
 
 export const artistRepository = new ArtistRepository();

@@ -5,10 +5,13 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { CheckoutModal } from '@/components/CheckoutModal';
+import { toast } from 'react-hot-toast';
 import api from '@/lib/api/client';
 
 interface PageProps {
@@ -18,7 +21,10 @@ interface PageProps {
 export default function EventDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const eventId = parseInt(id, 10);
+  const router = useRouter();
   const [showCheckout, setShowCheckout] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedTier, setSelectedTier] = useState('ga');
 
   const { data: event, isLoading, error } = useQuery({
     queryKey: ['event', eventId],
@@ -30,7 +36,7 @@ export default function EventDetailPage({ params }: PageProps) {
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
-          <div className="animate-pulse text-lg text-gray-400">Loading event...</div>
+          <div className="animate-pulse text-lg text-grit-300">Loading event...</div>
         </main>
         <Footer />
       </div>
@@ -43,8 +49,8 @@ export default function EventDetailPage({ params }: PageProps) {
         <Navbar />
         <main className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
           <Card className="text-center py-12">
-            <h2 className="text-2xl font-bold mb-4">Event Not Found</h2>
-            <p className="text-gray-400 mb-6">This event could not be found or has been removed.</p>
+            <h2 className="brand-heading text-2xl mb-4">Event Not Found</h2>
+            <p className="text-grit-300 mb-6">This event could not be found or has been removed.</p>
             <Link href="/events">
               <Button>Back to Events</Button>
             </Link>
@@ -74,13 +80,13 @@ export default function EventDetailPage({ params }: PageProps) {
       <Navbar />
 
       <main className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
-        <Link href="/events" className="inline-flex items-center text-blue-400 hover:text-blue-300 mb-6">
+        <Link href="/events" className="inline-flex items-center text-acid-400 hover:text-hack-green mb-6 transition-colors">
           ← Back to Events
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Event Image */}
-          <div className="relative aspect-square overflow-hidden rounded-lg bg-zinc-800">
+          <div className="relative aspect-square overflow-hidden rounded-lg bg-ink-800">
             {event.posterImageUrl ? (
               <Image
                 src={event.posterImageUrl}
@@ -91,7 +97,7 @@ export default function EventDetailPage({ params }: PageProps) {
                 priority
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-gray-500">
+              <div className="absolute inset-0 flex items-center justify-center text-grit-400">
                 <span className="text-6xl">🎵</span>
               </div>
             )}
@@ -100,26 +106,26 @@ export default function EventDetailPage({ params }: PageProps) {
           {/* Event Details */}
           <div className="space-y-6">
             <div>
-              <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+              <h1 className="brand-heading text-4xl mb-3 bg-gradient-to-r from-resistance-500 via-hack-green to-acid-400 bg-clip-text text-transparent">
                 {event.title}
               </h1>
 
               {event.primaryArtist && (
                 <Link
                   href={`/artists/${event.primaryArtist.slug}`}
-                  className="text-xl text-gray-300 hover:text-blue-400 transition-colors"
+                  className="text-xl text-bone-100 hover:text-acid-400 transition-colors"
                 >
                   {event.primaryArtist.name}
                 </Link>
               )}
             </div>
 
-            <div className="space-y-3 text-gray-300">
+            <div className="space-y-3 text-bone-100">
               <div className="flex items-start gap-3">
                 <span className="text-2xl">📅</span>
                 <div>
                   <div className="font-semibold">Date & Time</div>
-                  <div className="text-gray-400">{eventDate}</div>
+                  <div className="text-grit-300">{eventDate}</div>
                 </div>
               </div>
 
@@ -129,12 +135,12 @@ export default function EventDetailPage({ params }: PageProps) {
                   <div className="font-semibold">Venue</div>
                   <Link
                     href={`/venues/${event.venue?.slug}`}
-                    className="text-gray-400 hover:text-blue-400 transition-colors"
+                    className="text-grit-300 hover:text-acid-400 transition-colors"
                   >
                     {venueName}
                   </Link>
                   {venueLocation && (
-                    <div className="text-sm text-gray-500">{venueLocation}</div>
+                    <div className="text-sm text-grit-400">{venueLocation}</div>
                   )}
                 </div>
               </div>
@@ -144,28 +150,116 @@ export default function EventDetailPage({ params }: PageProps) {
                   <span className="text-2xl">ℹ️</span>
                   <div>
                     <div className="font-semibold">About</div>
-                    <div className="text-gray-400">{event.description}</div>
+                    <div className="text-grit-300">{event.description}</div>
                   </div>
                 </div>
               )}
             </div>
 
+            {/* Supporting Artists */}
+            {event.supportingArtists && event.supportingArtists.length > 0 && (
+              <div>
+                <h3 className="brand-heading text-lg mb-3 text-bone-100">Supporting Artists</h3>
+                <div className="flex flex-wrap gap-2">
+                  {event.supportingArtists.map((artist: any) => (
+                    <Link
+                      key={artist.id}
+                      href={`/artists/${artist.slug}`}
+                      className="px-3 py-1 rounded-full border border-acid-400/30 text-sm text-acid-400 hover:bg-acid-400/10 transition-colors"
+                    >
+                      {artist.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Ticket Purchase Section */}
-            <Card className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 border-blue-500/30">
+            <Card className="bg-gradient-to-br from-resistance-500/10 to-acid-400/10 border-resistance-500/30">
               <div className="space-y-4">
-                <h3 className="text-xl font-bold">Get Your NFT Tickets</h3>
-                <p className="text-gray-400 text-sm">
+                <div className="flex justify-between items-center">
+                  <h3 className="brand-heading text-xl">Get Your NFT Tickets</h3>
+                  <div className="text-sm">
+                    <span className="text-grit-400">Available: </span>
+                    <span className="text-acid-400 font-bold">{event.availableTickets || 0}</span>
+                  </div>
+                </div>
+                <p className="text-grit-300 text-sm">
                   Own your tickets as NFTs on Base. Secure, transferable, and yours forever.
                 </p>
 
+                {/* Ticket Tiers */}
                 <div className="space-y-2">
+                  <label className="block text-sm font-medium text-bone-100">Select Tier</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setSelectedTier('ga')}
+                      className={`p-3 rounded-lg border transition-all ${
+                        selectedTier === 'ga'
+                          ? 'border-acid-400 bg-acid-400/10'
+                          : 'border-grit-500/30 hover:border-grit-500/50'
+                      }`}
+                    >
+                      <div className="font-semibold text-bone-100">General Admission</div>
+                      <div className="text-sm text-grit-300">$25 USDC</div>
+                    </button>
+                    <button
+                      onClick={() => setSelectedTier('vip')}
+                      className={`p-3 rounded-lg border transition-all ${
+                        selectedTier === 'vip'
+                          ? 'border-acid-400 bg-acid-400/10'
+                          : 'border-grit-500/30 hover:border-grit-500/50'
+                      }`}
+                    >
+                      <div className="font-semibold text-bone-100">VIP</div>
+                      <div className="text-sm text-grit-300">$75 USDC</div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quantity Selector */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-bone-100">Quantity</label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      disabled={quantity <= 1}
+                      className="w-10 h-10 rounded-lg border border-grit-500/30 hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      −
+                    </button>
+                    <span className="flex-1 text-center text-xl font-bold">{quantity}</span>
+                    <button
+                      onClick={() => setQuantity(Math.min(8, quantity + 1))}
+                      disabled={quantity >= 8}
+                      className="w-10 h-10 rounded-lg border border-grit-500/30 hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Price Summary */}
+                <div className="space-y-2 pt-2 border-t border-grit-500/30">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Price per ticket:</span>
-                    <span className="text-xl font-bold">$25 USDC</span>
+                    <span className="text-grit-300">Price per ticket:</span>
+                    <span className="text-lg font-bold text-acid-400">
+                      ${selectedTier === 'vip' ? '75' : '25'} USDC
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-grit-300">Quantity:</span>
+                    <span className="text-bone-100">{quantity}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-500">Network:</span>
-                    <span className="text-blue-400">Base</span>
+                    <span className="text-grit-400">Network:</span>
+                    <span className="text-acid-400">Base</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-grit-500/30">
+                    <span className="font-bold text-bone-100">Total:</span>
+                    <span className="text-2xl font-bold text-acid-400">
+                      ${(selectedTier === 'vip' ? 75 : 25) * quantity} USDC
+                    </span>
                   </div>
                 </div>
 
@@ -174,10 +268,10 @@ export default function EventDetailPage({ params }: PageProps) {
                   className="w-full text-lg py-4"
                   onClick={() => setShowCheckout(true)}
                 >
-                  Purchase Tickets
+                  Purchase {quantity} Ticket{quantity > 1 ? 's' : ''}
                 </Button>
 
-                <div className="flex items-center gap-2 text-xs text-gray-500">
+                <div className="flex items-center gap-2 text-xs text-grit-400">
                   <span>🔒</span>
                   <span>Powered by OnchainKit • Secure blockchain transaction</span>
                 </div>
@@ -210,54 +304,24 @@ export default function EventDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* TODO: Add Checkout Modal with OnchainKit */}
-        {showCheckout && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <Card className="max-w-md w-full">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold">Purchase Tickets</h3>
-                  <button
-                    onClick={() => setShowCheckout(false)}
-                    className="text-gray-400 hover:text-white text-2xl"
-                  >
-                    ×
-                  </button>
-                </div>
-
-                <p className="text-gray-400">
-                  OnchainKit checkout integration coming soon. This will allow you to purchase tickets with USDC on Base.
-                </p>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span>Quantity:</span>
-                    <span>1 ticket</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Price:</span>
-                    <span>$25 USDC</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Total:</span>
-                    <span>$25 USDC</span>
-                  </div>
-                </div>
-
-                <Button
-                  variant="primary"
-                  className="w-full"
-                  onClick={() => {
-                    alert('Checkout will be integrated with OnchainKit in the next step!');
-                    setShowCheckout(false);
-                  }}
-                >
-                  Complete Purchase
-                </Button>
-              </div>
-            </Card>
-          </div>
-        )}
+        {/* OnchainKit Checkout Modal */}
+        <CheckoutModal
+          isOpen={showCheckout}
+          onClose={() => setShowCheckout(false)}
+          eventId={eventId}
+          eventTitle={event.title}
+          ticketTier={selectedTier === 'vip' ? 'VIP' : 'General Admission'}
+          quantity={quantity}
+          totalPrice={(selectedTier === 'vip' ? 75 : 25) * quantity}
+          onSuccess={(transactionId) => {
+            toast.success('Purchase successful! Redirecting to My Tickets...', { duration: 2000 });
+            console.log('Transaction completed:', transactionId);
+            // Redirect to My Tickets page after short delay
+            setTimeout(() => {
+              router.push('/my-tickets');
+            }, 2000);
+          }}
+        />
       </main>
 
       <Footer />

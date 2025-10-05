@@ -71,6 +71,24 @@ export class EventService {
     const events = await eventRepository.findByArtistId(artist.id);
     return { artist, events };
   }
+
+  async getAllVenues(filters?: { location?: string; minCapacity?: number }) {
+    const venues = await venueRepository.findAll(filters);
+    return venues.map((venue) => ({
+      ...venue,
+      eventCount: venue.events.length,
+      events: undefined, // Remove events array, just keep count
+    }));
+  }
+
+  async getAllArtists(filters?: { genre?: string }) {
+    const artists = await artistRepository.findAll(filters);
+    return artists.map((artist) => ({
+      ...artist,
+      eventCount: artist.events.length,
+      events: undefined, // Remove events array, just keep count
+    }));
+  }
 }
 
 export const eventService = new EventService();

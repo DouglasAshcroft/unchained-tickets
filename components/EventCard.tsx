@@ -12,6 +12,9 @@ interface Event {
   posterImageUrl?: string;
   externalLink?: string;
   mapsLink?: string;
+  availableTickets?: number;
+  featured?: boolean;
+  createdAt?: string;
   venue?: {
     id: number;
     name: string;
@@ -46,6 +49,11 @@ function EventCard({ event }: EventCardProps) {
     ? `${event.venue.city}, ${event.venue.state}`
     : '';
 
+  // Determine badges
+  const isSoldOut = event.availableTickets === 0;
+  const isFeatured = event.featured === true;
+  const isNew = event.createdAt && new Date(event.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // Created within last 7 days
+
   return (
     <Card className="h-full min-h-[420px] flex flex-col" accentLeft data-testid={`event-card-${event.id}`}>
       <div className="flex flex-1 flex-col">
@@ -63,18 +71,37 @@ function EventCard({ event }: EventCardProps) {
               <span className="text-4xl">🎵</span>
             </div>
           )}
+
+          {/* Badges */}
+          <div className="absolute top-2 right-2 flex flex-col gap-2">
+            {isSoldOut && (
+              <span className="px-2 py-1 text-xs font-bold uppercase tracking-wider rounded bg-signal-500 text-ink-900">
+                Sold Out
+              </span>
+            )}
+            {isFeatured && !isSoldOut && (
+              <span className="px-2 py-1 text-xs font-bold uppercase tracking-wider rounded bg-acid-400 text-ink-900">
+                Featured
+              </span>
+            )}
+            {isNew && !isSoldOut && !isFeatured && (
+              <span className="px-2 py-1 text-xs font-bold uppercase tracking-wider rounded bg-cobalt-500 text-bone-100">
+                New
+              </span>
+            )}
+          </div>
         </div>
 
-        <h2 className="mb-2 text-center text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+        <h2 className="brand-heading mb-2 text-center text-xl text-acid-400">
           {event.title ?? 'Untitled Event'}
         </h2>
 
-        <p className="mb-1 text-center text-sm text-gray-400">{when}</p>
+        <p className="mb-1 text-center text-sm text-grit-300">{when}</p>
 
-        <p className="mb-1 text-center text-sm font-semibold text-gray-300">{venueName}</p>
+        <p className="mb-1 text-center text-sm font-semibold text-bone-100">{venueName}</p>
 
         {venueLocation && (
-          <p className="mb-3 text-center text-xs text-gray-500">{venueLocation}</p>
+          <p className="mb-3 text-center text-xs text-grit-400">{venueLocation}</p>
         )}
       </div>
 
@@ -103,13 +130,23 @@ function EventCard({ event }: EventCardProps) {
         )}
       </div>
 
-      <Link
-        href={`/events/${event.id}`}
-        className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-colors bg-blue-600 hover:bg-blue-700 text-white border-blue-600 w-full"
-        data-testid={`purchase-${event.id}`}
-      >
-        Purchase NFT Tickets
-      </Link>
+      {isSoldOut ? (
+        <button
+          disabled
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-heading text-sm border transition-all uppercase tracking-wider bg-grit-500 text-grit-300 border-grit-500 w-full cursor-not-allowed opacity-60"
+          data-testid={`purchase-${event.id}`}
+        >
+          Sold Out
+        </button>
+      ) : (
+        <Link
+          href={`/events/${event.id}`}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-heading text-sm border transition-all uppercase tracking-wider bg-resistance-500 hover:brightness-110 text-ink-900 border-resistance-500 w-full"
+          data-testid={`purchase-${event.id}`}
+        >
+          Purchase NFT Tickets
+        </Link>
+      )}
     </Card>
   );
 }

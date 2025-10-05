@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { RootProvider } from "./rootProvider";
 import { Providers } from "./providers";
+import { ApiStatus } from "@/components/ApiStatus";
 import "./globals.css";
 
 const inter = Inter({
-  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -21,11 +23,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" style={{ colorScheme: 'dark' }}>
-      <body className={`${inter.variable} antialiased bg-zinc-950 text-white`}>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Resource hints for better performance */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+      </head>
+      <body className={`${inter.variable} antialiased font-sans`}>
         <RootProvider>
           <Providers>
             {children}
+            <ApiStatus />
           </Providers>
         </RootProvider>
       </body>

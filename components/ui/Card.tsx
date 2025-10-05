@@ -1,22 +1,19 @@
-import { ReactNode, CSSProperties } from 'react';
+import { ReactNode, HTMLAttributes } from 'react';
 
-interface CardProps {
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
   className?: string;
   accentLeft?: boolean;
   children: ReactNode;
-  style?: CSSProperties;
-  [key: string]: any;
 }
 
-export function Card({ className = '', accentLeft = false, children, style = {}, ...rest }: CardProps) {
+export function Card({ className = '', accentLeft = false, children, ...rest }: CardProps) {
   return (
     <div
-      className={`relative rounded-lg border border-white/10 bg-zinc-900 p-4 text-left shadow-lg md:p-6 ${className}`}
-      style={style}
+      className={`noise-overlay relative rounded-lg border border-grit-500/30 bg-bg-1 p-4 text-left shadow-ink md:p-6 ${className}`}
       {...rest}
     >
       {accentLeft && (
-        <div className="absolute top-0 bottom-0 left-0 w-[3px] bg-blue-500" />
+        <div className="absolute top-0 bottom-0 left-0 w-[3px] bg-resistance-500" />
       )}
       {children}
     </div>
