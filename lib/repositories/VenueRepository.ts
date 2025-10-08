@@ -15,13 +15,19 @@ export class VenueRepository {
   }
 
   async findAll(filters?: { location?: string; minCapacity?: number }) {
+    const { location, minCapacity } = filters ?? {};
+
     return await prisma.venue.findMany({
       where: {
-        ...(filters?.location && {
-          location: { contains: filters.location, mode: 'insensitive' },
+        ...(location && {
+          OR: [
+            { city: { contains: location, mode: 'insensitive' } },
+            { state: { contains: location, mode: 'insensitive' } },
+            { addressLine1: { contains: location, mode: 'insensitive' } },
+          ],
         }),
-        ...(filters?.minCapacity && {
-          capacity: { gte: filters.minCapacity },
+        ...(typeof minCapacity === 'number' && {
+          capacity: { gte: minCapacity },
         }),
       },
       include: {

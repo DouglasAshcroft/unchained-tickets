@@ -1,3 +1,4 @@
+import { TicketStatus } from '@prisma/client';
 import { eventRepository } from '@/lib/repositories/EventRepository';
 import { venueRepository } from '@/lib/repositories/VenueRepository';
 import { artistRepository } from '@/lib/repositories/ArtistRepository';
@@ -16,7 +17,35 @@ export class EventService {
     if (!event) {
       throw new Error('Event not found');
     }
-    return event;
+    const supportingArtists = event.artists
+      .filter((link) => !link.isPrimary && link.artist)
+      .map((link) => ({
+        id: link.artist.id,
+        name: link.artist.name,
+        slug: link.artist.slug,
+        genre: link.artist.genre,
+      }));
+
+    const ticketStatusesConsideredSold = new Set<TicketStatus>([
+      'minted',
+      'transferred',
+      'used',
+      'revoked',
+    ]);
+
+    const totalTickets = event.tickets?.length ?? 0;
+    const soldTickets = event.tickets?.filter((ticket) =>
+      ticketStatusesConsideredSold.has(ticket.status)
+    ).length ?? 0;
+    const availableTickets = Math.max(totalTickets - soldTickets, 0);
+
+    return {
+      ...event,
+      supportingArtists,
+      totalTickets,
+      soldTickets,
+      availableTickets,
+    };
   }
 
   async searchEvents(query: string, limit = 10) {

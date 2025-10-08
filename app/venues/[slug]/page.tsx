@@ -53,6 +53,9 @@ export default function VenueDetailPage({ params }: PageProps) {
   }
 
   const { venue, events = [] } = data;
+  const fullAddress = [venue.addressLine1, venue.addressLine2, venue.city, venue.state, venue.postalCode]
+    .filter(Boolean)
+    .join(', ');
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -88,10 +91,10 @@ export default function VenueDetailPage({ params }: PageProps) {
             <p className="mt-4 text-grit-400 max-w-3xl">{venue.description}</p>
           )}
 
-          {venue.address && (
+          {fullAddress && (
             <div className="mt-4">
               <a
-                href={`https://maps.google.com/?q=${encodeURIComponent(venue.address)}`}
+                href={`https://maps.google.com/?q=${encodeURIComponent(fullAddress)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 hover:border-acid-400/50 hover:bg-acid-400/10 transition-colors"

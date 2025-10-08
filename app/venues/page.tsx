@@ -35,22 +35,28 @@ export default function VenuesPage() {
     // Apply search filter
     if (debouncedSearch) {
       const searchLower = debouncedSearch.toLowerCase();
-      filtered = filtered.filter((venue: any) =>
-        venue.name?.toLowerCase().includes(searchLower) ||
-        venue.location?.toLowerCase().includes(searchLower) ||
-        venue.city?.toLowerCase().includes(searchLower) ||
-        venue.state?.toLowerCase().includes(searchLower)
-      );
+      filtered = filtered.filter((venue: any) => {
+        const addressLine1 = venue.addressLine1?.toLowerCase() ?? '';
+        return (
+          venue.name?.toLowerCase().includes(searchLower) ||
+          venue.city?.toLowerCase().includes(searchLower) ||
+          venue.state?.toLowerCase().includes(searchLower) ||
+          addressLine1.includes(searchLower)
+        );
+      });
     }
 
     // Apply location filter
     if (locationFilter) {
       const locationLower = locationFilter.toLowerCase();
-      filtered = filtered.filter((venue: any) =>
-        venue.location?.toLowerCase().includes(locationLower) ||
-        venue.city?.toLowerCase().includes(locationLower) ||
-        venue.state?.toLowerCase().includes(locationLower)
-      );
+      filtered = filtered.filter((venue: any) => {
+        const addressLine1 = venue.addressLine1?.toLowerCase() ?? '';
+        return (
+          venue.city?.toLowerCase().includes(locationLower) ||
+          venue.state?.toLowerCase().includes(locationLower) ||
+          addressLine1.includes(locationLower)
+        );
+      });
     }
 
     // Apply sorting

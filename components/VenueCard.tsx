@@ -22,8 +22,10 @@ interface VenueCardProps {
 function VenueCard({ venue }: VenueCardProps) {
   if (!venue) return null;
 
-  const location = venue.location ||
-    (venue.city && venue.state ? `${venue.city}, ${venue.state}` : 'Location TBA');
+  const location =
+    venue.city && venue.state
+      ? `${venue.city}, ${venue.state}`
+      : venue.city || venue.state || 'Location TBA';
 
   const eventCountText = venue.eventCount === 1
     ? '1 upcoming event'

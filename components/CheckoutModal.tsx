@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Checkout, CheckoutButton, CheckoutStatus } from '@coinbase/onchainkit/checkout';
 import type { LifecycleStatus } from '@coinbase/onchainkit/checkout';
+import { useAccount } from 'wagmi';
+import { toast } from 'react-hot-toast';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -27,6 +29,7 @@ export function CheckoutModal({
 }: CheckoutModalProps) {
   const [_chargeId, _setChargeId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const { address: walletAddress } = useAccount();
 
   // Check if we're in development mode
   const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
@@ -82,7 +85,7 @@ export function CheckoutModal({
     setIsProcessing(true);
 
     try {
-      // Simulate API call to create charge
+      // Call API to create charge and mint NFT
       const response = await fetch('/api/checkout/create-charge', {
         method: 'POST',
         headers: {
@@ -93,6 +96,7 @@ export function CheckoutModal({
           ticketTier,
           quantity,
           totalPrice,
+          walletAddress, // Pass wallet address for NFT minting
         }),
       });
 
@@ -103,6 +107,16 @@ export function CheckoutModal({
       const data = await response.json();
       const mockTransactionId = data.chargeId;
 
+      if (data.status === 'pending-mint') {
+        console.warn('Dev minting skipped: configure BASE_RPC_URL, MINTING_PRIVATE_KEY, and NFT_CONTRACT_ADDRESS to enable on-chain minting.');
+        toast.error('Minting skipped: configure RPC, contract, and minting key to enable dev minting.');
+      }
+
+      if (data.status === 'mint-failed') {
+        toast.error('NFT mint failed in dev mode. Fix minting credentials and retry.');
+        throw new Error('Minting failed in dev mode');
+      }
+
       // Save purchase to localStorage for My Tickets page
       const purchase = {
         id: mockTransactionId,
@@ -112,6 +126,8 @@ export function CheckoutModal({
         quantity,
         totalPrice,
         transactionId: mockTransactionId,
+        tokenId: data.tokenId ?? null,
+        status: data.status ?? 'completed',
         purchasedAt: new Date().toISOString(),
       };
 
@@ -126,7 +142,7 @@ export function CheckoutModal({
 
     } catch (error) {
       console.error('Mock payment error:', error);
-      alert('Payment failed. Please try again.');
+      toast.error('Charge created, but minting failed. Fix minting credentials and retry.');
     } finally {
       setIsProcessing(false);
     }
@@ -181,17 +197,17 @@ export function CheckoutModal({
             <div className="space-y-4">
               <button
                 onClick={handleMockPayment}
-                disabled={isProcessing}
+                disabled={isProcessing || !walletAddress}
                 className="w-full py-4 px-6 rounded-lg bg-gradient-to-r from-acid-400 to-hack-green text-ink-900 font-bold text-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
               >
                 {isProcessing ? (
                   <>
                     <div className="w-5 h-5 border-2 border-ink-900 border-t-transparent rounded-full animate-spin" />
-                    Processing Payment...
+                    Minting NFT Ticket...
                   </>
                 ) : (
                   <>
-                    🧪 Simulate Payment (Dev Mode)
+                    {walletAddress ? '🎫 Purchase & Mint NFT Ticket' : '⚠️ Connect Wallet First'}
                   </>
                 )}
               </button>
@@ -199,7 +215,15 @@ export function CheckoutModal({
               {/* Dev Mode Info */}
               <div className="p-3 bg-cobalt-500/10 border border-cobalt-500/30 rounded-lg">
                 <p className="text-xs text-cobalt-300">
-                  🚀 <strong>Development Mode:</strong> This simulates a successful payment without connecting a wallet or spending real money. Perfect for testing and demos!
+                  {walletAddress ? (
+                    <>
+                      🎉 <strong>Wallet Connected:</strong> {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)} - Click to mint a real NFT ticket on Base Sepolia testnet!
+                    </>
+                  ) : (
+                    <>
+                      ⚠️ <strong>Connect your wallet first</strong> to receive the NFT ticket. The button will activate once connected.
+                    </>
+                  )}
                 </p>
               </div>
             </div>

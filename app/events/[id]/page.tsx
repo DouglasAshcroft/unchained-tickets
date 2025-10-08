@@ -201,7 +201,7 @@ export default function EventDetailPage({ params }: PageProps) {
                       }`}
                     >
                       <div className="font-semibold text-bone-100">General Admission</div>
-                      <div className="text-sm text-grit-300">$25 USDC</div>
+                      <div className="text-sm text-grit-300">$0.25 USDC</div>
                     </button>
                     <button
                       onClick={() => setSelectedTier('vip')}
@@ -212,7 +212,7 @@ export default function EventDetailPage({ params }: PageProps) {
                       }`}
                     >
                       <div className="font-semibold text-bone-100">VIP</div>
-                      <div className="text-sm text-grit-300">$75 USDC</div>
+                      <div className="text-sm text-grit-300">$0.50 USDC</div>
                     </button>
                   </div>
                 </div>
@@ -244,7 +244,7 @@ export default function EventDetailPage({ params }: PageProps) {
                   <div className="flex justify-between items-center">
                     <span className="text-grit-300">Price per ticket:</span>
                     <span className="text-lg font-bold text-acid-400">
-                      ${selectedTier === 'vip' ? '75' : '25'} USDC
+                      ${selectedTier === 'vip' ? '0.50' : '0.25'} USDC
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -258,7 +258,7 @@ export default function EventDetailPage({ params }: PageProps) {
                   <div className="flex justify-between items-center pt-2 border-t border-grit-500/30">
                     <span className="font-bold text-bone-100">Total:</span>
                     <span className="text-2xl font-bold text-acid-400">
-                      ${(selectedTier === 'vip' ? 75 : 25) * quantity} USDC
+                      ${(selectedTier === 'vip' ? 0.50 : 0.25) * quantity} USDC
                     </span>
                   </div>
                 </div>
@@ -312,9 +312,9 @@ export default function EventDetailPage({ params }: PageProps) {
           eventTitle={event.title}
           ticketTier={selectedTier === 'vip' ? 'VIP' : 'General Admission'}
           quantity={quantity}
-          totalPrice={(selectedTier === 'vip' ? 75 : 25) * quantity}
+          totalPrice={(selectedTier === 'vip' ? 0.50 : 0.25) * quantity}
           onSuccess={(transactionId) => {
-            toast.success('Purchase successful! Redirecting to My Tickets...', { duration: 2000 });
+            toast.success('NFT Ticket Minted! Check your wallet.', { duration: 3000 });
             console.log('Transaction completed:', transactionId);
             // Redirect to My Tickets page after short delay
             setTimeout(() => {

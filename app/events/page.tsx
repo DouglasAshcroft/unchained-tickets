@@ -46,9 +46,10 @@ export default function EventsPage() {
         uniqueSuggestions.add(event.venue.name);
       }
       // Add artist names
-      event.artists?.forEach((artist: any) => {
-        if (artist.name?.toLowerCase().includes(search.toLowerCase())) {
-          uniqueSuggestions.add(artist.name);
+      event.artists?.forEach((artistLink: any) => {
+        const artistName = artistLink?.artist?.name;
+        if (artistName?.toLowerCase().includes(search.toLowerCase())) {
+          uniqueSuggestions.add(artistName);
         }
       });
     });
