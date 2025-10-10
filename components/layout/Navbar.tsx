@@ -2,16 +2,27 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ConnectWallet } from '@coinbase/onchainkit/wallet';
-import { useAccount } from 'wagmi';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { WalletMenu } from '@/components/layout/WalletMenu';
+import { RBAC } from '@/lib/constants/roles';
+
+const WalletControls = dynamic(
+  () => import('./WalletControls').then((mod) => mod.WalletControls),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="px-3 py-2 text-sm text-grit-400 border border-grit-500/30 rounded-lg">
+        Loading wallet…
+      </div>
+    ),
+  }
+);
 
 export function Navbar() {
-  const { isAuthenticated } = useAuth();
-  const { isConnected } = useAccount();
+  const { isAuthenticated, hasAnyRole } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const canAccessVenueDashboard = hasAnyRole(RBAC.venueAccess);
 
   return (
     <nav className="sticky top-0 z-50 bg-ink-900/95 dark:bg-ink-900/95 light:bg-bone-100/95 border-b border-grit-500/30 backdrop-blur-sm">
@@ -38,6 +49,14 @@ export function Navbar() {
             >
               Venues
             </Link>
+            {canAccessVenueDashboard && (
+              <Link
+                href="/dashboard/venue"
+                className="text-sm font-medium text-bone-100 hover:text-acid-400 transition-colors"
+              >
+                Venue Dashboard
+              </Link>
+            )}
             <Link
               href="/artists"
               className="text-sm font-medium text-bone-100 hover:text-acid-400 transition-colors"
@@ -64,7 +83,7 @@ export function Navbar() {
           <div className="flex items-center space-x-2 sm:space-x-3">
             <ThemeToggle />
             <div className="hidden sm:block">
-              {isConnected ? <WalletMenu /> : <ConnectWallet />}
+              <WalletControls />
             </div>
 
             {/* Mobile menu button */}
@@ -104,6 +123,15 @@ export function Navbar() {
               >
                 Venues
               </Link>
+              {canAccessVenueDashboard && (
+                <Link
+                  href="/dashboard/venue"
+                  className="text-sm font-medium text-bone-100 hover:text-acid-400 transition-colors px-2 py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Venue Dashboard
+                </Link>
+              )}
               <Link
                 href="/artists"
                 className="text-sm font-medium text-bone-100 hover:text-acid-400 transition-colors px-2 py-2"
@@ -130,7 +158,7 @@ export function Navbar() {
 
               {/* Mobile Wallet Connect */}
               <div className="pt-4 border-t border-grit-500/30">
-                {isConnected ? <WalletMenu /> : <ConnectWallet />}
+                <WalletControls className="w-full" />
               </div>
             </div>
           </div>

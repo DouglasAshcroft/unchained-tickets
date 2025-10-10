@@ -2,12 +2,13 @@
 
 import { create } from 'zustand';
 import { api } from '@/lib/api/client';
+import type { UserRoleValue } from '@/lib/constants/roles';
 
 interface User {
   id: number;
   email: string;
   name: string | null;
-  role: string;
+  role: UserRoleValue;
 }
 
 interface AuthState {
@@ -18,6 +19,8 @@ interface AuthState {
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => void;
   fetchUser: () => Promise<void>;
+  hasRole: (role: UserRoleValue) => boolean;
+  hasAnyRole: (roles: UserRoleValue[]) => boolean;
 }
 
 export const useAuth = create<AuthState>((set) => ({
@@ -30,6 +33,13 @@ export const useAuth = create<AuthState>((set) => ({
     try {
       const { user } = await api.login({ email, password });
       set({ user, isAuthenticated: true, isLoading: false });
+      if (typeof window !== 'undefined') {
+        const target =
+          user.role === 'venue' || user.role === 'admin' || user.role === 'dev'
+            ? '/dashboard/venue'
+            : '/events';
+        window.location.replace(target);
+      }
     } catch (error) {
       set({ isLoading: false });
       throw error;
@@ -41,6 +51,13 @@ export const useAuth = create<AuthState>((set) => ({
     try {
       const { user } = await api.register({ email, password, name });
       set({ user, isAuthenticated: true, isLoading: false });
+      if (typeof window !== 'undefined') {
+        const target =
+          user.role === 'venue' || user.role === 'admin' || user.role === 'dev'
+            ? '/dashboard/venue'
+            : '/events';
+        window.location.replace(target);
+      }
     } catch (error) {
       set({ isLoading: false });
       throw error;
@@ -60,5 +77,16 @@ export const useAuth = create<AuthState>((set) => ({
     } catch {
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
+  },
+
+  hasRole: (role: UserRoleValue) => {
+    const { user } = useAuth.getState();
+    return Boolean(user && user.role === role);
+  },
+
+  hasAnyRole: (roles: UserRoleValue[]) => {
+    const { user } = useAuth.getState();
+    if (!user) return false;
+    return roles.includes(user.role);
   },
 }));

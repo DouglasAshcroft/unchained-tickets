@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { Checkout, CheckoutButton, CheckoutStatus } from '@coinbase/onchainkit/checkout';
 import type { LifecycleStatus } from '@coinbase/onchainkit/checkout';
+import { OnchainKitProvider } from '@coinbase/onchainkit';
+import '@coinbase/onchainkit/styles.css';
+import { base, baseSepolia } from 'wagmi/chains';
 import { useAccount } from 'wagmi';
 import { toast } from 'react-hot-toast';
 
@@ -33,6 +36,9 @@ export function CheckoutModal({
 
   // Check if we're in development mode
   const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
+
+  const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID) || 8453;
+  const selectedChain = chainId === 84532 ? baseSepolia : base;
 
   if (!isOpen) return null;
 
@@ -149,9 +155,22 @@ export function CheckoutModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="relative w-full max-w-md mx-4">
-        <div className="bg-ink-900 rounded-xl border border-grit-500/30 shadow-2xl p-6">
+    <OnchainKitProvider
+      apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
+      chain={selectedChain}
+      config={{
+        appearance: {
+          mode: 'dark',
+        },
+        wallet: {
+          preference: 'all',
+          display: 'modal',
+        },
+      }}
+    >
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div className="relative w-full max-w-md mx-4">
+          <div className="bg-ink-900 rounded-xl border border-grit-500/30 shadow-2xl p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-bone-100">Complete Purchase</h2>
@@ -251,6 +270,7 @@ export function CheckoutModal({
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </OnchainKitProvider>
   );
 }

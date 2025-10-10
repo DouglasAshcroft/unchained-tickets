@@ -4,23 +4,37 @@ This document outlines all external requirements, configurations, and tasks need
 
 ---
 
+## 🎛️ Venue Dashboard Roadmap (Dev)
+
+- [x] Scaffold `/dashboard/venue` with mock data and base layout
+- [ ] Wire dashboard to real event/venue/payout APIs once RBAC is live
+- [ ] Enforce role-based access on the server (client gate added; still need API guard)
+- [ ] Connect poster workflow actions to upload + approval services
+- [ ] Surface Base Paymaster fee savings in revenue widgets
+
+---
+
 ## 🔐 1. API Keys & Environment Variables
 
 ### Required API Keys
 
 #### **Coinbase/Base Ecosystem**
-- [ ] **OnchainKit API Key**
+
+- [x] **OnchainKit API Key**
+
   - Get from: [Coinbase Developer Platform](https://portal.cdp.coinbase.com/)
   - Add to `.env.local`: `NEXT_PUBLIC_ONCHAINKIT_API_KEY=your_key_here`
   - Used for: Wallet connection, identity, checkout
 
-- [ ] **Coinbase Commerce API Key** (for production payments)
+- [x] **Coinbase Commerce API Key** (for production payments)
+
   - Get from: [Coinbase Commerce](https://commerce.coinbase.com/)
   - Add to `.env.local`: `COINBASE_COMMERCE_API_KEY=your_key_here`
   - Used for: Creating charges, processing USDC payments
   - Configure webhook URL for payment confirmations
 
-- [ ] **Base RPC URL** (recommended: own RPC endpoint)
+- [x] **Base RPC URL** (recommended: own RPC endpoint)
+  - [Coinbase] (https://portal.cdp.coinbase.com/products/node) - 'https://api.developer.coinbase.com/rpc/v1/base'
   - Options:
     - [Alchemy](https://www.alchemy.com/) - `https://base-mainnet.g.alchemy.com/v2/YOUR-API-KEY`
     - [Infura](https://infura.io/) - `https://base-mainnet.infura.io/v3/YOUR-API-KEY`
@@ -29,6 +43,7 @@ This document outlines all external requirements, configurations, and tasks need
   - Used for: Blockchain interactions, transaction queries
 
 #### **Database**
+
 - [ ] **Production PostgreSQL Database**
   - Options:
     - [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres)
@@ -42,7 +57,9 @@ This document outlines all external requirements, configurations, and tasks need
     ```
 
 #### **Authentication**
+
 - [ ] **JWT Secret** (production)
+
   - Generate: `openssl rand -base64 32`
   - Add to `.env`: `JWT_SECRET=your_secure_random_string`
   - Used for: User session tokens
@@ -53,11 +70,14 @@ This document outlines all external requirements, configurations, and tasks need
   - Add to `.env`: `NEXTAUTH_URL=https://your-domain.com`
 
 #### **Optional Services**
+
 - [ ] **Email Service** (for confirmations)
+
   - Options: SendGrid, Resend, Postmark
   - Env vars: `EMAIL_API_KEY`, `EMAIL_FROM`
 
 - [ ] **Storage** (for event images, NFT metadata)
+
   - Options: Vercel Blob, AWS S3, Cloudflare R2, IPFS (Pinata/NFT.Storage)
   - Env vars depend on provider
 
@@ -75,6 +95,7 @@ This document outlines all external requirements, configurations, and tasks need
 You need to deploy an NFT contract for ticket minting on Base mainnet.
 
 - [ ] **Write NFT Ticket Smart Contract**
+
   - Suggested: ERC-1155 (multi-token) or ERC-721A (gas-optimized)
   - Features needed:
     - Mint ticket NFTs with event ID and tier metadata
@@ -84,11 +105,13 @@ You need to deploy an NFT contract for ticket minting on Base mainnet.
   - Tools: Hardhat, Foundry, or Remix
 
 - [ ] **Deploy to Base Mainnet**
+
   - Get Base ETH for gas fees
   - Deploy using wallet (MetaMask, Coinbase Wallet)
   - Verify contract on [BaseScan](https://basescan.org/)
 
 - [ ] **Save Contract Address & ABI**
+
   - Add to `.env.local`:
     ```
     NEXT_PUBLIC_NFT_CONTRACT_ADDRESS=0x...
@@ -115,11 +138,13 @@ You need to deploy an NFT contract for ticket minting on Base mainnet.
 ### Prisma Schema Updates
 
 - [ ] **Review Prisma Schema**
+
   - File: `prisma/schema.prisma`
   - Ensure all models match production requirements
   - Add indexes for performance (already done in schema)
 
 - [ ] **Add Transaction/Charge Models**
+
   ```prisma
   model Charge {
     id            String   @id @default(cuid())
@@ -155,6 +180,7 @@ You need to deploy an NFT contract for ticket minting on Base mainnet.
   ```
 
 - [ ] **Run Production Migrations**
+
   ```bash
   npx prisma migrate deploy
   npx prisma generate
@@ -172,6 +198,7 @@ You need to deploy an NFT contract for ticket minting on Base mainnet.
 ### Coinbase Commerce Webhooks
 
 - [ ] **Create Webhook Endpoint**
+
   - File: `app/api/webhooks/coinbase/route.ts`
   - Verify webhook signature
   - Handle events:
@@ -186,23 +213,25 @@ You need to deploy an NFT contract for ticket minting on Base mainnet.
   - Save webhook secret
 
 ### Example Webhook Handler Structure
+
 ```typescript
 // app/api/webhooks/coinbase/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
+import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
-  const signature = request.headers.get('x-cc-webhook-signature');
+  const signature = request.headers.get("x-cc-webhook-signature");
 
   // Verify signature
   const isValid = verifySignature(rawBody, signature);
-  if (!isValid) return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  if (!isValid)
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
 
   const event = JSON.parse(rawBody);
 
   // Handle charge confirmation
-  if (event.type === 'charge:confirmed') {
+  if (event.type === "charge:confirmed") {
     // 1. Update charge status in database
     // 2. Mint NFT ticket
     // 3. Send confirmation email
@@ -220,16 +249,19 @@ export async function POST(request: NextRequest) {
 ### Recommended: Vercel
 
 - [ ] **Connect GitHub Repository**
+
   - Sign up at [Vercel](https://vercel.com/)
   - Import GitHub repo
   - Auto-deploys on push to `main` branch
 
 - [ ] **Configure Environment Variables**
+
   - In Vercel dashboard → Settings → Environment Variables
   - Add all `.env.local` variables
   - Separate Production/Preview/Development environments
 
 - [ ] **Configure Build Settings**
+
   - Build Command: `npm run build`
   - Output Directory: `.next`
   - Install Command: `npm install`
@@ -243,11 +275,13 @@ export async function POST(request: NextRequest) {
 ### Alternative: Railway, Render, or AWS
 
 - [ ] **Railway**
+
   - Connect repo, auto-deploys
   - Built-in Postgres database
   - Simple environment variable management
 
 - [ ] **Render**
+
   - Connect repo
   - Create Web Service + PostgreSQL database
   - Configure env vars
@@ -263,11 +297,14 @@ export async function POST(request: NextRequest) {
 ## 🔒 6. Security Checklist
 
 ### Environment & Secrets
+
 - [ ] **Never commit `.env` files to Git**
+
   - Verify `.gitignore` includes `.env*`
   - Use Vercel/platform secrets for production
 
 - [ ] **Rotate all development API keys**
+
   - Generate new keys for production
   - Revoke any exposed keys
 
@@ -276,31 +313,36 @@ export async function POST(request: NextRequest) {
   - Never log or expose in responses
 
 ### Application Security
+
 - [ ] **Enable Rate Limiting**
+
   - Implement on API routes (already in backend middleware)
   - Use Vercel Edge Config or Upstash Redis
 
 - [ ] **Add CORS Configuration**
+
   - Restrict API origins to your frontend domain
   - File: `next.config.js` or middleware
 
 - [ ] **Implement CSP Headers**
+
   - Content Security Policy headers
   - Add to `next.config.js`:
     ```javascript
     headers: [
       {
-        source: '/(.*)',
+        source: "/(.*)",
         headers: [
-          { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' }
-        ]
-      }
-    ]
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "origin-when-cross-origin" },
+        ],
+      },
+    ];
     ```
 
 - [ ] **SQL Injection Protection**
+
   - Already protected via Prisma ORM
   - Never use raw SQL with user input
 
@@ -314,6 +356,7 @@ export async function POST(request: NextRequest) {
 ## 📊 7. Monitoring & Logging
 
 ### Error Tracking
+
 - [ ] **Set Up Sentry** (recommended)
   - Sign up at [Sentry.io](https://sentry.io/)
   - Install: `npm install @sentry/nextjs`
@@ -321,7 +364,9 @@ export async function POST(request: NextRequest) {
   - Add DSN to env: `NEXT_PUBLIC_SENTRY_DSN`
 
 ### Performance Monitoring
+
 - [ ] **Vercel Analytics** (if using Vercel)
+
   - Auto-enabled, no setup required
   - Web Vitals tracking
 
@@ -331,6 +376,7 @@ export async function POST(request: NextRequest) {
   - Set up alerts for slow queries
 
 ### Logging
+
 - [ ] **Structured Logging**
   - Already implemented in `backend/server/src/config/logger.js`
   - Ensure it works with your deployment platform
@@ -341,23 +387,28 @@ export async function POST(request: NextRequest) {
 ## 🧪 8. Testing Before Launch
 
 ### Manual Testing Checklist
+
 - [ ] **Wallet Connection Flow**
+
   - Test with Coinbase Wallet
   - Test with MetaMask
   - Test on mobile (WalletConnect)
 
 - [ ] **Event Browsing**
+
   - Search functionality works
   - Filters apply correctly
   - Autocomplete suggestions appear
   - No API spam (check Network tab)
 
 - [ ] **Ticket Purchase Flow**
+
   - Select event → Choose tier → Set quantity
   - Click Purchase → CheckoutModal opens
   - (In production) Complete payment → Receive NFT
 
 - [ ] **Responsive Design**
+
   - Test on mobile (iOS Safari, Android Chrome)
   - Test on tablet
   - Test on desktop (Chrome, Firefox, Safari)
@@ -368,7 +419,9 @@ export async function POST(request: NextRequest) {
   - Check Core Web Vitals
 
 ### Automated Testing
+
 - [ ] **Run Test Suite**
+
   ```bash
   npm run test
   npm run test:coverage
@@ -384,13 +437,16 @@ export async function POST(request: NextRequest) {
 ## 🎨 9. Content & Branding
 
 ### Required Content
+
 - [ ] **Create Legal Pages**
+
   - Terms of Service (`/terms`)
   - Privacy Policy (`/privacy`)
   - Refund Policy (`/refunds`)
   - Use templates from [Termly](https://termly.io/) or [Privacy Policies](https://www.privacypolicies.com/)
 
 - [ ] **Create Marketing Pages**
+
   - About page (`/about`)
   - How it Works (`/how-it-works`)
   - FAQ page (`/faq`)
@@ -401,12 +457,15 @@ export async function POST(request: NextRequest) {
   - Event reminder (24h before)
 
 ### SEO & Meta Tags
+
 - [ ] **Add Metadata to All Pages**
+
   - Already in `app/layout.tsx`, but customize per page
   - Open Graph images for social sharing
   - Twitter Card metadata
 
 - [ ] **Create `robots.txt`**
+
   ```
   # public/robots.txt
   User-agent: *
@@ -425,6 +484,7 @@ export async function POST(request: NextRequest) {
 If you want native mobile apps:
 
 - [ ] **Progressive Web App (PWA)**
+
   - Add `manifest.json`
   - Service worker for offline support
   - Install prompt
@@ -445,6 +505,7 @@ If you want native mobile apps:
   - Auto-deploy to Vercel on merge to `main`
 
 Example workflow:
+
 ```yaml
 name: Deploy
 on:
@@ -460,7 +521,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: "20"
       - run: npm ci
       - run: npm run test
       - run: npm run build
@@ -483,6 +544,7 @@ jobs:
 ## 📋 12. Launch Checklist
 
 ### Pre-Launch (1 Week Before)
+
 - [ ] All API keys configured and tested
 - [ ] Smart contract deployed and verified
 - [ ] Database migrated and seeded
@@ -494,6 +556,7 @@ jobs:
 - [ ] Backup strategy in place (database backups)
 
 ### Launch Day
+
 - [ ] Deploy to production
 - [ ] Verify all environment variables
 - [ ] Test complete purchase flow end-to-end
@@ -503,6 +566,7 @@ jobs:
 - [ ] Test on multiple devices/browsers
 
 ### Post-Launch (First Week)
+
 - [ ] Monitor application performance
 - [ ] Track user feedback and errors
 - [ ] Check transaction success rates
@@ -515,6 +579,7 @@ jobs:
 ## 🆘 Support & Resources
 
 ### Documentation Links
+
 - [Next.js Docs](https://nextjs.org/docs)
 - [OnchainKit Docs](https://onchainkit.xyz/)
 - [Base Docs](https://docs.base.org/)
@@ -522,11 +587,13 @@ jobs:
 - [Vercel Docs](https://vercel.com/docs)
 
 ### Community
+
 - [Base Discord](https://discord.gg/base)
 - [OnchainKit GitHub](https://github.com/coinbase/onchainkit)
 - Next.js Discord
 
 ### Getting Help
+
 - Open GitHub issues for bugs
 - Stack Overflow for technical questions
 - Base developer community for blockchain questions
@@ -536,6 +603,7 @@ jobs:
 ## 📝 Notes
 
 ### Cost Estimates (Monthly)
+
 - **Vercel Pro**: $20/month (recommended for production)
 - **Database (Vercel Postgres)**: $10-50/month depending on usage
 - **Coinbase Commerce**: Free (they take a small fee per transaction)
@@ -546,6 +614,7 @@ jobs:
 **Total Estimated**: ~$50-150/month for small-medium scale
 
 ### Scaling Considerations
+
 - Use Redis for caching (Vercel KV, Upstash)
 - Implement CDN for images (Cloudflare, Vercel Edge)
 - Database connection pooling (Prisma already supports)

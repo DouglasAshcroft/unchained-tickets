@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { ticketService, type Purchase } from '@/lib/services/TicketService';
+import { ticketService } from '@/lib/services/TicketService';
 
 const ValidateRequestSchema = z.object({
   purchases: z.array(

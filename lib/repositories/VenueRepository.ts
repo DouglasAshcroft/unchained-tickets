@@ -1,6 +1,12 @@
 import { prisma } from '@/lib/db/prisma';
 
 export class VenueRepository {
+  async findById(id: number) {
+    return await prisma.venue.findUnique({
+      where: { id },
+    });
+  }
+
   async findBySlug(slug: string) {
     return await prisma.venue.findUnique({
       where: { slug },

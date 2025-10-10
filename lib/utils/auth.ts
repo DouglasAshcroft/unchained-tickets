@@ -4,6 +4,7 @@ import { authService } from '@/lib/services/AuthService';
 export interface AuthUser {
   id: number;
   email: string;
+  role: string;
 }
 
 export function getAuthToken(request: NextRequest): string | null {
@@ -25,7 +26,7 @@ export async function verifyAuth(request: NextRequest): Promise<AuthUser> {
 
   try {
     const payload = authService.verifyToken(token);
-    return { id: payload.sub, email: payload.email };
+    return { id: payload.sub, email: payload.email, role: payload.role };
   } catch {
     throw new Error('Invalid token');
   }

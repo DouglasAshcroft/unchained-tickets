@@ -16,6 +16,7 @@ interface LoginData {
 interface TokenPayload {
   sub: number;
   email: string;
+  role: string;
 }
 
 export class AuthService {
@@ -107,8 +108,8 @@ export class AuthService {
     return user;
   }
 
-  generateToken(user: { id: number; email: string }) {
-    return jwt.sign({ sub: user.id, email: user.email }, this.jwtSecret, {
+  generateToken(user: { id: number; email: string; role: string }) {
+    return jwt.sign({ sub: user.id, email: user.email, role: user.role }, this.jwtSecret, {
       expiresIn: '7d',
     });
   }

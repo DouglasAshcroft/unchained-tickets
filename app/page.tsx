@@ -29,7 +29,7 @@ export default function HomePage() {
                   href="/about"
                   className="px-8 py-4 border-2 border-acid-400/60 text-acid-400 hover:bg-acid-400/10 rounded-lg font-semibold text-lg transition-all"
                 >
-                  Learn More
+                  Learn More About Unchained
                 </Link>
               </div>
             </div>

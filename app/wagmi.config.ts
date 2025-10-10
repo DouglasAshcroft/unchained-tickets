@@ -25,12 +25,6 @@ import { injected } from 'wagmi/connectors';
  * which causes issues with Next.js SSR
  */
 export function getWagmiConfig() {
-  // Determine which chain to use based on environment
-  const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID) || 8453;
-
-  // Select chain configuration
-  const primaryChain = chainId === 84532 ? baseSepolia : base;
-
   // Get RPC URL from environment
   const rpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL;
 

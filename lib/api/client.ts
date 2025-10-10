@@ -111,6 +111,53 @@ class ApiClient {
     return this.request<any>(`/api/events/${id}`);
   }
 
+  async getVenues(params?: { location?: string; minCapacity?: number }) {
+    const searchParams = new URLSearchParams();
+    if (params?.location) searchParams.append('location', params.location);
+    if (params?.minCapacity) {
+      searchParams.append('minCapacity', String(params.minCapacity));
+    }
+    const query = searchParams.toString();
+    return this.request<any[]>(`/api/venues${query ? `?${query}` : ''}`);
+  }
+
+  async createEvent(data: {
+    title: string;
+    startsAt: string;
+    endsAt?: string | null;
+    venueId: number;
+    primaryArtistId?: number | null;
+    posterImageUrl?: string | null;
+    externalLink?: string | null;
+    mapsLink?: string | null;
+    status?: 'draft' | 'published';
+  }) {
+    return this.request<any>(`/api/events`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateEvent(
+    id: number,
+    data: Partial<{
+      title: string;
+      startsAt: string;
+      endsAt: string | null;
+      venueId: number;
+      primaryArtistId: number | null;
+      posterImageUrl: string | null;
+      externalLink: string | null;
+      mapsLink: string | null;
+      status: 'draft' | 'published' | 'canceled' | 'completed';
+    }>
+  ) {
+    return this.request<any>(`/api/events/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Venues endpoints
   async getVenueBySlug(slug: string) {
     return this.request<{ venue: any; events: any[] }>(`/api/venues/${slug}`);

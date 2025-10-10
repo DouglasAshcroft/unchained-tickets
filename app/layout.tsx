@@ -37,12 +37,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* Resource hints for better performance */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-      </head>
+      <head></head>
       <body className={`${inter.variable} antialiased font-sans`}>
         <RootProvider initialState={initialState}>
           <Providers>

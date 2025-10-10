@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Badge } from '@/components/ui/Badge';
 
 type ConnectionStatus = 'connected' | 'disconnected' | 'checking';
 
@@ -28,7 +27,7 @@ export function ApiStatus() {
         } else {
           setStatus('disconnected');
         }
-      } catch (error) {
+      } catch {
         setStatus('disconnected');
       }
     };
