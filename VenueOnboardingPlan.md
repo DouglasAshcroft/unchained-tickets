@@ -1,5 +1,7 @@
 Here’s a high-level implementation roadmap for the Venue Onboarding epic. It’s organized around the user stories and breaks the work into coordinated streams so venues get to “value” quickly while we continue layering in depth.
 
+**Progress update (2025-10-15):** Ticket tier management and seat-map ingestion now exist end-to-end (Prisma models, API endpoints, admin UI). Reserved tiers trigger seat-map requirements and populate event-level reserved seat inventory for future checkout flows.
+
 Phase 0 – Foundations (already in place or underway)
 Secure/stable infra: Coinbase charges + webhook minting, chain supply fix, charge retry metadata, deployment runbooks.
 Prereq data: Ensure Prisma schema and migrations cover charges, promotions, venue/event relationships.
@@ -16,11 +18,11 @@ Ensure contract tier supply updates if on-chain data must change (captured in Ph
 Deliverable: venues can create/publish an event in minutes; can return to edit details.
 
 Phase 2 – Flexible Ticket Types & Seating (Story 2)
-Ticket tier management
+Ticket tier management *(core pricing + capacity delivered 2025-10-15; presale/promo pending)*
 UI table for tiers (name, price, quantity, sales window, presale code).
-Backend: extend Prisma Ticket/Charge handling; map to contract tier IDs.
+Backend: extend Prisma Ticket/Charge handling; map to contract tier IDs. *(Prisma + EventService updates shipped)*
 Seat-map designer (deferred or scoped)
-MVP: upload JSON/CSV seating map; choose sections/tier mapping.
+MVP: upload JSON/CSV seating map; choose sections/tier mapping. *(JSON upload + seat inventory assignment complete; managed from venue dashboard onboarding instead of the event wizard)*
 Future: visual designer using canvas library (phase 2.5).
 Presale rules & limits
 Support per-tier promo codes, per-buyer limit, waitlist toggles.

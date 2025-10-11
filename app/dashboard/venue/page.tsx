@@ -4,6 +4,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { mockVenueDashboard } from '@/lib/mocks/venueDashboard';
 import { venueDashboardService } from '@/lib/services/VenueDashboardService';
+import { prisma } from '@/lib/db/prisma';
 
 export const metadata = {
   title: 'Venue Dashboard · Unchained',
@@ -11,12 +12,34 @@ export const metadata = {
 
 export default async function VenueDashboardPage() {
   let data = mockVenueDashboard;
+  let error: string | null = null;
 
   try {
-    // TODO: replace hard-coded ID with authenticated venue context once RBAC is in place
-    data = await venueDashboardService.getDashboardData(1);
-  } catch (error) {
-    console.error('Failed to load venue dashboard data, falling back to mock payload', error);
+    // TODO Phase 4.1: Implement server-side auth with cookies
+    // Currently using client-side JWT auth only. Need to add:
+    // 1. Cookie-based session management
+    // 2. Server-side auth utility to get current user
+    // 3. Query user's venue from database
+    // Example future implementation:
+    // const user = await getServerSideUser();
+    // if (user?.role === 'venue' || user?.role === 'admin' || user?.role === 'dev') {
+    //   const userVenue = await prisma.venue.findFirst({ where: { ownerUserId: user.id } });
+    //   if (userVenue) {
+    //     data = await venueDashboardService.getDashboardData(userVenue.id);
+    //   }
+    // }
+
+    // For now: load the first venue in database (dev/testing only)
+    const firstVenue = await prisma.venue.findFirst({ select: { id: true } });
+    if (firstVenue) {
+      data = await venueDashboardService.getDashboardData(firstVenue.id);
+    } else {
+      throw new Error('No venues configured yet');
+    }
+  } catch (err) {
+    error = err instanceof Error ? err.message : 'Failed to load venue data';
+    console.warn('Venue dashboard fallback:', error);
+    // Fall back to mock data
   }
 
   return (

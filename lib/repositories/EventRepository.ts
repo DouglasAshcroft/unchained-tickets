@@ -3,7 +3,17 @@ import { prisma } from "@/lib/db/prisma";
 
 interface EventFilters {
   search?: string;
+  city?: string;
+  state?: string;
+  genre?: string;
+  featured?: boolean;
 }
+
+// Pagination interface for future use
+// interface PaginationOptions {
+//   page?: number;
+//   limit?: number;
+// }
 
 interface CreateEventData {
   title: string;
@@ -118,6 +128,66 @@ export class EventRepository {
             seatSection: true,
             seatRow: true,
             seat: true,
+            ticketTypeId: true,
+            reservedSeatId: true,
+          },
+        },
+        ticketTypes: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            pricingType: true,
+            priceCents: true,
+            currency: true,
+            capacity: true,
+            salesStart: true,
+            salesEnd: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+        seatMapAssignments: {
+          include: {
+            seatMap: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                status: true,
+                version: true,
+              },
+            },
+            reservedSeats: {
+              select: {
+                id: true,
+                status: true,
+                ticketTypeId: true,
+                seatPosition: {
+                  select: {
+                    id: true,
+                    seatNumber: true,
+                    displayLabel: true,
+                    row: {
+                      select: {
+                        id: true,
+                        name: true,
+                        label: true,
+                        section: {
+                          select: {
+                            id: true,
+                            name: true,
+                            label: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -295,6 +365,219 @@ export class EventRepository {
       take: limit,
       orderBy: { startsAt: "asc" },
     });
+  }
+
+  async findByGenreAndLocation(filters: {
+    genre?: string;
+    city?: string;
+    state?: string;
+    limit?: number;
+  }) {
+    const { genre, city, state, limit = 5 } = filters;
+
+    const where: any = {
+      status: EventStatus.published,
+      startsAt: { gte: new Date() },
+    };
+
+    if (city || state) {
+      where.venue = {};
+      if (city) where.venue.city = city;
+      if (state) where.venue.state = state;
+    }
+
+    // If genre is specified and not "All Events", filter by genre
+    if (genre && genre.toLowerCase() !== "all events" && genre !== "all-events") {
+      where.primaryArtist = {
+        genre: { equals: genre, mode: "insensitive" },
+      };
+    }
+    // If genre is "All Events", don't filter by genre (show all)
+
+    return await prisma.event.findMany({
+      where,
+      select: {
+        id: true,
+        title: true,
+        startsAt: true,
+        createdAt: true,
+        posterImageUrl: true,
+        externalLink: true,
+        mapsLink: true,
+        featured: true,
+        venue: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            city: true,
+            state: true,
+          },
+        },
+        primaryArtist: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            genre: true,
+          },
+        },
+      },
+      orderBy: { startsAt: "asc" },
+      take: limit,
+    });
+  }
+
+  async findFeaturedEvents(filters: {
+    city?: string;
+    state?: string;
+    limit?: number;
+  }) {
+    const { city, state, limit = 5 } = filters;
+
+    const where: any = {
+      status: EventStatus.published,
+      featured: true,
+      startsAt: { gte: new Date() },
+      OR: [
+        { featuredUntil: null },
+        { featuredUntil: { gte: new Date() } },
+      ],
+    };
+
+    if (city || state) {
+      where.venue = {};
+      if (city) where.venue.city = city;
+      if (state) where.venue.state = state;
+    }
+
+    return await prisma.event.findMany({
+      where,
+      select: {
+        id: true,
+        title: true,
+        startsAt: true,
+        createdAt: true,
+        posterImageUrl: true,
+        externalLink: true,
+        mapsLink: true,
+        featured: true,
+        featuredUntil: true,
+        venue: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            city: true,
+            state: true,
+          },
+        },
+        primaryArtist: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            genre: true,
+          },
+        },
+      },
+      orderBy: [
+        { featuredUntil: "asc" },
+        { startsAt: "asc" },
+      ],
+      take: limit,
+    });
+  }
+
+  async getAvailableGenres(filters?: { city?: string; state?: string }) {
+    const { city, state } = filters || {};
+
+    const where: any = {
+      status: EventStatus.published,
+      startsAt: { gte: new Date() },
+    };
+
+    if (city || state) {
+      where.venue = {};
+      if (city) where.venue.city = city;
+      if (state) where.venue.state = state;
+    }
+
+    const events = await prisma.event.findMany({
+      where,
+      select: {
+        primaryArtist: {
+          select: {
+            genre: true,
+          },
+        },
+      },
+    });
+
+    const genreCounts = new Map<string, number>();
+
+    // Count events with genres
+    events.forEach((event) => {
+      const genre = event.primaryArtist?.genre;
+      if (genre) {
+        genreCounts.set(genre, (genreCounts.get(genre) || 0) + 1);
+      }
+    });
+
+    // Add "All Events" category with total count if there are events without genres
+    const eventsWithoutGenre = events.filter(e => !e.primaryArtist?.genre).length;
+    if (eventsWithoutGenre > 0 || genreCounts.size === 0) {
+      genreCounts.set("All Events", events.length);
+    }
+
+    return Array.from(genreCounts.entries())
+      .map(([name, count]) => ({
+        name,
+        count,
+        slug: name.toLowerCase().replace(/\s+/g, "-"),
+      }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  async getAvailableCities() {
+    const venues = await prisma.venue.findMany({
+      where: {
+        events: {
+          some: {
+            status: EventStatus.published,
+            startsAt: { gte: new Date() },
+          },
+        },
+      },
+      select: {
+        city: true,
+        state: true,
+        latitude: true,
+        longitude: true,
+        _count: {
+          select: {
+            events: {
+              where: {
+                status: EventStatus.published,
+                startsAt: { gte: new Date() },
+              },
+            },
+          },
+        },
+      },
+      distinct: ["city", "state"],
+    });
+
+    return venues
+      .filter((v) => v.city && v.state)
+      .map((v) => ({
+        city: v.city!,
+        state: v.state!,
+        latitude: v.latitude ? Number(v.latitude) : null,
+        longitude: v.longitude ? Number(v.longitude) : null,
+        count: v._count.events,
+      }))
+      .sort((a, b) => b.count - a.count);
   }
 }
 

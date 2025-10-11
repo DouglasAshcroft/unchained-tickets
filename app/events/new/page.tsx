@@ -16,13 +16,46 @@ import { Input } from "@/components/ui/Input";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { api } from "@/lib/api/client";
 
-type WizardStep = "basics" | "schedule" | "review";
+type PricingType = "general_admission" | "reserved" | "mixed";
+
+type TicketTypeForm = {
+  id: string;
+  name: string;
+  description: string;
+  pricingType: PricingType;
+  price: string;
+  currency: string;
+  capacity: string;
+  salesStart: string;
+  salesEnd: string;
+  isActive: boolean;
+};
+
+type WizardStep = "basics" | "schedule" | "tickets" | "review";
 
 interface StepDefinition {
   id: WizardStep;
   title: string;
   description: string;
 }
+
+const generateTicketTypeId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `ticket-${Math.random().toString(36).slice(2, 10)}`;
+
+const createEmptyTicketType = (): TicketTypeForm => ({
+  id: generateTicketTypeId(),
+  name: "",
+  description: "",
+  pricingType: "general_admission",
+  price: "",
+  currency: "USD",
+  capacity: "",
+  salesStart: "",
+  salesEnd: "",
+  isActive: true,
+});
 
 const steps: StepDefinition[] = [
   {
@@ -34,6 +67,12 @@ const steps: StepDefinition[] = [
     id: "schedule",
     title: "Schedule & Venue",
     description: "Set the timeline and choose where the event happens.",
+  },
+  {
+    id: "tickets",
+    title: "Tickets & Seating",
+    description:
+      "Define ticket tiers, pricing, and reserve a seat map if needed.",
   },
   {
     id: "review",
@@ -52,9 +91,10 @@ type FormState = {
   endsAt: string;
   venueId: string;
   status: "draft" | "published";
+  ticketTypes: TicketTypeForm[];
 };
 
-type FormErrors = Partial<Record<keyof FormState, string>>;
+type FormErrors = Record<string, string | undefined>;
 
 const initialState: FormState = {
   title: "",
@@ -65,6 +105,7 @@ const initialState: FormState = {
   endsAt: "",
   venueId: "",
   status: "draft",
+  ticketTypes: [createEmptyTicketType()],
 };
 
 type VenueOption = {
@@ -123,6 +164,7 @@ export default function NewEventPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [posterFile, setPosterFile] = useState<File | null>(null);
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
+  const [isDraggingPoster, setIsDraggingPoster] = useState(false);
   const [venueQuery, setVenueQuery] = useState("");
   const [selectedVenue, setSelectedVenue] = useState<VenueOption | null>(null);
   const [showVenueSuggestions, setShowVenueSuggestions] = useState(false);
@@ -133,6 +175,15 @@ export default function NewEventPage() {
 
   const currentStep = steps[currentStepIndex];
 
+
+  const hasReservedPricing = useMemo(
+    () =>
+      formData.ticketTypes.some((ticket) =>
+        ["reserved", "mixed"].includes(ticket.pricingType)
+      ),
+    [formData.ticketTypes]
+  );
+
   const {
     data: venues = [],
     isLoading: isLoadingVenues,
@@ -142,6 +193,7 @@ export default function NewEventPage() {
     queryFn: () => api.getVenues(),
     staleTime: 5 * 60 * 1000,
   });
+
 
   const fuse = useMemo(() => {
     if (!venues.length) return null;
@@ -212,6 +264,37 @@ export default function NewEventPage() {
   const createEvent = useMutation({
     mutationFn: async () => {
       const venueId = parseInt(formData.venueId, 10);
+
+      const ticketTypesPayload = formData.ticketTypes.map((ticket) => {
+        const trimmedPrice = ticket.price.trim();
+        let priceCents: number | null = null;
+        if (trimmedPrice) {
+          priceCents = Math.round(parseFloat(trimmedPrice) * 100);
+        }
+
+        const trimmedCapacity = ticket.capacity.trim();
+        let capacity: number | null = null;
+        if (trimmedCapacity) {
+          capacity = parseInt(trimmedCapacity, 10);
+        }
+
+        return {
+          name: ticket.name.trim(),
+          description: ticket.description.trim() || null,
+          pricingType: ticket.pricingType,
+          priceCents,
+          currency: ticket.currency.trim().toUpperCase(),
+          capacity,
+          salesStart: ticket.salesStart
+            ? new Date(ticket.salesStart).toISOString()
+            : null,
+          salesEnd: ticket.salesEnd
+            ? new Date(ticket.salesEnd).toISOString()
+            : null,
+          isActive: ticket.isActive,
+        };
+      });
+
       const payload = {
         title: formData.title.trim(),
         startsAt: new Date(formData.startsAt).toISOString(),
@@ -223,6 +306,7 @@ export default function NewEventPage() {
         externalLink: formData.externalLink || null,
         mapsLink: formData.mapsLink || null,
         status: formData.status,
+        ticketTypes: ticketTypesPayload,
       };
 
       return api.createEvent(payload);
@@ -238,15 +322,7 @@ export default function NewEventPage() {
     },
   });
 
-  const handlePosterFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      setPosterFile(null);
-      setPosterPreview(null);
-      setErrors((prev) => ({ ...prev, posterImageUrl: undefined }));
-      return;
-    }
-
+  const processPosterFile = (file: File) => {
     setPosterFile(file);
     setErrors((prev) => ({ ...prev, posterImageUrl: undefined }));
 
@@ -259,6 +335,38 @@ export default function NewEventPage() {
     reader.readAsDataURL(file);
   };
 
+  const handlePosterFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setPosterFile(null);
+      setPosterPreview(null);
+      setErrors((prev) => ({ ...prev, posterImageUrl: undefined }));
+      return;
+    }
+
+    processPosterFile(file);
+  };
+
+  const handlePosterDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingPoster(true);
+  };
+
+  const handlePosterDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingPoster(false);
+  };
+
+  const handlePosterDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingPoster(false);
+
+    const file = event.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      processPosterFile(file);
+    }
+  };
+
   const clearPosterFile = () => {
     setPosterFile(null);
     setPosterPreview(null);
@@ -267,6 +375,59 @@ export default function NewEventPage() {
     }
     setErrors((prev) => ({ ...prev, posterImageUrl: undefined }));
   };
+
+  const getTicketFieldError = (
+    ticketId: string,
+    field: keyof TicketTypeForm
+  ) => errors[`ticketTypes.${ticketId}.${String(field)}`];
+
+  const handleTicketTypeChange = <K extends keyof TicketTypeForm>(
+    ticketId: string,
+    field: K,
+    value: TicketTypeForm[K]
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      ticketTypes: prev.ticketTypes.map((ticket) =>
+        ticket.id === ticketId ? { ...ticket, [field]: value } : ticket
+      ),
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [`ticketTypes.${ticketId}.${String(field)}`]: undefined,
+    }));
+  };
+
+  const handleAddTicketType = () => {
+    setFormData((prev) => ({
+      ...prev,
+      ticketTypes: [...prev.ticketTypes, createEmptyTicketType()],
+    }));
+  };
+
+  const handleRemoveTicketType = (ticketId: string) => {
+    if (formData.ticketTypes.length === 1) {
+      toast.error("Keep at least one ticket type");
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      ticketTypes: prev.ticketTypes.filter((ticket) => ticket.id !== ticketId),
+    }));
+
+    setErrors((prev) => {
+      const next = { ...prev } as Record<string, string | undefined>;
+      Object.keys(next).forEach((key) => {
+        if (key.startsWith(`ticketTypes.${ticketId}`)) {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+  };
+
 
   const handleStartTimeChange = (value: string) => {
     setFormData((prev) => {
@@ -313,7 +474,11 @@ export default function NewEventPage() {
     if (selectedVenue) {
       setSelectedVenue(null);
       setMapsLocked(false);
-      setFormData((prev) => ({ ...prev, venueId: "", mapsLink: "" }));
+      setFormData((prev) => ({
+        ...prev,
+        venueId: "",
+        mapsLink: "",
+      }));
     }
   };
 
@@ -330,7 +495,10 @@ export default function NewEventPage() {
       mapsLink: derivedLink || prev.mapsLink,
     }));
     setMapsLocked(true);
-    setErrors((prev) => ({ ...prev, venueId: undefined }));
+    setErrors((prev) => ({
+      ...prev,
+      venueId: undefined,
+    }));
   };
 
   const clearSelectedVenue = () => {
@@ -338,8 +506,15 @@ export default function NewEventPage() {
     setVenueQuery("");
     setShowVenueSuggestions(false);
     setMapsLocked(false);
-    setFormData((prev) => ({ ...prev, venueId: "", mapsLink: "" }));
-    setErrors((prev) => ({ ...prev, venueId: undefined }));
+    setFormData((prev) => ({
+      ...prev,
+      venueId: "",
+      mapsLink: "",
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      venueId: undefined,
+    }));
   };
 
   const toggleMapsLock = () => {
@@ -407,6 +582,70 @@ export default function NewEventPage() {
       } else if (formData.mapsLink && !isValidUrl(formData.mapsLink)) {
         stepErrors.mapsLink = "Maps link must be a valid URL.";
       }
+    }
+
+    if (stepId === "tickets") {
+      if (!formData.ticketTypes.length) {
+        stepErrors.ticketTypes = "Add at least one ticket type.";
+      }
+
+      const seenNames = new Set<string>();
+
+      formData.ticketTypes.forEach((ticket) => {
+        const trimmedName = ticket.name.trim();
+        if (!trimmedName) {
+          stepErrors[`ticketTypes.${ticket.id}.name`] =
+            "Ticket name is required.";
+        } else {
+          const normalized = trimmedName.toLowerCase();
+          if (seenNames.has(normalized)) {
+            stepErrors[`ticketTypes.${ticket.id}.name`] =
+              "Ticket names must be unique.";
+          } else {
+            seenNames.add(normalized);
+          }
+        }
+
+        const priceValue = ticket.price.trim();
+        if (!priceValue) {
+          stepErrors[`ticketTypes.${ticket.id}.price`] =
+            "Enter a price for this ticket.";
+        } else {
+          const parsedPrice = Number.parseFloat(priceValue);
+          if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+            stepErrors[`ticketTypes.${ticket.id}.price`] =
+              "Price must be a valid non-negative number.";
+          }
+        }
+
+        const currencyValue = ticket.currency.trim();
+        if (!/^[A-Za-z]{3}$/.test(currencyValue)) {
+          stepErrors[`ticketTypes.${ticket.id}.currency`] =
+            "Use a three-letter currency code (e.g., USD).";
+        }
+
+        const capacityValue = ticket.capacity.trim();
+        if (!capacityValue) {
+          stepErrors[`ticketTypes.${ticket.id}.capacity`] =
+            "Capacity is required.";
+        } else {
+          const parsedCapacity = Number.parseInt(capacityValue, 10);
+          if (!Number.isFinite(parsedCapacity) || parsedCapacity <= 0) {
+            stepErrors[`ticketTypes.${ticket.id}.capacity`] =
+              "Capacity must be a positive whole number.";
+          }
+        }
+
+        if (ticket.salesStart && ticket.salesEnd) {
+          const startDate = new Date(ticket.salesStart);
+          const endDate = new Date(ticket.salesEnd);
+          if (endDate < startDate) {
+            stepErrors[`ticketTypes.${ticket.id}.salesEnd`] =
+              "Sales end must be after the start.";
+          }
+        }
+      });
+
     }
 
     if (stepId === "review") {
@@ -487,9 +726,14 @@ export default function NewEventPage() {
               posterInputRef.current?.click();
             }
           }}
+          onDragOver={handlePosterDragOver}
+          onDragLeave={handlePosterDragLeave}
+          onDrop={handlePosterDrop}
           className={`flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 transition-colors ${
             posterPreview
               ? "border-acid-400/60 bg-acid-400/10"
+              : isDraggingPoster
+              ? "border-acid-400 bg-acid-400/20"
               : "border-grit-500/40 bg-ink-800/40 hover:border-acid-400/50"
           }`}
         >
@@ -733,6 +977,207 @@ export default function NewEventPage() {
     </div>
   );
 
+  const renderTicketsStep = () => (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-lg font-semibold text-bone-100">Ticket tiers</div>
+          <p className="text-sm text-grit-300">
+            Configure pricing, inventory, and sales windows. Seat maps now live in the
+            venue dashboard onboarding flow, so you only upload layouts once.
+          </p>
+        </div>
+        <Button type="button" onClick={handleAddTicketType}>
+          Add ticket type
+        </Button>
+      </div>
+
+      {errors.ticketTypes && (
+        <p className="text-sm text-signal-500">{errors.ticketTypes}</p>
+      )}
+
+      <div className="space-y-4">
+        {formData.ticketTypes.map((ticket, index) => (
+          <Card key={ticket.id} className="bg-ink-800/60 border-grit-500/40">
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-4 md:grid md:grid-cols-2">
+                <Input
+                  label="Ticket name"
+                  placeholder={index === 0 ? "General Admission" : "VIP Balcony"}
+                  value={ticket.name}
+                  onChange={(event) =>
+                    handleTicketTypeChange(ticket.id, "name", event.target.value)
+                  }
+                  error={getTicketFieldError(ticket.id, "name")}
+                />
+
+                <div className="w-full">
+                  <label className="block mb-2 text-sm font-medium text-bone-100">
+                    Pricing type
+                  </label>
+                  <select
+                    value={ticket.pricingType}
+                    onChange={(event) =>
+                      handleTicketTypeChange(
+                        ticket.id,
+                        "pricingType",
+                        event.target.value as PricingType
+                      )
+                    }
+                    className={`w-full rounded-md bg-ink-800 px-3 py-2 text-bone-100 focus:outline-none focus:ring-2 focus:ring-acid-400/50 ${
+                      getTicketFieldError(ticket.id, "pricingType")
+                        ? "border border-signal-500"
+                        : "border border-grit-500/30"
+                    }`}
+                  >
+                    <option value="general_admission">General admission</option>
+                    <option value="reserved">Reserved seating</option>
+                    <option value="mixed">Mixed: GA + reserved</option>
+                  </select>
+                  {getTicketFieldError(ticket.id, "pricingType") && (
+                    <p className="mt-1 text-sm text-signal-500">
+                      {getTicketFieldError(ticket.id, "pricingType")}
+                    </p>
+                  )}
+                </div>
+
+                <Input
+                  label="Price"
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  placeholder="75.00"
+                  value={ticket.price}
+                  onChange={(event) =>
+                    handleTicketTypeChange(ticket.id, "price", event.target.value)
+                  }
+                  error={getTicketFieldError(ticket.id, "price")}
+                  helperText="Enter price in the event currency"
+                />
+
+                <Input
+                  label="Capacity"
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="250"
+                  value={ticket.capacity}
+                  onChange={(event) =>
+                    handleTicketTypeChange(ticket.id, "capacity", event.target.value)
+                  }
+                  error={getTicketFieldError(ticket.id, "capacity")}
+                />
+
+                <Input
+                  label="Currency"
+                  placeholder="USD"
+                  value={ticket.currency}
+                  onChange={(event) =>
+                    handleTicketTypeChange(
+                      ticket.id,
+                      "currency",
+                      event.target.value.toUpperCase()
+                    )
+                  }
+                  maxLength={3}
+                  error={getTicketFieldError(ticket.id, "currency")}
+                />
+
+                <div className="grid gap-4 md:grid-cols-2 md:col-span-2">
+                  <Input
+                    label="Sales start"
+                    type="datetime-local"
+                    value={ticket.salesStart}
+                    onChange={(event) =>
+                      handleTicketTypeChange(
+                        ticket.id,
+                        "salesStart",
+                        event.target.value
+                      )
+                    }
+                    error={getTicketFieldError(ticket.id, "salesStart")}
+                  />
+                  <Input
+                    label="Sales end"
+                    type="datetime-local"
+                    value={ticket.salesEnd}
+                    onChange={(event) =>
+                      handleTicketTypeChange(
+                        ticket.id,
+                        "salesEnd",
+                        event.target.value
+                      )
+                    }
+                    error={getTicketFieldError(ticket.id, "salesEnd")}
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium text-bone-100">
+                    Description (optional)
+                  </label>
+                  <textarea
+                    className="w-full rounded-md border border-grit-500/30 bg-ink-800 px-3 py-2 text-sm text-bone-100 placeholder-grit-400 focus:outline-none focus:ring-2 focus:ring-acid-400/50"
+                    rows={3}
+                    value={ticket.description}
+                    onChange={(event) =>
+                      handleTicketTypeChange(
+                        ticket.id,
+                        "description",
+                        event.target.value
+                      )
+                    }
+                    placeholder="Notes for staff, perks included, or seating instructions."
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <input
+                    id={`ticket-active-${ticket.id}`}
+                    type="checkbox"
+                    checked={ticket.isActive}
+                    onChange={(event) =>
+                      handleTicketTypeChange(
+                        ticket.id,
+                        "isActive",
+                        event.target.checked
+                      )
+                    }
+                    className="h-4 w-4 rounded border-grit-500/40 bg-ink-800 text-acid-400 focus:outline-none focus:ring-2 focus:ring-acid-400/50"
+                  />
+                  <label htmlFor={`ticket-active-${ticket.id}`} className="text-sm text-bone-100">
+                    Active for sale
+                  </label>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTicketType(ticket.id)}
+                  className="text-sm text-signal-400 hover:text-signal-300"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {hasReservedPricing && (
+        <Card className="bg-ink-800/60 border-dashed border-grit-500/40">
+          <p className="text-sm text-grit-300">
+            Reserved seating tiers are best paired with a venue seat map. Upload and manage
+            layouts once from the venue dashboard’s onboarding checklist—events will pick up the
+            latest version automatically.
+          </p>
+        </Card>
+      )}
+    </div>
+  );
+
   const renderReviewStep = () => {
     const startPreview = formData.startsAt
       ? format(new Date(formData.startsAt), "PPpp")
@@ -790,16 +1235,82 @@ export default function NewEventPage() {
           </div>
         </Card>
 
-        <Card className="bg-ink-800/40 border-dashed border-grit-500/40">
-          <div className="space-y-2">
-            <div className="text-sm text-grit-300">
-              {
-                "Ticket tiers, collectible poster approvals, and Base Paymaster incentives anchor the next slice of work. After this wizard ships, we'll layer in tier creation and rarity scoring without requiring venues to recreate events."
-              }
+        <Card className="bg-ink-800/60 border-grit-500/40">
+          <div className="space-y-4">
+            <div>
+              <div className="text-xs uppercase tracking-widest text-grit-400">
+                Ticket types
+              </div>
+              <div className="mt-3 space-y-3">
+                {formData.ticketTypes.map((ticket) => {
+                  const price = ticket.price.trim();
+                  const parsedPrice = Number.parseFloat(price);
+                  const pricePreview =
+                    price && Number.isFinite(parsedPrice)
+                      ? `$${parsedPrice.toFixed(2)}`
+                      : "--";
+                  const capacityPreview = ticket.capacity.trim() || "--";
+
+                  return (
+                    <div
+                      key={ticket.id}
+                      className="rounded-lg border border-grit-500/30 bg-ink-900/60 px-4 py-3"
+                    >
+                      <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <div className="text-sm font-semibold text-bone-100">
+                            {ticket.name || "Unnamed tier"}
+                          </div>
+                          <div className="text-xs text-grit-400">
+                            {ticket.pricingType === "general_admission"
+                              ? "General admission"
+                              : ticket.pricingType === "reserved"
+                              ? "Reserved seating"
+                              : "Mixed seating"}
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-start gap-1 text-xs text-grit-300 md:flex-row md:items-center md:gap-4">
+                          <span>
+                            Price: <span className="text-bone-100">{pricePreview}</span>
+                          </span>
+                          <span>
+                            Capacity:{" "}
+                            <span className="text-bone-100">{capacityPreview}</span>
+                          </span>
+                          <span>
+                            Currency:{" "}
+                            <span className="text-bone-100">
+                              {ticket.currency || "USD"}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                      {ticket.description && (
+                        <div className="mt-2 text-xs text-grit-400">
+                          {ticket.description}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="text-sm text-grit-500">
-              You can safely create the event now and return once the tier
-              builder is ready.
+
+            <div>
+              <div className="text-xs uppercase tracking-widest text-grit-400">
+                Seating
+              </div>
+              {hasReservedPricing ? (
+                <div className="mt-2 text-sm text-grit-300">
+                  Reserved or mixed tiers are enabled. Upload and activate your
+                  venue seat map from the dashboard’s onboarding checklist so
+                  buyers can choose their seats when you go live.
+                </div>
+              ) : (
+                <div className="mt-2 text-sm text-grit-300">
+                  All tickets are general admission for this event.
+                </div>
+              )}
             </div>
           </div>
         </Card>
@@ -859,6 +1370,8 @@ export default function NewEventPage() {
         return renderBasicsStep();
       case "schedule":
         return renderScheduleStep();
+      case "tickets":
+        return renderTicketsStep();
       case "review":
         return renderReviewStep();
       default:

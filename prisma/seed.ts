@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting seed...');
 
-  // Roles
-  const roles = ['fan', 'artist', 'venue', 'admin'];
+  // Roles (including dev role for Phase 1 RBAC)
+  const roles = ['fan', 'artist', 'venue', 'admin', 'dev'];
   const roleRecords: Record<string, any> = {};
   for (const name of roles) {
     roleRecords[name] = await prisma.role.upsert({

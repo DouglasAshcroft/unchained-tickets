@@ -20,7 +20,8 @@
     "db:seed": "prisma db seed"
   },
   "dependencies": {
-    "@coinbase/onchainkit": "latest",
+    "@coinbase/cdp-sdk": "^1.38.4",
+    "@coinbase/onchainkit": "^1.1.1",
     "@prisma/client": "^6.16.3",
     "@tanstack/react-query": "^5.81.5",
     "bcrypt": "^6.0.0",
@@ -35,8 +36,9 @@
     "react-hot-toast": "^2.6.0",
     "react-idle-timer": "^5.7.2",
     "react-qr-code": "^2.0.18",
+    "sonner": "^2.0.7",
     "use-debounce": "^10.0.6",
-    "viem": "^2.31.6",
+    "viem": "^2.38.0",
     "wagmi": "^2.16.3",
     "zod": "^4.1.11",
     "zustand": "^5.0.8"

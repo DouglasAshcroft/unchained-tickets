@@ -1,57 +1,24 @@
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { eventService } from '@/lib/services/EventService';
-import EventsBrowser, { type EventListItem } from './EventsBrowser';
+import EventsPageClient from './EventsPageClient';
 
-type EventsPageProps = {
-  searchParams?: {
-    search?: string;
-  };
-};
+// Enable ISR - revalidate every 60 seconds
+export const revalidate = 60;
 
-function serializeEvents(events: Awaited<ReturnType<typeof eventService.getEvents>>): EventListItem[] {
-  return events.map((event) => ({
-    id: event.id,
-    title: event.title,
-    startsAt: event.startsAt.toISOString(),
-    createdAt: event.createdAt.toISOString(),
-    posterImageUrl: event.posterImageUrl ?? null,
-    externalLink: event.externalLink ?? null,
-    mapsLink: event.mapsLink ?? null,
-    venue: event.venue
-      ? {
-          id: event.venue.id,
-          name: event.venue.name,
-          slug: event.venue.slug,
-          city: event.venue.city,
-          state: event.venue.state,
-        }
-      : null,
-  }));
-}
+export default async function EventsPage() {
+  // Fetch cities list on server side
+  const citiesResponse = await fetch(
+    `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/events/cities`,
+    { next: { revalidate: 600 } } // Cache cities for 10 minutes
+  );
 
-export default async function EventsPage({ searchParams }: EventsPageProps) {
-  const initialSearch = typeof searchParams?.search === 'string' ? searchParams.search : '';
-  let serializedEvents: EventListItem[] = [];
-  let initialError: string | null = null;
-
-  try {
-    const events = await eventService.getEvents({ search: initialSearch || undefined });
-    serializedEvents = serializeEvents(events);
-  } catch (error) {
-    console.error('Failed to load events', error);
-    initialError = 'Events are temporarily unavailable. Please try again later.';
-  }
+  const citiesData = citiesResponse.ok ? await citiesResponse.json() : { cities: [] };
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <EventsBrowser
-          initialEvents={serializedEvents}
-          initialSearch={initialSearch}
-          initialError={initialError}
-        />
+        <EventsPageClient cities={citiesData.cities} />
       </main>
       <Footer />
     </div>

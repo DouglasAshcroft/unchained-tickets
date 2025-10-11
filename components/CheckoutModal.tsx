@@ -8,6 +8,7 @@ import '@coinbase/onchainkit/styles.css';
 import { base, baseSepolia } from 'wagmi/chains';
 import { useAccount } from 'wagmi';
 import { toast } from 'react-hot-toast';
+import { CardCheckoutForm } from '@/components/CardCheckoutForm';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ export function CheckoutModal({
   const [_chargeId, _setChargeId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const { address: walletAddress } = useAccount();
+  const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'card'>('wallet');
 
   // Check if we're in development mode
   const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
@@ -210,8 +212,37 @@ export function CheckoutModal({
             </div>
           </div>
 
+          {/* Payment Method Toggle */}
+          <div className="mb-6">
+            <div className="grid grid-cols-2 gap-2 p-1 bg-ink-800/70 border border-grit-500/30 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('wallet')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  paymentMethod === 'wallet'
+                    ? 'bg-acid-400/20 text-acid-300'
+                    : 'text-grit-300 hover:text-bone-100'
+                }`}
+              >
+                Crypto Wallet
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('card')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  paymentMethod === 'card'
+                    ? 'bg-acid-400/20 text-acid-300'
+                    : 'text-grit-300 hover:text-bone-100'
+                }`}
+              >
+                Credit / Debit Card
+              </button>
+            </div>
+          </div>
+
           {/* Payment Section */}
-          {isDevMode ? (
+          {paymentMethod === 'wallet' ? (
+            isDevMode ? (
             /* Development Mode: Mock Payment */
             <div className="space-y-4">
               <button
@@ -246,27 +277,38 @@ export function CheckoutModal({
                 </p>
               </div>
             </div>
-          ) : (
-            /* Production Mode: Real OnchainKit Checkout */
-            <>
-              <Checkout
-                chargeHandler={handleCreateCharge}
-                onStatus={handleStatusChange}
-              >
-                <CheckoutButton
-                  coinbaseBranded
-                  text="Pay with Coinbase"
-                />
-                <CheckoutStatus />
-              </Checkout>
+            ) : (
+              /* Production Mode: Real OnchainKit Checkout */
+              <>
+                <Checkout
+                  chargeHandler={handleCreateCharge}
+                  onStatus={handleStatusChange}
+                >
+                  <CheckoutButton
+                    coinbaseBranded
+                    text="Pay with Coinbase"
+                  />
+                  <CheckoutStatus />
+                </Checkout>
 
-              {/* Production Info */}
-              <div className="mt-6 p-3 bg-cobalt-500/10 border border-cobalt-500/30 rounded-lg">
-                <p className="text-xs text-cobalt-300">
-                  🔒 Secure payment powered by Coinbase. Your tickets will be minted as NFTs after payment confirmation.
-                </p>
-              </div>
-            </>
+                {/* Production Info */}
+                <div className="mt-6 p-3 bg-cobalt-500/10 border border-cobalt-500/30 rounded-lg">
+                  <p className="text-xs text-cobalt-300">
+                    🔒 Secure payment powered by Coinbase. Your tickets will be minted as NFTs after payment confirmation.
+                  </p>
+                </div>
+              </>
+            )
+          ) : (
+            <CardCheckoutForm
+              eventId={eventId}
+              eventTitle={eventTitle}
+              ticketTier={ticketTier}
+              quantity={quantity}
+              totalPrice={totalPrice}
+              onClose={onClose}
+              onSuccess={onSuccess}
+            />
           )}
         </div>
       </div>

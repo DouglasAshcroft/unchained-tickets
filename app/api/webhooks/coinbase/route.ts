@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { CoinbaseCommerceService } from '@/lib/services/CoinbaseCommerceService';
-import { NFTMintingService } from '@/lib/services/NFTMintingService';
+// TODO Phase 3.1: Reimplement NFT minting with viem
+// import { NFTMintingService } from '@/lib/services/NFTMintingService';
 
 async function handleChargeConfirmed(event: any) {
   const chargeId = event.data?.id as string | undefined;
@@ -44,75 +45,23 @@ async function handleChargeConfirmed(event: any) {
     return NextResponse.json({ success: true });
   }
 
-  const mintingService = new NFTMintingService();
-  const maxMintRetries = Number(process.env.MINT_MAX_RETRIES ?? '3');
-  const tierId = chargeRecord.ticketTier.toLowerCase().includes('vip') ? 1 : 0;
+  // TODO Phase 3.1: Reimplement NFT minting with viem/wagmi
+  console.warn('⚠️ NFT minting temporarily disabled during Phase 1. Will be reimplemented in Phase 3.1');
 
-  try {
-    const { txHash, tokenId } = await mintingService.mintTicket({
-      eventId: chargeRecord.eventId,
-      tierId,
-      recipientAddress: walletAddress,
-    });
+  // Mark charge as confirmed without minting for now
+  await prisma.charge.update({
+    where: { id: chargeRecord.id },
+    data: {
+      status: 'confirmed',
+      mintRetryCount: 0,
+      mintLastError: 'Minting temporarily disabled - awaiting Phase 3.1 implementation',
+    },
+  });
 
-    let wallet = await prisma.wallet.findUnique({ where: { address: walletAddress } });
-    if (!wallet) {
-      wallet = await prisma.wallet.create({
-        data: {
-          chain: process.env.NEXT_PUBLIC_CHAIN_ID === '84532' ? 'base-sepolia' : 'base',
-          address: walletAddress,
-        },
-      });
-    }
-
-    const contractAddress = process.env.NFT_CONTRACT_ADDRESS || process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS || '';
-    const contract = await prisma.nFTContract.findFirst({ where: { address: contractAddress } });
-
-    if (contract) {
-      await prisma.nFTMint.create({
-        data: {
-          ticketId: ticket.id,
-          contractId: contract.id,
-          tokenId,
-          txHash,
-          mintedAt: new Date(),
-          ownerWalletId: wallet.id,
-        },
-      });
-    }
-
-    await prisma.ticket.update({
-      where: { id: ticket.id },
-      data: { status: 'minted' },
-    });
-
-    await prisma.charge.update({
-      where: { id: chargeRecord.id },
-      data: {
-        status: 'confirmed',
-        transactionHash: txHash,
-        mintedTokenId: tokenId,
-        mintRetryCount: 0,
-        mintLastError: null,
-      },
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Minting error during webhook:', error);
-    const nextRetryCount = (chargeRecord.mintRetryCount ?? 0) + 1;
-    const nextStatus = nextRetryCount >= maxMintRetries ? 'failed' : 'retrying';
-
-    await prisma.charge.update({
-      where: { id: chargeRecord.id },
-      data: {
-        status: nextStatus,
-        mintRetryCount: nextRetryCount,
-        mintLastError: error instanceof Error ? error.message : 'Unknown error',
-      },
-    });
-    return NextResponse.json({ error: 'Minting failed' }, { status: 500 });
-  }
+  return NextResponse.json({
+    success: true,
+    warning: 'Payment confirmed but NFT minting is temporarily disabled'
+  });
 }
 
 async function handleChargeFailure(event: any) {

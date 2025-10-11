@@ -21,7 +21,7 @@ export function useIdleTimer({
   events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'],
   enabled = true,
 }: UseIdleTimerOptions) {
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     if (!enabled) return;

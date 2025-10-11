@@ -36,9 +36,19 @@ export class VenueRepository {
           capacity: { gte: minCapacity },
         }),
       },
-      include: {
-        events: {
-          select: { id: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        imageUrl: true,
+        addressLine1: true,
+        addressLine2: true,
+        city: true,
+        state: true,
+        postalCode: true,
+        capacity: true,
+        _count: {
+          select: { events: true },
         },
       },
       orderBy: { name: 'asc' },

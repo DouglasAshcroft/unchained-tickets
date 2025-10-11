@@ -314,8 +314,8 @@ export function EventsBrowser({ initialEvents, initialSearch = '', initialError 
             isFetching && 'opacity-90'
           )}
         >
-          {filteredEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
+          {filteredEvents.map((event, index) => (
+            <EventCard key={event.id} event={event} priority={index === 0} />
           ))}
         </div>
       )}

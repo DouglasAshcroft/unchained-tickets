@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db/prisma';
-import { NFTMintingService } from '@/lib/services/NFTMintingService';
+// TODO: Rewrite NFTMintingService to use viem instead of ethers
+// import { NFTMintingService } from '@/lib/services/NFTMintingService';
 import { getCoinbaseCommerceService } from '@/lib/services/CoinbaseCommerceService';
 
 function toDecimal(value: number): Prisma.Decimal {
@@ -45,12 +46,13 @@ export async function POST(request: NextRequest) {
     const mintingPrivateKey = process.env.MINTING_PRIVATE_KEY || process.env.MINTING_WALLET_PRIVATE_KEY;
     const mintingContractAddress = process.env.NFT_CONTRACT_ADDRESS || process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS;
     const canMintOnChain = Boolean(rpcUrl && mintingPrivateKey && mintingContractAddress);
-    const maxMintRetries = Number(process.env.MINT_MAX_RETRIES ?? '3');
+    // Unused during Phase 1, will be needed in Phase 3.1 for NFT minting
+    // const _maxMintRetries = Number(process.env.MINT_MAX_RETRIES ?? '3');
 
     if (isDevMode) {
       const chargeId = `mock-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
-      const chargeRecord = await prisma.charge.create({
+      await prisma.charge.create({
         data: {
           chargeId,
           eventId,
@@ -65,89 +67,9 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // TODO Phase 3.1: Reimplement NFT minting with viem/wagmi
       if (walletAddress && canMintOnChain) {
-        try {
-          const mintingService = new NFTMintingService();
-          const tierId = ticketTier.toLowerCase().includes('vip') ? 1 : 0;
-          const { txHash, tokenId } = await mintingService.mintTicket({
-            eventId,
-            tierId,
-            recipientAddress: walletAddress,
-          });
-
-          let wallet = await prisma.wallet.findUnique({ where: { address: walletAddress } });
-          if (!wallet) {
-            wallet = await prisma.wallet.create({
-              data: {
-                chain: 'base-sepolia',
-                address: walletAddress,
-              },
-            });
-          }
-
-          const contract = await prisma.nFTContract.findFirst({
-            where: { address: mintingContractAddress || '' },
-          });
-
-          if (contract) {
-            await prisma.nFTMint.create({
-              data: {
-                ticketId: ticket.id,
-                contractId: contract.id,
-                tokenId,
-                txHash,
-                mintedAt: new Date(),
-                ownerWalletId: wallet.id,
-              },
-            });
-          }
-
-          await prisma.ticket.update({
-            where: { id: ticket.id },
-            data: { status: 'minted' },
-          });
-
-          await prisma.charge.update({
-            where: { id: chargeRecord.id },
-            data: {
-              status: 'confirmed',
-              transactionHash: txHash,
-              mintedTokenId: tokenId,
-              mintRetryCount: 0,
-              mintLastError: null,
-            },
-          });
-
-          return NextResponse.json({
-            chargeId,
-            ticketId: ticket.id,
-            tokenId,
-            txHash,
-            status: 'completed',
-            message: 'Mock charge created and NFT minted successfully',
-          });
-        } catch (error) {
-          const nextRetryCount = chargeRecord.mintRetryCount + 1;
-          const nextStatus = nextRetryCount >= maxMintRetries ? 'failed' : 'retrying';
-
-          await prisma.charge.update({
-            where: { id: chargeRecord.id },
-            data: {
-              status: nextStatus,
-              mintRetryCount: nextRetryCount,
-              mintLastError: error instanceof Error ? error.message : 'Unknown error',
-            },
-          });
-
-          console.error('❌ Error minting NFT:', error);
-          return NextResponse.json({
-            chargeId,
-            ticketId: ticket.id,
-            status: 'mint-failed',
-            message: 'Mock charge created, but NFT minting failed. Please retry after checking minting credentials.',
-            error: error instanceof Error ? error.message : 'Unknown error',
-          });
-        }
+        console.warn('⚠️ NFT minting temporarily disabled during Phase 1. Will be reimplemented with viem in Phase 3.1');
       }
 
       if (walletAddress && !canMintOnChain) {

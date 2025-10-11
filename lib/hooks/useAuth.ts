@@ -16,6 +16,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithWallet: (walletAddress: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => void;
   fetchUser: () => Promise<void>;
@@ -23,7 +24,7 @@ interface AuthState {
   hasAnyRole: (roles: UserRoleValue[]) => boolean;
 }
 
-export const useAuth = create<AuthState>((set) => ({
+export const useAuth = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: false,
@@ -40,6 +41,36 @@ export const useAuth = create<AuthState>((set) => ({
             : '/events';
         window.location.replace(target);
       }
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  loginWithWallet: async (walletAddress: string) => {
+    set({ isLoading: true });
+    try {
+      const response = await fetch('/api/auth/wallet-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ walletAddress }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Wallet login failed');
+      }
+
+      const { token, user } = await response.json();
+
+      // Store token in localStorage (same as email/password login)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth_token', token);
+      }
+
+      set({ user, isAuthenticated: true, isLoading: false });
     } catch (error) {
       set({ isLoading: false });
       throw error;
@@ -80,12 +111,12 @@ export const useAuth = create<AuthState>((set) => ({
   },
 
   hasRole: (role: UserRoleValue) => {
-    const { user } = useAuth.getState();
+    const { user } = get();
     return Boolean(user && user.role === role);
   },
 
   hasAnyRole: (roles: UserRoleValue[]) => {
-    const { user } = useAuth.getState();
+    const { user } = get();
     if (!user) return false;
     return roles.includes(user.role);
   },

@@ -1,170 +1,61 @@
-'use client';
-
-import { useQuery } from '@tanstack/react-query';
-import { useState, useMemo } from 'react';
-import { useDebounce } from 'use-debounce';
-import VenueCard from '@/components/VenueCard';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { eventService } from '@/lib/services/EventService';
+import VenuesBrowser, { type VenueListItem } from './VenuesBrowser';
 
-export default function VenuesPage() {
-  const [search, setSearch] = useState('');
-  const [locationFilter, setLocationFilter] = useState('');
-  const [sortBy, setSortBy] = useState('name'); // name, capacity, events
+// Enable ISR - revalidate every 10 minutes
+export const revalidate = 600;
 
-  // Debounce search to prevent API spam (DoS protection)
-  const [debouncedSearch] = useDebounce(search, 500);
+type VenuesPageProps = {
+  searchParams?: Promise<{
+    search?: string;
+    location?: string;
+  }>;
+};
 
-  const { data: venues = [], isLoading, error } = useQuery({
-    queryKey: ['venues'],
-    queryFn: async () => {
-      const response = await fetch('/api/venues');
-      if (!response.ok) throw new Error('Failed to fetch venues');
-      return response.json();
-    },
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
-  });
+function serializeVenues(venues: Awaited<ReturnType<typeof eventService.getAllVenues>>): VenueListItem[] {
+  return venues.map((venue) => ({
+    id: venue.id,
+    name: venue.name,
+    slug: venue.slug,
+    imageUrl: venue.imageUrl ?? null,
+    addressLine1: venue.addressLine1 ?? null,
+    addressLine2: venue.addressLine2 ?? null,
+    city: venue.city ?? null,
+    state: venue.state ?? null,
+    postalCode: venue.postalCode ?? null,
+    capacity: venue.capacity ?? null,
+    eventCount: venue.eventCount ?? 0,
+  }));
+}
 
-  // Show loading indicator during debounce
-  const isSearching = search !== debouncedSearch;
+export default async function VenuesPage(props: VenuesPageProps) {
+  const resolvedSearchParams = props.searchParams ? await props.searchParams : undefined;
+  const initialSearch = typeof resolvedSearchParams?.search === 'string' ? resolvedSearchParams.search : '';
+  const initialLocation = typeof resolvedSearchParams?.location === 'string' ? resolvedSearchParams.location : '';
 
-  // Filter and sort venues
-  const filteredAndSortedVenues = useMemo(() => {
-    let filtered = [...venues];
+  let serializedVenues: VenueListItem[] = [];
+  let initialError: string | null = null;
 
-    // Apply search filter
-    if (debouncedSearch) {
-      const searchLower = debouncedSearch.toLowerCase();
-      filtered = filtered.filter((venue: any) => {
-        const addressLine1 = venue.addressLine1?.toLowerCase() ?? '';
-        return (
-          venue.name?.toLowerCase().includes(searchLower) ||
-          venue.city?.toLowerCase().includes(searchLower) ||
-          venue.state?.toLowerCase().includes(searchLower) ||
-          addressLine1.includes(searchLower)
-        );
-      });
-    }
-
-    // Apply location filter
-    if (locationFilter) {
-      const locationLower = locationFilter.toLowerCase();
-      filtered = filtered.filter((venue: any) => {
-        const addressLine1 = venue.addressLine1?.toLowerCase() ?? '';
-        return (
-          venue.city?.toLowerCase().includes(locationLower) ||
-          venue.state?.toLowerCase().includes(locationLower) ||
-          addressLine1.includes(locationLower)
-        );
-      });
-    }
-
-    // Apply sorting
-    filtered.sort((a: any, b: any) => {
-      if (sortBy === 'name') {
-        return (a.name || '').localeCompare(b.name || '');
-      }
-      if (sortBy === 'capacity') {
-        return (b.capacity || 0) - (a.capacity || 0);
-      }
-      if (sortBy === 'events') {
-        return (b.eventCount || 0) - (a.eventCount || 0);
-      }
-      return 0;
-    });
-
-    return filtered;
-  }, [venues, debouncedSearch, locationFilter, sortBy]);
+  try {
+    const venues = await eventService.getAllVenues();
+    serializedVenues = serializeVenues(venues);
+  } catch (error) {
+    console.error('Failed to load venues', error);
+    initialError = 'Venues are temporarily unavailable. Please try again later.';
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <header className="mb-8 space-y-4">
-          <h1 className="brand-heading text-4xl font-bold bg-gradient-to-r from-resistance-500 via-hack-green to-acid-400 bg-clip-text text-transparent">
-            All Venues
-          </h1>
-
-          <div className="max-w-md relative">
-            <input
-              type="text"
-              placeholder="Search venues by name or location..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-4 py-3 pr-10 rounded-lg bg-ink-800 border border-grit-500/30 text-bone-100 placeholder-grit-400 focus:outline-none focus:ring-2 focus:ring-acid-400/50 focus:border-acid-400/50"
-              autoComplete="off"
-            />
-            {/* Loading spinner during debounce */}
-            {isSearching && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <div className="w-5 h-5 border-2 border-acid-400 border-t-transparent rounded-full animate-spin" />
-              </div>
-            )}
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-grit-300">Location:</label>
-              <input
-                type="text"
-                placeholder="Filter by location..."
-                value={locationFilter}
-                onChange={(e) => setLocationFilter(e.target.value)}
-                className="px-3 py-2 rounded-lg bg-ink-800 border border-grit-500/30 text-bone-100 placeholder-grit-400 focus:outline-none focus:ring-2 focus:ring-acid-400/50"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-grit-300">Sort:</label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 rounded-lg bg-ink-800 border border-grit-500/30 text-bone-100 focus:outline-none focus:ring-2 focus:ring-acid-400/50"
-              >
-                <option value="name">Name</option>
-                <option value="capacity">Capacity</option>
-                <option value="events">Upcoming Events</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm text-grit-400">
-              <span>{filteredAndSortedVenues.length} venue{filteredAndSortedVenues.length !== 1 ? 's' : ''} found</span>
-            </div>
-          </div>
-        </header>
-
-        {isLoading && (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="animate-pulse text-lg text-grit-300">Loading venues...</div>
-          </div>
-        )}
-
-        {error && (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-signal-500">Error loading venues. Please try again.</div>
-          </div>
-        )}
-
-        {!isLoading && !error && filteredAndSortedVenues.length === 0 && (
-          <div className="py-16 text-center">
-            <p className="text-xl text-grit-300">No venues found.</p>
-            {(search || locationFilter) && (
-              <p className="text-sm text-grit-400 mt-2">Try adjusting your search or filters</p>
-            )}
-          </div>
-        )}
-
-        {!isLoading && !error && filteredAndSortedVenues.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
-            {filteredAndSortedVenues.map((venue: any) => (
-              <VenueCard key={venue.id} venue={venue} />
-            ))}
-          </div>
-        )}
+        <VenuesBrowser
+          initialVenues={serializedVenues}
+          initialError={initialError}
+          initialSearch={initialSearch}
+          initialLocation={initialLocation}
+        />
       </main>
-
       <Footer />
     </div>
   );

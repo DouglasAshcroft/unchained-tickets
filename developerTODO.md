@@ -4,6 +4,36 @@ This document outlines all external requirements, configurations, and tasks need
 
 ---
 
+## 🎨 Recent UX Improvements (October 2025)
+
+### Completed
+- [x] **Concert/Music-Related Images**: Updated seed data with 15 Unsplash concert photos and 8 venue images
+- [x] **ViewDetails Button**: Always visible with toast error handling ("we are still waiting on the event details")
+- [x] **Location Filter on Venues Page**: Added location selector to venues page
+- [x] **Image Optimization**: Added fetchpriority="high" for first 3 carousel items, lazy loading for others
+- [x] **Carousel Button UX**: Widened buttons (w-12), positioned outside edges, opacity-20 with hover/active states
+- [x] **Smooth Carousel Transitions**: Implemented seamless looping for continuous scroll feel
+- [x] **Featured Resistance Theme**: Added highlighted container for onboarded venues/artists
+- [x] **Genre Ordering**: Reordered by music industry popularity (Rock, Pop, Hip-Hop first; Dream Pop now 20th)
+- [x] **Layout Restructure**: Moved Featured section under header, controls below
+
+### In Progress / Blocked
+- [ ] **Genre Picker Navigation**: Component created but not rendering (see TODO in `components/GenrePicker.tsx`)
+  - Issues: Conditional rendering logic, data loading timing
+  - TODO added for future review and fix
+
+### Pending Performance
+- [ ] **Lighthouse Score Improvement**: Currently 40/100, target 90+
+  - Address LCP (Largest Contentful Paint)
+  - Reduce CLS (Cumulative Layout Shift)
+  - Optimize remaining images
+
+### Technical Debt
+- [ ] **Embla Carousel Research**: Consider replacing custom carousel components (TODO in `components/GenreCarousel.tsx`)
+- [ ] **Venue API Routes**: Consolidate [venueId] and slug-based routes (cleaned up conflicting directories)
+
+---
+
 ## 🎛️ Venue Dashboard Roadmap (Dev)
 
 - [x] Scaffold `/dashboard/venue` with mock data and base layout
@@ -11,8 +41,22 @@ This document outlines all external requirements, configurations, and tasks need
 - [ ] Enforce role-based access on the server (client gate added; still need API guard)
 - [ ] Connect poster workflow actions to upload + approval services
 - [ ] Surface Base Paymaster fee savings in revenue widgets
+      Create a demo of your Coinbase Smart wallet integration, post on social (Warpcast and/or X) and tag Coinbase Wallet and/or Base to get a $1,000 credit bonus
+      unchainedtickets@gmail.com
 
----
+Douglasashcroftjackson@gmail.com
+
+4f86c9a3-dcd7-4561-a487-6e0795dd857d
+
+Unchained Tickets
+
+https://github.com/DouglasAshcroft/unchained-tickets
+
+Unchained is a NFT ticketing platform that is aiming to disrupt traditional ticket monopolies with anti-scalping royalties and collectible digital stubs. To maximize adoption, we're launching Unchained on Base's ecosystem using the onchain kit and leveraging Base’s built-in social distribution and creating a simplified user centric design process with Coinbase's user-friendly wallet innovations to allow easy adoption by those that aren't familiar with crypto assets.
+
+@UnchainedTicket
+
+## Limits set on the RPC to limit single user purchases. Limits on event tickets to prevent bulk purchase by wholesalers.
 
 ## 🔐 1. API Keys & Environment Variables
 

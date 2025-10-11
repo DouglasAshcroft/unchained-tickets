@@ -1,3 +1,23 @@
+# HOME
+
+73
+Performance
+93
+Accessibility
+100
+Best Practices
+100
+SEO
+There were issues affecting this run of Lighthouse:
+
+There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores.
+73
+FCP
++10
+LCP
++25
+TBT
++3
 CLS
 +25
 SI
@@ -14,11 +34,11 @@ Expand view
 First Contentful Paint
 0.4 s
 Largest Contentful Paint
-0.5 s
+0.6 s
 Total Blocking Time
-890 ms
+830 ms
 Cumulative Layout Shift
-0.002
+0.003
 Speed Index
 0.4 s
 View Treemap
@@ -44,59 +64,34 @@ TBT
 
 CLS
 Insights
-Network dependency tree
-Avoid chaining critical requests by reducing the length of chains, reducing the download size of resources, or deferring the download of unnecessary resources to improve page load.LCP
-Maximum critical path latency: 1,468 ms
-Initial Navigation
-http://localhost:3000 - 90 ms, 13.28 KiB
-/**nextjs_original-stack-frames(localhost) - 1,468 ms, 1.57 KiB
-/**nextjs_original-stack-frames(localhost) - 1,465 ms, 1.55 KiB
-Preconnected origins
-preconnect hints help the browser establish a connection earlier in the page load, saving time when the first request for that origin is made. The following are the origins that the page preconnected to.
-Origin
-Source
-https://fonts.googleapis.com/
-head > link
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-Unused preconnect. Only use `preconnect` for origins that the page is likely to request.
-https://fonts.gstatic.com/
-head > link
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-Unused preconnect. Only use `preconnect` for origins that the page is likely to request.
-Preconnect candidates
-Add preconnect hints to your most important origins, but try to use no more than 4.
-No additional origins are good candidates for preconnecting
 Layout shift culprits
-Layout shifts occur when elements move absent any user interaction. Investigate the causes of layout shifts, such as elements being added, removed, or their fonts changing as the page loads.CLS
-Element
-Layout shift score
-Total
-0.002
-JOIN THE RESISTANCE
-<h1 class="brand-heading text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-re…">
-0.002
-/fonts/special-elite.woff2(localhost)
-Web font
-Element
-Layout shift score
-Total
-0.002
-🌙 Dark Connect Wallet Connect Wallet Connect wallet
-<div class="flex items-center space-x-2 sm:space-x-3">
-0.002
 LCP breakdown
-Each subpart has specific improvement strategies. Ideally, most of the LCP time should be spent on loading the resources, not within delays.LCP
-Subpart
-Duration
-Time to first byte
-50 ms
-Element render delay
-160 ms
-Experience live music like never before. Buy tickets as NFTs, own your memories…
-<p class="text-xl md:text-2xl mb-8 text-grit-300 max-w-3xl mx-auto">
+3rd parties
 These insights are also available in the Chrome DevTools Performance Panel - record a trace to view more detailed information.
 Diagnostics
+Minify JavaScript Est savings of 22 KiB
+Minifying JavaScript files can reduce payload sizes and script parse time. Learn how to minify JavaScript.FCPLCP
+URL
+Transfer Size
+Est Savings
+localhost 1st party
+28.0 KiB 22.3 KiB
+…chunks/webpack.js?v=176…(localhost)
+28.0 KiB
+22.3 KiB
+Reduce unused JavaScript Est savings of 1,032 KiB
+Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. Learn how to reduce unused JavaScript.FCPLCP
+URL
+Transfer Size
+Est Savings
+localhost 1st party
+3,593.4 KiB 1,032.2 KiB
+…chunks/_app-pages-browser_components_layout_WalletControls_….js(localhost)
+3,501.8 KiB
+1,008.0 KiB
+…app/page.js(localhost)
+91.6 KiB
+24.2 KiB
 Page prevented back/forward cache restoration 5 failure reasons
 Many navigations are performed by going back to a previous page, or forwards again. The back/forward cache (bfcache) can speed up these return navigations. Learn more about the bfcache
 Failure reason
@@ -116,215 +111,344 @@ http://localhost:3000
 WebSocketUsedWithCCNS
 Not actionable
 http://localhost:3000
-Minify CSS Est savings of 11 KiB
+Minify CSS Est savings of 9 KiB
 Minifying CSS files can reduce network payload sizes. Learn how to minify CSS.FCPLCP
 URL
 Transfer Size
 Est Savings
 Unattributable
-9.9 KiB	7.2 KiB
+9.9 KiB 7.2 KiB
 :host(.dark) { --color-font: white; --color-backdrop: rgba(0, 0, 0, 0.8); --color-border-shad…
 3.7 KiB
 2.7 KiB
-:host { /* * Although the style applied to the shadow host is isolated, * the element that a…
+:host { /\* _ Although the style applied to the shadow host is isolated, _ the element that a…
 3.2 KiB
 2.3 KiB
-:host { all: initial; /* the direction property is not reset by 'all' */ direction: ltr; } …
+:host { all: initial; /_ the direction property is not reset by 'all' _/ direction: ltr; } …
 3.0 KiB
 2.2 KiB
 localhost 1st party
-20.4 KiB	3.9 KiB
+10.8 KiB 2.1 KiB
 …app/layout.css?v=176…(localhost)
-20.4 KiB
-3.9 KiB
-Minify JavaScript Est savings of 22 KiB
-Minifying JavaScript files can reduce payload sizes and script parse time. Learn how to minify JavaScript.FCPLCP
-URL
-Transfer Size
-Est Savings
-localhost 1st party
-27.6 KiB	22.0 KiB
-…chunks/webpack.js?v=176…(localhost)
-27.6 KiB
-22.0 KiB
-Avoid serving legacy JavaScript to modern browsers Est savings of 23 KiB
+10.8 KiB
+2.1 KiB
+Avoid serving legacy JavaScript to modern browsers Est savings of 17 KiB
 Polyfills and transforms enable legacy browsers to use new JavaScript features. However, many aren't necessary for modern browsers. Consider modifying your JavaScript build process to not transpile Baseline features, unless you know you must support legacy browsers. Learn why most sites can deploy ES6+ code without transpilingFCPLCP
 URL
 Est Savings
 localhost 1st party
-22.6 KiB
+16.6 KiB
 …chunks/main-app.js?v=176…(localhost)
 10.4 KiB
-…chunks/main-app.js?v=176…:1160:116330(localhost)
+:3000/_next/static/c…=1760110390644:1160
 @babel/plugin-transform-classes
-…chunks/main-app.js?v=176…:1160:561042(localhost)
+:3000/\_next/static/c…=1760110390644:1160
 @babel/plugin-transform-spread
-…chunks/main-app.js?v=176…:72:1029(localhost)
+:3000/\_next/static/c…?v=1760110390644:72
 Array.prototype.at
-…chunks/main-app.js?v=176…:72:415(localhost)
+:3000/\_next/static/c…?v=1760110390644:72
 Array.prototype.flat
-…chunks/main-app.js?v=176…:72:528(localhost)
+:3000/\_next/static/c…?v=1760110390644:72
 Array.prototype.flatMap
-…chunks/main-app.js?v=176…:72:906(localhost)
+:3000/\_next/static/c…?v=1760110390644:72
 Object.fromEntries
-…chunks/main-app.js?v=176…:72:1164(localhost)
+:3000/\_next/static/c…?v=1760110390644:72
 Object.hasOwn
-…chunks/main-app.js?v=176…:72:151(localhost)
+:3000/\_next/static/c…?v=1760110390644:72
 String.prototype.trimEnd
-…chunks/main-app.js?v=176…:72:64(localhost)
+:3000/\_next/static/c…?v=1760110390644:72
 String.prototype.trimStart
-…app/page.js(localhost)
+…chunks/\_app-pages-browser_components_layout_WalletControls_….js(localhost)
 6.3 KiB
-…app/page.js:4026:101712(localhost)
+:3000/_next/static/c…ontrols_tsx.js:4048
 Object.create
-…app/layout.js(localhost)
-5.9 KiB
-…app/layout.js:711:101712(localhost)
-Object.create
-Reduce unused JavaScript Est savings of 1,707 KiB
-Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. Learn how to reduce unused JavaScript.FCPLCP
-URL
-Transfer Size
-Est Savings
-localhost 1st party
-3,489.9 KiB	1,706.9 KiB
-…app/page.js(localhost)
-3,489.9 KiB
-1,706.9 KiB
-Avoid enormous network payloads Total size was 8,017 KiB
+Avoid enormous network payloads Total size was 7,368 KiB
 Large network payloads cost users real money and are highly correlated with long load times. Learn how to reduce payload sizes.
 URL
 Transfer Size
 localhost 1st party
-7,930.9 KiB
-…app/page.js(localhost)
-3,490.4 KiB
-…app/layout.js(localhost)
-1,897.2 KiB
+7,267.0 KiB
+…chunks/\_app-pages-browser_components_layout_WalletControls_….js(localhost)
+3,502.3 KiB
 …chunks/main-app.js?v=176…(localhost)
 1,713.9 KiB
-…chunks/_app-pages-browser_node_modules_base-org_account_dis….js(localhost)
-583.0 KiB
+…app/layout.js(localhost)
+996.4 KiB
+…chunks/\_app-pages-browser_node_modules_base-org_account_dis….js(localhost)
+743.6 KiB
+…app/page.js(localhost)
+92.1 KiB
 …chunks/app-pages-internals.js(localhost)
 61.0 KiB
 /fonts/special-elite.woff2(localhost)
 53.1 KiB
 …media/e4af272ccee01ff0-s.p.woff2(localhost)
 47.6 KiB
-…chunks/_app-pages-browser_node_modules_react-hot-toast_dist….js(localhost)
+…chunks/\_app-pages-browser_node_modules_react-hot-toast_dist….js(localhost)
 28.7 KiB
-/__nextjs_font/geist-latin.woff2(localhost)
-28.0 KiB
 …chunks/webpack.js?v=176…(localhost)
-28.0 KiB
+28.4 KiB
 Avoid long main-thread tasks 4 long tasks found
-Lists the longest tasks on the main thread, useful for identifying worst contributors to input delay. Learn how to avoid long main-thread tasksTBT
-URL
-Start Time
-Duration
-localhost 1st party
-1,092 ms
-…app/page.js(localhost)
-7,195 ms
-384 ms
-…app/layout.js(localhost)
-5,487 ms
-321 ms
-…chunks/main-app.js?v=176…(localhost)
-4,915 ms
-287 ms
-…chunks/_app-pages-browser_node_modules_base-org_account_dis….js(localhost)
-6,167 ms
-100 ms
 User Timing marks and measures 3 user timings
-Consider instrumenting your app with the User Timing API to measure your app's real-world performance during key user experiences. Learn more about User Timing marks.
-Name
-Type
-Start Time
-Duration
-ua_parser
-Measure
-1,635.51 ms
-3.21 ms
-ua_parser_start
-Mark
-1,635.51 ms
-ua_parser_end
-Mark
-1,638.73 ms
 More information about the performance of your application. These numbers don't directly affect the Performance score.
-Passed audits (22)
-Show
-93
-Accessibility
-These checks highlight opportunities to improve the accessibility of your web app. Automatic detection can only detect a subset of issues and does not guarantee the accessibility of your web app, so manual testing is also encouraged.
-Contrast
-Background and foreground colors do not have a sufficient contrast ratio.
-These are opportunities to improve the legibility of your content.
-Navigation
-Heading elements are not in a sequentially-descending order
-These are opportunities to improve keyboard navigation in your application.
-Additional items to manually check (10)
-Show
-These items address areas which an automated testing tool cannot cover. Learn more in our guide on conducting an accessibility review.
-Passed audits (18)
-Show
-Not applicable (37)
-Show
-96
-Best Practices
-General
-Browser errors were logged to the console
-Missing source maps for large first-party JavaScript
-Trust and Safety
-Ensure CSP is effective against XSS attacks
-Mitigate DOM-based XSS with Trusted Types
-Passed audits (12)
-Show
-Not applicable (6)
-Show
-82
-SEO
-These checks ensure that your page is following basic search engine optimization advice. There are many additional factors Lighthouse does not score here that may affect your search ranking, including performance on Core Web Vitals. Learn more about Google Search Essentials.
-Content Best Practices
-Links do not have descriptive text 1 link found
-Descriptive link text helps search engines understand your content. Learn how to make links more accessible.
-Link destination
-Link Text
-localhost 1st party
-/about(localhost)
-Learn More
-Format your HTML in a way that enables crawlers to better understand your app’s content.
-Crawling and Indexing
-robots.txt is not validLighthouse was unable to download a robots.txt file
-If your robots.txt file is malformed, crawlers may not be able to understand how you want your website to be crawled or indexed. Learn more about robots.txt.
-To appear in search results, crawlers need access to your app.
-Additional items to manually check (1)
-Show
-Run these additional validators on your site to check additional SEO best practices.
 
-42
+# EVENTS
+
+http://localhost:3000/events
+
+37
 Performance
 96
 Accessibility
 96
 Best Practices
-92
+100
 SEO
 There were issues affecting this run of Lighthouse:
 
 There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores.
-42
+37
+FCP
++1
+LCP
++6
+TBT
++3
+CLS
++25
+SI
++3
+Performance
+Values are estimated and may vary. The performance score is calculated directly from these metrics.See calculator.
+0–49
+50–89
+90–100
+Final Screenshot
+
+Metrics
+Expand view
+First Contentful Paint
+3.1 s
+Largest Contentful Paint
+3.5 s
+Total Blocking Time
+770 ms
+Cumulative Layout Shift
+0.006
+Speed Index
+3.1 s
+View Treemap
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Later this year, insights will replace performance audits. Learn more and provide feedback here.
+Go back to audits
+Show audits relevant to:
+
+All
+
+FCP
+
+LCP
+
+TBT
+
+CLS
+Insights
+LCP request discovery
+Optimize LCP by making the LCP image discoverable from the HTML immediately, and avoiding lazy-loadingLCP
+fetchpriority=high should be applied
+Request is discoverable in initial document
+lazy load not applied
+img.object-cover
+Improve image delivery Est savings of 85 KiB
+Layout shift culprits
+Layout shifts occur when elements move absent any user interaction. Investigate the causes of layout shifts, such as elements being added, removed, or their fonts changing as the page loads.CLS
+Element
+Layout shift score
+Total
+0.006
+div.noise-overlay.relative.rounded-lg.border.border-grit-500/30.bg-bg-1.p-4.text-left.shadow-ink.md:p-6.h-full.min-h-[420px].flex.flex-col
+0.005
+h1.brand-heading.text-4xl.font-bold.bg-gradient-to-r.from-resistance-500.via-hack-green.to-acid-400.bg-clip-text.text-transparent
+0.001
+/fonts/special-elite.woff2(localhost)
+Web font
+div.flex.items-center.space-x-2.sm:space-x-3
+0.000
+div.flex.items-center.space-x-2.sm:space-x-3
+0.000
+LCP breakdown
+Each subpart has specific improvement strategies. Ideally, most of the LCP time should be spent on loading the resources, not within delays.LCP
+Subpart
+Duration
+Time to first byte
+140 ms
+Resource load delay
+60 ms
+Resource load duration
+10 ms
+Element render delay
+90 ms
+img.object-cover
+3rd parties
+These insights are also available in the Chrome DevTools Performance Panel - record a trace to view more detailed information.
+Diagnostics
+Minify CSS Est savings of 9 KiB
+Minifying CSS files can reduce network payload sizes. Learn how to minify CSS.FCPLCP
+URL
+Transfer Size
+Est Savings
+Unattributable
+9.9 KiB 7.2 KiB
+:host(.dark) { --color-font: white; --color-backdrop: rgba(0, 0, 0, 0.8); --color-border-shad…
+3.7 KiB
+2.7 KiB
+:host { /\* _ Although the style applied to the shadow host is isolated, _ the element that a…
+3.2 KiB
+2.3 KiB
+:host { all: initial; /_ the direction property is not reset by 'all' _/ direction: ltr; } …
+3.0 KiB
+2.2 KiB
+localhost 1st party
+10.8 KiB 2.1 KiB
+…app/layout.css?v=176…(localhost)
+10.8 KiB
+2.1 KiB
+Reduce unused JavaScript Est savings of 1,035 KiB
+Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. Learn how to reduce unused JavaScript.FCPLCP
+URL
+Transfer Size
+Est Savings
+localhost 1st party
+3,708.1 KiB 1,035.3 KiB
+…chunks/_app-pages-browser_components_layout_WalletControls_….js(localhost)
+3,501.8 KiB
+1,008.5 KiB
+…events/page.js(localhost)
+206.3 KiB
+26.8 KiB
+Page prevented back/forward cache restoration 5 failure reasons
+Many navigations are performed by going back to a previous page, or forwards again. The back/forward cache (bfcache) can speed up these return navigations. Learn more about the bfcache
+Failure reason
+Failure type
+Pages with cache-control:no-store header cannot enter back/forward cache.
+Actionable
+/events(localhost)
+Pages with WebSocket cannot enter back/forward cache.
+Pending browser support
+/events(localhost)
+Pages whose main resource has cache-control:no-store cannot enter back/forward cache.
+Not actionable
+/events(localhost)
+Back/forward cache is disabled because some JavaScript network request received resource with `Cache-Control: no-store` header.
+Not actionable
+/events(localhost)
+WebSocketUsedWithCCNS
+Not actionable
+/events(localhost)
+Minify JavaScript Est savings of 22 KiB
+Minifying JavaScript files can reduce payload sizes and script parse time. Learn how to minify JavaScript.FCPLCP
+URL
+Transfer Size
+Est Savings
+localhost 1st party
+28.0 KiB 22.3 KiB
+…chunks/webpack.js?v=176…(localhost)
+28.0 KiB
+22.3 KiB
+Avoid serving legacy JavaScript to modern browsers Est savings of 17 KiB
+Polyfills and transforms enable legacy browsers to use new JavaScript features. However, many aren't necessary for modern browsers. Consider modifying your JavaScript build process to not transpile Baseline features, unless you know you must support legacy browsers. Learn why most sites can deploy ES6+ code without transpilingFCPLCP
+URL
+Est Savings
+localhost 1st party
+16.6 KiB
+…chunks/main-app.js?v=176…(localhost)
+10.4 KiB
+_next/static/chunks/…=1760110466475:1160
+@babel/plugin-transform-classes
+\_next/static/chunks/…=1760110466475:1160
+@babel/plugin-transform-spread
+\_next/static/chunks/…?v=1760110466475:72
+Array.prototype.at
+\_next/static/chunks/…?v=1760110466475:72
+Array.prototype.flat
+\_next/static/chunks/…?v=1760110466475:72
+Array.prototype.flatMap
+\_next/static/chunks/…?v=1760110466475:72
+Object.fromEntries
+\_next/static/chunks/…?v=1760110466475:72
+Object.hasOwn
+\_next/static/chunks/…?v=1760110466475:72
+String.prototype.trimEnd
+\_next/static/chunks/…?v=1760110466475:72
+String.prototype.trimStart
+…chunks/\_app-pages-browser_components_layout_WalletControls_….js(localhost)
+6.3 KiB
+_next/static/chunks/…ontrols_tsx.js:4048
+Object.create
+Avoid enormous network payloads Total size was 11,060 KiB
+Large network payloads cost users real money and are highly correlated with long load times. Learn how to reduce payload sizes.
+URL
+Transfer Size
+localhost 1st party
+10,789.0 KiB
+…chunks/\_app-pages-browser_components_layout_WalletControls_….js(localhost)
+3,502.3 KiB
+/events(localhost)
+3,396.5 KiB
+…chunks/main-app.js?v=176…(localhost)
+1,713.9 KiB
+…app/layout.js(localhost)
+996.4 KiB
+…chunks/\_app-pages-browser_node_modules_base-org_account_dis….js(localhost)
+743.6 KiB
+…events/page.js(localhost)
+206.7 KiB
+/\_next/image?url=…(localhost)
+67.8 KiB
+…chunks/app-pages-internals.js(localhost)
+61.0 KiB
+/fonts/special-elite.woff2(localhost)
+53.1 KiB
+…media/e4af272ccee01ff0-s.p.woff2(localhost)
+47.6 KiB
+Avoid long main-thread tasks 5 long tasks found
+User Timing marks and measures 3 user timings
+More information about the performance of your application. These numbers don't directly affect the Performance score.
+Passed audits (20)
+
+# VENUES
+
+http://localhost:3000/venues
+
+70
+Performance
+91
+Accessibility
+100
+Best Practices
+100
+SEO
+There were issues affecting this run of Lighthouse:
+
+There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores.
+70
 FCP
 +10
 LCP
-+0
++25
 TBT
-+2
++3
 CLS
 +22
 SI
-+9
++10
 Performance
 Values are estimated and may vary. The performance score is calculated directly from these metrics.See calculator.
 0–49
@@ -337,13 +461,13 @@ Expand view
 First Contentful Paint
 0.4 s
 Largest Contentful Paint
-12.7 s
+0.7 s
 Total Blocking Time
-1,020 ms
+830 ms
 Cumulative Layout Shift
-0.108
+0.103
 Speed Index
-1.3 s
+0.6 s
 View Treemap
 Screenshot
 Screenshot
@@ -367,339 +491,237 @@ TBT
 
 CLS
 Insights
-Improve image delivery Est savings of 85 KiB
-Reducing the download time of images can improve the perceived load time of the page and LCP. Learn more about optimizing image sizeFCPLCP
-URL
-Resource Size
-Est Savings
-localhost 1st party
-115.7 KiB 84.7 KiB
-/\_next/image?url=…(localhost)
-67.3 KiB
-54.3 KiB
-Increasing the image compression factor could improve this image's download size.
-17.3 KiB
-This image file is larger than it needs to be (640x480) for its displayed dimensions (327x245). Use responsive images to reduce the image download size.
-49.8 KiB
-/\_next/image?url=…(localhost)
-24.9 KiB
-15.7 KiB
-This image file is larger than it needs to be (570x427) for its displayed dimensions (368x245). Use responsive images to reduce the image download size.
-15.7 KiB
-/\_next/image?url=…(localhost)
-23.4 KiB
-14.8 KiB
-This image file is larger than it needs to be (570x427) for its displayed dimensions (368x245). Use responsive images to reduce the image download size.
-14.8 KiB
-Legacy JavaScript Est savings of 29 KiB
-Polyfills and transforms enable older browsers to use new JavaScript features. However, many aren't necessary for modern browsers. Consider modifying your JavaScript build process to not transpile Baseline features, unless you know you must support older browsers. Learn why most sites can deploy ES6+ code without transpilingFCPLCP
-URL
-Wasted bytes
-localhost 1st party
-28.9 KiB
-…chunks/main-app.js?v=176…(localhost)
-10.4 KiB
-…chunks/main-app.js?v=176…:1160:116330(localhost)
-@babel/plugin-transform-classes
-…chunks/main-app.js?v=176…:1160:561042(localhost)
-@babel/plugin-transform-spread
-…chunks/main-app.js?v=176…:72:1029(localhost)
-Array.prototype.at
-…chunks/main-app.js?v=176…:72:415(localhost)
-Array.prototype.flat
-…chunks/main-app.js?v=176…:72:528(localhost)
-Array.prototype.flatMap
-…chunks/main-app.js?v=176…:72:906(localhost)
-Object.fromEntries
-…chunks/main-app.js?v=176…:72:1164(localhost)
-Object.hasOwn
-…chunks/main-app.js?v=176…:72:151(localhost)
-String.prototype.trimEnd
-…chunks/main-app.js?v=176…:72:64(localhost)
-String.prototype.trimStart
-…events/page.js(localhost)
-6.3 KiB
-…events/page.js:4070:101712(localhost)
-Object.create
-…app/page.js(localhost)
-6.3 KiB
-…app/page.js:4026:101712(localhost)
-Object.create
-…app/layout.js(localhost)
-5.9 KiB
-…app/layout.js:711:101712(localhost)
-Object.create
 Layout shift culprits
 Layout shifts occur when elements move absent any user interaction. Investigate the causes of layout shifts, such as elements being added, removed, or their fonts changing as the page loads.CLS
 Element
 Layout shift score
 Total
+0.103
+footer.border-t.border-white/10.bg-[var(--background)].mt-auto
+0.103
+div.flex.items-center.space-x-2.sm:space-x-3
 0.000
-UPCOMING EVENTS
-
-<h1 class="brand-heading text-4xl font-bold bg-gradient-to-r from-resistance-500 via-…">
+div.flex.items-center.space-x-2.sm:space-x-3
+0.000
+h1.brand-heading.text-4xl.font-bold.bg-gradient-to-r.from-resistance-500.via-hack-green.to-acid-400.bg-clip-text.text-transparent
 0.000
 /fonts/special-elite.woff2(localhost)
 Web font
-Element
-Layout shift score
-Total
-0.108
-Events Artists Venues About © 2025 Unchained. Powered by Base.
-<footer class="border-t border-white/10 bg-[var(--background)] mt-auto">
-0.106
-🌙 Dark Connect Wallet Connect Wallet Connect wallet
-<div class="flex items-center space-x-2 sm:space-x-3">
-0.002
-LCP request discovery
-Optimize LCP by making the LCP image discoverable from the HTML immediately, and avoiding lazy-loadingLCP
-fetchpriority=high should be applied
-Request is discoverable in initial document
-lazy load not applied
-Midnight Dreams Tour - Getter
-<img alt="Midnight Dreams Tour - Getter" loading="lazy" decoding="async" data-nimg="fill" class="object-cover" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" srcset="/_next/image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1514525253161-7…" src="http://localhost:3000/_next/image?url=https%3A%2F%2Fimages.unsplash.com%2F…" style="position: absolute; height: 100%; width: 100%; inset: 0px;">
-Network dependency tree
-Avoid chaining critical requests by reducing the length of chains, reducing the download size of resources, or deferring the download of unnecessary resources to improve page load.LCP
-Maximum critical path latency: 2,309 ms
-Initial Navigation
-/events(localhost) - 366 ms, 11.30 KiB
-/__nextjs_original-stack-frames(localhost) - 2,309 ms, 1.76 KiB
-/__nextjs_original-stack-frames(localhost) - 2,277 ms, 1.73 KiB
-Preconnected origins
-preconnect hints help the browser establish a connection earlier in the page load, saving time when the first request for that origin is made. The following are the origins that the page preconnected to.
-Origin
-Source
-https://fonts.googleapis.com/
-head > link
-<link rel="preconnect" href="https://fonts.googleapis.com">
-Unused preconnect. Only use `preconnect` for origins that the page is likely to request.
-https://fonts.gstatic.com/
-head > link
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-Unused preconnect. Only use `preconnect` for origins that the page is likely to request.
-Preconnect candidates
-Add preconnect hints to your most important origins, but try to use no more than 4.
-No additional origins are good candidates for preconnecting
+Legacy JavaScript Est savings of 17 KiB
+Polyfills and transforms enable older browsers to use new JavaScript features. However, many aren't necessary for modern browsers. Consider modifying your JavaScript build process to not transpile Baseline features, unless you know you must support older browsers. Learn why most sites can deploy ES6+ code without transpilingFCPLCP
+URL
+Wasted bytes
+localhost 1st party
+16.6 KiB
+…chunks/main-app.js?v=176…(localhost)
+10.4 KiB
+_next/static/chunks/…=1760110573046:1160
+@babel/plugin-transform-classes
+\_next/static/chunks/…=1760110573046:1160
+@babel/plugin-transform-spread
+\_next/static/chunks/…?v=1760110573046:72
+Array.prototype.at
+\_next/static/chunks/…?v=1760110573046:72
+Array.prototype.flat
+\_next/static/chunks/…?v=1760110573046:72
+Array.prototype.flatMap
+\_next/static/chunks/…?v=1760110573046:72
+Object.fromEntries
+\_next/static/chunks/…?v=1760110573046:72
+Object.hasOwn
+\_next/static/chunks/…?v=1760110573046:72
+String.prototype.trimEnd
+\_next/static/chunks/…?v=1760110573046:72
+String.prototype.trimStart
+…chunks/\_app-pages-browser_components_layout_WalletControls_….js(localhost)
+6.3 KiB
+_next/static/chunks/…ontrols_tsx.js:4048
+Object.create
 LCP breakdown
 Each subpart has specific improvement strategies. Ideally, most of the LCP time should be spent on loading the resources, not within delays.LCP
 Subpart
 Duration
 Time to first byte
-350 ms
-Resource load delay
-2,170 ms
-Resource load duration
-20 ms
+60 ms
 Element render delay
-160 ms
-Midnight Dreams Tour - Getter
-<img alt="Midnight Dreams Tour - Getter" loading="lazy" decoding="async" data-nimg="fill" class="object-cover" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" srcset="/_next/image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1514525253161-7…" src="http://localhost:3000/_next/image?url=https%3A%2F%2Fimages.unsplash.com%2F…" style="position: absolute; height: 100%; width: 100%; inset: 0px;">
+150 ms
+div.min-h-screen.flex.flex-col
+3rd parties
+3rd party code can significantly impact load performance. Reduce and defer loading of 3rd party code to prioritize your page's content.
+3rd party
+Transfer size
+Main thread time
+Google Fonts cdn
+28 KiB 0 ms
+…v17/rP2Yp2ywx….woff2(fonts.gstatic.com)
+23 KiB
+0 ms
+/css2?family=Noto+Sans+Mono:wght@100..900&display=swap(fonts.googleapis.com)
+1 KiB
+0 ms
+/css2?family=Inter&display=swap(fonts.googleapis.com)
+1 KiB
+0 ms
+/css2?family=Inter:wght@700&display=swap(fonts.googleapis.com)
+1 KiB
+0 ms
+/css2?family=DM+Sans:ital,opsz@0,9..40;1,9..40&display=swap(fonts.googleapis.com)
+1 KiB
+0 ms
+/css2?family=…(fonts.googleapis.com)
+1 KiB
+0 ms
+/css2?family=Oxanium:wght@200..800&display=swap(fonts.googleapis.com)
+0 KiB
+0 ms
 These insights are also available in the Chrome DevTools Performance Panel - record a trace to view more detailed information.
 Diagnostics
-Reduce JavaScript execution time 1.6 s
-Consider reducing the time spent parsing, compiling, and executing JS. You may find delivering smaller JS payloads helps with this. Learn how to reduce Javascript execution time.TBT
-URL
-Total CPU Time
-Script Evaluation
-Script Parse
-localhost 1st party
-1,478 ms	702 ms	610 ms
-…events/page.js(localhost)
-414 ms
-199 ms
-195 ms
-…chunks/main-app.js?v=176…(localhost)
-329 ms
-228 ms
-97 ms
-…app/layout.js(localhost)
-328 ms
-196 ms
-109 ms
-…app/page.js(localhost)
-176 ms
-1 ms
-175 ms
-/events(localhost)
-131 ms
-19 ms
-2 ms
-…chunks/_app-pages-browser_node_modules_base-org_account_dis….js(localhost)
-99 ms
-60 ms
-32 ms
-Unattributable
-380 ms	238 ms	0 ms
-webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js
-145 ms
-142 ms
-0 ms
-Unattributable
-101 ms
-5 ms
-0 ms
-webpack-internal:///(app-pages-browser)/./node_modules/@tanstack/query-core/build/modern/notifyManager.js
-73 ms
-32 ms
-0 ms
-webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js
-61 ms
-60 ms
-0 ms
-Reduce unused JavaScript Est savings of 5,137 KiB
+Reduce unused JavaScript Est savings of 1,166 KiB
 Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. Learn how to reduce unused JavaScript.FCPLCP
 URL
 Transfer Size
 Est Savings
 localhost 1st party
-7,110.4 KiB	5,136.7 KiB
+3,748.6 KiB 1,166.4 KiB
+…chunks/\_app-pages-browser_components_layout_WalletControls_….js(localhost)
+3,501.8 KiB
+1,008.0 KiB
 …app/page.js(localhost)
-3,489.9 KiB
-3,420.0 KiB
-…events/page.js(localhost)
-3,620.5 KiB
-1,716.7 KiB
-Avoid serving legacy JavaScript to modern browsers Est savings of 29 KiB
-Polyfills and transforms enable legacy browsers to use new JavaScript features. However, many aren't necessary for modern browsers. Consider modifying your JavaScript build process to not transpile Baseline features, unless you know you must support legacy browsers. Learn why most sites can deploy ES6+ code without transpilingFCPLCP
-URL
-Est Savings
-localhost 1st party
-28.9 KiB
-…chunks/main-app.js?v=176…(localhost)
-10.4 KiB
-…chunks/main-app.js?v=176…:1160:116330(localhost)
-@babel/plugin-transform-classes
-…chunks/main-app.js?v=176…:1160:561042(localhost)
-@babel/plugin-transform-spread
-…chunks/main-app.js?v=176…:72:1029(localhost)
-Array.prototype.at
-…chunks/main-app.js?v=176…:72:415(localhost)
-Array.prototype.flat
-…chunks/main-app.js?v=176…:72:528(localhost)
-Array.prototype.flatMap
-…chunks/main-app.js?v=176…:72:906(localhost)
-Object.fromEntries
-…chunks/main-app.js?v=176…:72:1164(localhost)
-Object.hasOwn
-…chunks/main-app.js?v=176…:72:151(localhost)
-String.prototype.trimEnd
-…chunks/main-app.js?v=176…:72:64(localhost)
-String.prototype.trimStart
-…events/page.js(localhost)
-6.3 KiB
-…events/page.js:4070:101712(localhost)
-Object.create
-…app/page.js(localhost)
-6.3 KiB
-…app/page.js:4026:101712(localhost)
-Object.create
-…app/layout.js(localhost)
-5.9 KiB
-…app/layout.js:711:101712(localhost)
-Object.create
-Page prevented back/forward cache restoration 5 failure reasons
-Many navigations are performed by going back to a previous page, or forwards again. The back/forward cache (bfcache) can speed up these return navigations. Learn more about the bfcache
-Failure reason
-Failure type
-Pages with cache-control:no-store header cannot enter back/forward cache.
-Actionable
-/events(localhost)
-Pages with WebSocket cannot enter back/forward cache.
-Pending browser support
-/events(localhost)
-Pages whose main resource has cache-control:no-store cannot enter back/forward cache.
-Not actionable
-/events(localhost)
-Back/forward cache is disabled because some JavaScript network request received resource with `Cache-Control: no-store` header.
-Not actionable
-/events(localhost)
-WebSocketUsedWithCCNS
-Not actionable
-/events(localhost)
-Minify CSS Est savings of 11 KiB
-Minifying CSS files can reduce network payload sizes. Learn how to minify CSS.FCPLCP
-URL
-Transfer Size
-Est Savings
-Unattributable
-9.9 KiB	7.2 KiB
-:host(.dark) { --color-font: white; --color-backdrop: rgba(0, 0, 0, 0.8); --color-border-shad…
-3.7 KiB
-2.7 KiB
-:host { /* * Although the style applied to the shadow host is isolated, * the element that a…
-3.2 KiB
-2.3 KiB
-:host { all: initial; /* the direction property is not reset by 'all' */ direction: ltr; } …
-3.0 KiB
-2.2 KiB
-localhost 1st party
-20.4 KiB	3.9 KiB
-…app/layout.css?v=176…(localhost)
-20.4 KiB
-3.9 KiB
+91.6 KiB
+88.4 KiB
+…venues/page.js(localhost)
+155.2 KiB
+70.0 KiB
 Minify JavaScript Est savings of 22 KiB
 Minifying JavaScript files can reduce payload sizes and script parse time. Learn how to minify JavaScript.FCPLCP
 URL
 Transfer Size
 Est Savings
 localhost 1st party
-27.6 KiB	22.0 KiB
+28.0 KiB 22.3 KiB
 …chunks/webpack.js?v=176…(localhost)
-27.6 KiB
-22.0 KiB
-Avoid enormous network payloads Total size was 14,090 KiB
+28.0 KiB
+22.3 KiB
+Page prevented back/forward cache restoration 5 failure reasons
+Many navigations are performed by going back to a previous page, or forwards again. The back/forward cache (bfcache) can speed up these return navigations. Learn more about the bfcache
+Failure reason
+Failure type
+Pages with cache-control:no-store header cannot enter back/forward cache.
+Actionable
+/venues(localhost)
+Pages with WebSocket cannot enter back/forward cache.
+Pending browser support
+/venues(localhost)
+Pages whose main resource has cache-control:no-store cannot enter back/forward cache.
+Not actionable
+/venues(localhost)
+Back/forward cache is disabled because some JavaScript network request received resource with `Cache-Control: no-store` header.
+Not actionable
+/venues(localhost)
+WebSocketUsedWithCCNS
+Not actionable
+/venues(localhost)
+Minify CSS Est savings of 9 KiB
+Minifying CSS files can reduce network payload sizes. Learn how to minify CSS.FCPLCP
+URL
+Transfer Size
+Est Savings
+Unattributable
+9.9 KiB 7.2 KiB
+:host(.dark) { --color-font: white; --color-backdrop: rgba(0, 0, 0, 0.8); --color-border-shad…
+3.7 KiB
+2.7 KiB
+:host { /\* _ Although the style applied to the shadow host is isolated, _ the element that a…
+3.2 KiB
+2.3 KiB
+:host { all: initial; /_ the direction property is not reset by 'all' _/ direction: ltr; } …
+3.0 KiB
+2.2 KiB
+localhost 1st party
+10.8 KiB 2.1 KiB
+…app/layout.css?v=176…(localhost)
+10.8 KiB
+2.1 KiB
+Avoid serving legacy JavaScript to modern browsers Est savings of 17 KiB
+Polyfills and transforms enable legacy browsers to use new JavaScript features. However, many aren't necessary for modern browsers. Consider modifying your JavaScript build process to not transpile Baseline features, unless you know you must support legacy browsers. Learn why most sites can deploy ES6+ code without transpilingFCPLCP
+URL
+Est Savings
+localhost 1st party
+16.6 KiB
+…chunks/main-app.js?v=176…(localhost)
+10.4 KiB
+_next/static/chunks/…=1760110573046:1160
+@babel/plugin-transform-classes
+\_next/static/chunks/…=1760110573046:1160
+@babel/plugin-transform-spread
+\_next/static/chunks/…?v=1760110573046:72
+Array.prototype.at
+\_next/static/chunks/…?v=1760110573046:72
+Array.prototype.flat
+\_next/static/chunks/…?v=1760110573046:72
+Array.prototype.flatMap
+\_next/static/chunks/…?v=1760110573046:72
+Object.fromEntries
+\_next/static/chunks/…?v=1760110573046:72
+Object.hasOwn
+\_next/static/chunks/…?v=1760110573046:72
+String.prototype.trimEnd
+\_next/static/chunks/…?v=1760110573046:72
+String.prototype.trimStart
+…chunks/\_app-pages-browser_components_layout_WalletControls_….js(localhost)
+6.3 KiB
+_next/static/chunks/…ontrols_tsx.js:4048
+Object.create
+Avoid enormous network payloads Total size was 7,535 KiB
 Large network payloads cost users real money and are highly correlated with long load times. Learn how to reduce payload sizes.
 URL
 Transfer Size
 localhost 1st party
-13,794.9 KiB
-…events/page.js(localhost)
-3,621.0 KiB
-…app/page.js(localhost)
-3,490.4 KiB
-/api/events(localhost)
-2,259.8 KiB
-…app/layout.js(localhost)
-1,897.2 KiB
+7,394.2 KiB
+…chunks/\_app-pages-browser_components_layout_WalletControls_….js(localhost)
+3,502.3 KiB
 …chunks/main-app.js?v=176…(localhost)
 1,713.9 KiB
+…app/layout.js(localhost)
+996.4 KiB
 …chunks/_app-pages-browser_node_modules_base-org_account_dis….js(localhost)
-583.0 KiB
-/_next/image?url=…(localhost)
-67.8 KiB
+743.6 KiB
+…venues/page.js(localhost)
+155.6 KiB
+…app/page.js(localhost)
+92.1 KiB
 …chunks/app-pages-internals.js(localhost)
 61.0 KiB
 /fonts/special-elite.woff2(localhost)
 53.1 KiB
 …media/e4af272ccee01ff0-s.p.woff2(localhost)
 47.6 KiB
-Avoid long main-thread tasks 6 long tasks found
+…chunks/\_app-pages-browser_node_modules_react-hot-toast_dist….js(localhost)
+28.7 KiB
+Avoid long main-thread tasks 5 long tasks found
 Lists the longest tasks on the main thread, useful for identifying worst contributors to input delay. Learn how to avoid long main-thread tasksTBT
 URL
 Start Time
 Duration
 localhost 1st party
-1,347 ms
-…events/page.js(localhost)
-12,411 ms
-414 ms
+1,033 ms
+…chunks/\_app-pages-browser_components_layout_WalletControls_….js(localhost)
+6,844 ms
+435 ms
 …chunks/main-app.js?v=176…(localhost)
-6,783 ms
-329 ms
+2,993 ms
+400 ms
+…chunks/\_app-pages-browser_node_modules_base-org_account_dis….js(localhost)
+4,604 ms
+122 ms
 …app/layout.js(localhost)
-7,715 ms
-329 ms
-…app/page.js(localhost)
-12,235 ms
-176 ms
-…chunks/_app-pages-browser_node_modules_base-org_account_dis….js(localhost)
-9,047 ms
-99 ms
+2,404 ms
+76 ms
 Unattributable
-182 ms
+58 ms
 webpack-internal:///(app-pages-browser)/./node_modules/@tanstack/query-core/build/modern/notifyManager.js
-201 ms
-182 ms
+226 ms
+58 ms
 User Timing marks and measures 3 user timings
 Consider instrumenting your app with the User Timing API to measure your app's real-world performance during key user experiences. Learn more about User Timing marks.
 Name
@@ -708,12 +730,324 @@ Start Time
 Duration
 ua_parser
 Measure
-2,652.27 ms
-1.95 ms
+1,042.56 ms
+2.27 ms
 ua_parser_start
 Mark
-2,652.27 ms
+1,042.56 ms
 ua_parser_end
 Mark
-2,654.22 ms
+1,044.83 ms
+More information about the performance of your application. These numbers don't directly affect the Performance score.
+
+# ARTISTS
+
+http://localhost:3000/artists
+
+68
+Performance
+91
+Accessibility
+100
+Best Practices
+100
+SEO
+There were issues affecting this run of Lighthouse:
+
+There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores.
+68
+FCP
++10
+LCP
++25
+TBT
++2
+CLS
++22
+SI
++10
+Performance
+Values are estimated and may vary. The performance score is calculated directly from these metrics.See calculator.
+0–49
+50–89
+90–100
+Final Screenshot
+
+Metrics
+Expand view
+First Contentful Paint
+0.4 s
+Largest Contentful Paint
+0.7 s
+Total Blocking Time
+910 ms
+Cumulative Layout Shift
+0.114
+Speed Index
+0.6 s
+View Treemap
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Later this year, insights will replace performance audits. Learn more and provide feedback here.
+Go back to audits
+Show audits relevant to:
+
+All
+
+FCP
+
+LCP
+
+TBT
+
+CLS
+Insights
+Layout shift culprits
+Layout shifts occur when elements move absent any user interaction. Investigate the causes of layout shifts, such as elements being added, removed, or their fonts changing as the page loads.CLS
+Element
+Layout shift score
+Total
+0.114
+footer.border-t.border-white/10.bg-[var(--background)].mt-auto
+0.113
+div.flex.items-center.space-x-2.sm:space-x-3
+0.000
+div.flex.items-center.space-x-2.sm:space-x-3
+0.000
+h1.brand-heading.text-4xl.font-bold.bg-gradient-to-r.from-resistance-500.via-hack-green.to-acid-400.bg-clip-text.text-transparent
+0.000
+/fonts/special-elite.woff2(localhost)
+Web font
+Legacy JavaScript Est savings of 17 KiB
+Polyfills and transforms enable older browsers to use new JavaScript features. However, many aren't necessary for modern browsers. Consider modifying your JavaScript build process to not transpile Baseline features, unless you know you must support older browsers. Learn why most sites can deploy ES6+ code without transpilingFCPLCP
+URL
+Wasted bytes
+localhost 1st party
+16.6 KiB
+…chunks/main-app.js?v=176…(localhost)
+10.4 KiB
+_next/static/chunks/…=1760110659751:1160
+@babel/plugin-transform-classes
+\_next/static/chunks/…=1760110659751:1160
+@babel/plugin-transform-spread
+\_next/static/chunks/…?v=1760110659751:72
+Array.prototype.at
+\_next/static/chunks/…?v=1760110659751:72
+Array.prototype.flat
+\_next/static/chunks/…?v=1760110659751:72
+Array.prototype.flatMap
+\_next/static/chunks/…?v=1760110659751:72
+Object.fromEntries
+\_next/static/chunks/…?v=1760110659751:72
+Object.hasOwn
+\_next/static/chunks/…?v=1760110659751:72
+String.prototype.trimEnd
+\_next/static/chunks/…?v=1760110659751:72
+String.prototype.trimStart
+…chunks/\_app-pages-browser_components_layout_WalletControls_….js(localhost)
+6.3 KiB
+_next/static/chunks/…ontrols_tsx.js:4048
+Object.create
+LCP breakdown
+Each subpart has specific improvement strategies. Ideally, most of the LCP time should be spent on loading the resources, not within delays.LCP
+Subpart
+Duration
+Time to first byte
+60 ms
+Element render delay
+150 ms
+div.min-h-screen.flex.flex-col
+3rd parties
+3rd party code can significantly impact load performance. Reduce and defer loading of 3rd party code to prioritize your page's content.
+3rd party
+Transfer size
+Main thread time
+Google Fonts cdn
+28 KiB 0 ms
+…v17/rP2Yp2ywx….woff2(fonts.gstatic.com)
+23 KiB
+0 ms
+/css2?family=Inter&display=swap(fonts.googleapis.com)
+1 KiB
+0 ms
+/css2?family=Noto+Sans+Mono:wght@100..900&display=swap(fonts.googleapis.com)
+1 KiB
+0 ms
+/css2?family=Inter:wght@700&display=swap(fonts.googleapis.com)
+1 KiB
+0 ms
+/css2?family=DM+Sans:ital,opsz@0,9..40;1,9..40&display=swap(fonts.googleapis.com)
+1 KiB
+0 ms
+/css2?family=…(fonts.googleapis.com)
+1 KiB
+0 ms
+/css2?family=Oxanium:wght@200..800&display=swap(fonts.googleapis.com)
+0 KiB
+0 ms
+These insights are also available in the Chrome DevTools Performance Panel - record a trace to view more detailed information.
+Diagnostics
+Minify JavaScript Est savings of 22 KiB
+Minifying JavaScript files can reduce payload sizes and script parse time. Learn how to minify JavaScript.FCPLCP
+URL
+Transfer Size
+Est Savings
+localhost 1st party
+28.0 KiB 22.3 KiB
+…chunks/webpack.js?v=176…(localhost)
+28.0 KiB
+22.3 KiB
+Reduce unused JavaScript Est savings of 1,166 KiB
+Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. Learn how to reduce unused JavaScript.FCPLCP
+URL
+Transfer Size
+Est Savings
+localhost 1st party
+3,748.4 KiB 1,166.5 KiB
+…chunks/\_app-pages-browser_components_layout_WalletControls_….js(localhost)
+3,501.8 KiB
+1,008.0 KiB
+…app/page.js(localhost)
+91.6 KiB
+88.4 KiB
+…artists/page.js(localhost)
+155.0 KiB
+70.0 KiB
+Page prevented back/forward cache restoration 5 failure reasons
+Many navigations are performed by going back to a previous page, or forwards again. The back/forward cache (bfcache) can speed up these return navigations. Learn more about the bfcache
+Failure reason
+Failure type
+Pages with cache-control:no-store header cannot enter back/forward cache.
+Actionable
+/artists(localhost)
+Pages with WebSocket cannot enter back/forward cache.
+Pending browser support
+/artists(localhost)
+Pages whose main resource has cache-control:no-store cannot enter back/forward cache.
+Not actionable
+/artists(localhost)
+Back/forward cache is disabled because some JavaScript network request received resource with `Cache-Control: no-store` header.
+Not actionable
+/artists(localhost)
+WebSocketUsedWithCCNS
+Not actionable
+/artists(localhost)
+Minify CSS Est savings of 9 KiB
+Minifying CSS files can reduce network payload sizes. Learn how to minify CSS.FCPLCP
+URL
+Transfer Size
+Est Savings
+Unattributable
+9.9 KiB 7.2 KiB
+:host(.dark) { --color-font: white; --color-backdrop: rgba(0, 0, 0, 0.8); --color-border-shad…
+3.7 KiB
+2.7 KiB
+:host { /\* _ Although the style applied to the shadow host is isolated, _ the element that a…
+3.2 KiB
+2.3 KiB
+:host { all: initial; /_ the direction property is not reset by 'all' _/ direction: ltr; } …
+3.0 KiB
+2.2 KiB
+localhost 1st party
+10.8 KiB 2.1 KiB
+…app/layout.css?v=176…(localhost)
+10.8 KiB
+2.1 KiB
+Avoid serving legacy JavaScript to modern browsers Est savings of 17 KiB
+Polyfills and transforms enable legacy browsers to use new JavaScript features. However, many aren't necessary for modern browsers. Consider modifying your JavaScript build process to not transpile Baseline features, unless you know you must support legacy browsers. Learn why most sites can deploy ES6+ code without transpilingFCPLCP
+URL
+Est Savings
+localhost 1st party
+16.6 KiB
+…chunks/main-app.js?v=176…(localhost)
+10.4 KiB
+_next/static/chunks/…=1760110659751:1160
+@babel/plugin-transform-classes
+\_next/static/chunks/…=1760110659751:1160
+@babel/plugin-transform-spread
+\_next/static/chunks/…?v=1760110659751:72
+Array.prototype.at
+\_next/static/chunks/…?v=1760110659751:72
+Array.prototype.flat
+\_next/static/chunks/…?v=1760110659751:72
+Array.prototype.flatMap
+\_next/static/chunks/…?v=1760110659751:72
+Object.fromEntries
+\_next/static/chunks/…?v=1760110659751:72
+Object.hasOwn
+\_next/static/chunks/…?v=1760110659751:72
+String.prototype.trimEnd
+\_next/static/chunks/…?v=1760110659751:72
+String.prototype.trimStart
+…chunks/\_app-pages-browser_components_layout_WalletControls_….js(localhost)
+6.3 KiB
+_next/static/chunks/…ontrols_tsx.js:4048
+Object.create
+Avoid enormous network payloads Total size was 7,531 KiB
+Large network payloads cost users real money and are highly correlated with long load times. Learn how to reduce payload sizes.
+URL
+Transfer Size
+localhost 1st party
+7,394.0 KiB
+…chunks/\_app-pages-browser_components_layout_WalletControls_….js(localhost)
+3,502.3 KiB
+…chunks/main-app.js?v=176…(localhost)
+1,713.9 KiB
+…app/layout.js(localhost)
+996.4 KiB
+…chunks/_app-pages-browser_node_modules_base-org_account_dis….js(localhost)
+743.6 KiB
+…artists/page.js(localhost)
+155.4 KiB
+…app/page.js(localhost)
+92.1 KiB
+…chunks/app-pages-internals.js(localhost)
+61.0 KiB
+/fonts/special-elite.woff2(localhost)
+53.1 KiB
+…media/e4af272ccee01ff0-s.p.woff2(localhost)
+47.6 KiB
+…chunks/\_app-pages-browser_node_modules_react-hot-toast_dist….js(localhost)
+28.7 KiB
+Avoid long main-thread tasks 4 long tasks found
+Lists the longest tasks on the main thread, useful for identifying worst contributors to input delay. Learn how to avoid long main-thread tasksTBT
+URL
+Start Time
+Duration
+localhost 1st party
+1,114 ms
+…chunks/\_app-pages-browser_components_layout_WalletControls_….js(localhost)
+6,889 ms
+468 ms
+…chunks/main-app.js?v=176…(localhost)
+3,033 ms
+424 ms
+…chunks/\_app-pages-browser_node_modules_base-org_account_dis….js(localhost)
+4,609 ms
+115 ms
+…app/layout.js(localhost)
+2,449 ms
+107 ms
+User Timing marks and measures 3 user timings
+Consider instrumenting your app with the User Timing API to measure your app's real-world performance during key user experiences. Learn more about User Timing marks.
+Name
+Type
+Start Time
+Duration
+ua_parser
+Measure
+1,122.66 ms
+3.21 ms
+ua_parser_start
+Mark
+1,122.66 ms
+ua_parser_end
+Mark
+1,125.87 ms
 More information about the performance of your application. These numbers don't directly affect the Performance score.

@@ -1,5 +1,17 @@
+"use client";
+
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
-import type { VenueDashboardData, VenueDashboardEvent } from '@/lib/mocks/venueDashboard';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
+import { api } from '@/lib/api/client';
+import { VenueOnboardingPanel } from '@/components/dashboard/venue/VenueOnboardingPanel';
+import type { ChecklistTaskId } from '@/lib/config/venueChecklist';
+import type {
+  VenueDashboardData,
+  VenueDashboardEvent,
+  VenueDashboardSeatMap,
+} from '@/lib/mocks/venueDashboard';
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -18,7 +30,73 @@ interface VenueDashboardProps {
 }
 
 export function VenueDashboard({ data }: VenueDashboardProps) {
-  const { venue, stats, events, checklist, posterQueue, payouts, support } = data;
+  const { venue, stats, events, posterQueue, payouts, support } = data;
+  const [checklist, setChecklist] = useState(data.checklist);
+  const [seatMaps, setSeatMaps] = useState<VenueDashboardSeatMap[]>(data.seatMaps);
+  const [pendingTaskId, setPendingTaskId] = useState<ChecklistTaskId | null>(null);
+
+  const checklistMutation = useMutation({
+    mutationFn: ({ task, complete }: { task: ChecklistTaskId; complete: boolean }) =>
+      api.setVenueChecklistItem(venue.id, task, complete),
+  });
+
+  const handleChecklistToggle = (task: ChecklistTaskId, nextComplete: boolean) => {
+    const previous = checklist;
+    const next = checklist.map((item) =>
+      item.id === task ? { ...item, complete: nextComplete } : item
+    );
+
+    setChecklist(next);
+    setPendingTaskId(task);
+
+    checklistMutation.mutate(
+      { task, complete: nextComplete },
+      {
+        onError: (error: any) => {
+          const message =
+            error?.data?.error || error?.message || 'Failed to update checklist';
+          toast.error(message);
+          setChecklist(previous);
+          setPendingTaskId(null);
+        },
+        onSuccess: () => {
+          setPendingTaskId(null);
+        },
+      }
+    );
+  };
+
+  const handleSeatMapCreated = (seatMap: VenueDashboardSeatMap) => {
+    setSeatMaps((current) => [seatMap, ...current]);
+    setChecklist((current) =>
+      current.map((item) =>
+        item.id === 'seat_map' ? { ...item, complete: true } : item
+      )
+    );
+  };
+
+  const completedCount = useMemo(
+    () => checklist.filter((item) => item.complete).length,
+    [checklist]
+  );
+
+  const onboardingProgress = useMemo(
+    () => (checklist.length ? completedCount / checklist.length : 0),
+    [checklist, completedCount]
+  );
+
+  const onboardingStatus = useMemo(() => {
+    if (onboardingProgress === 0) return 'incomplete';
+    if (onboardingProgress === 1) return 'complete';
+    return 'in_progress';
+  }, [onboardingProgress]);
+
+  const progressPercent = Math.round(onboardingProgress * 100);
+
+  const onboardingHelper =
+    onboardingStatus === 'complete'
+      ? 'You’re ready to launch new events. Keep the poster queue clear to unlock collectibles.'
+      : 'Finish the checklist below to unlock automated poster approvals and payouts.';
 
   return (
     <div className="space-y-10">
@@ -36,26 +114,32 @@ export function VenueDashboard({ data }: VenueDashboardProps) {
           <div className="w-full max-w-md rounded-xl border border-grit-500/30 bg-ink-900/70 p-4">
             <div className="flex items-center justify-between text-xs text-grit-400">
               <span>Onboarding progress</span>
-              <span>{percentFormatter.format(venue.onboardingProgress)}</span>
+              <span>{percentFormatter.format(onboardingProgress)}</span>
             </div>
             <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-ink-800">
               <div
                 className={`h-full bg-gradient-to-r ${
-                  venue.onboardingStatus === 'complete'
+                  onboardingStatus === 'complete'
                     ? 'from-hack-green to-acid-400'
                     : 'from-resistance-500 via-hack-green to-acid-400'
                 }`}
-                style={{ width: `${Math.round(venue.onboardingProgress * 100)}%` }}
+                style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <p className="mt-3 text-xs text-grit-400">
-              {venue.onboardingStatus === 'complete'
-                ? 'You’re ready to launch new events. Keep the poster queue clear to unlock collectibles.'
-                : 'Finish the checklist below to unlock automated poster approvals and payouts.'}
-            </p>
+            <p className="mt-3 text-xs text-grit-400">{onboardingHelper}</p>
           </div>
         </div>
       </header>
+
+      <VenueOnboardingPanel
+        venueId={venue.id}
+        seatMaps={seatMaps}
+        checklist={checklist}
+        onboardingProgress={onboardingProgress}
+        pendingTaskId={pendingTaskId}
+      onToggleChecklist={handleChecklistToggle}
+        onSeatMapCreated={handleSeatMapCreated}
+      />
 
       <StatsGrid stats={stats} />
 
@@ -71,12 +155,8 @@ export function VenueDashboard({ data }: VenueDashboardProps) {
         </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <Checklist items={checklist} />
+      <section className="grid gap-6 lg:grid-cols-3">
         <PosterQueue tasks={posterQueue} />
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <PayoutsList payouts={payouts} />
         <SupportPanel support={support} />
       </section>
@@ -191,37 +271,6 @@ function EventColumn({ title, description, events, accent }: EventColumnProps) {
             Nothing here yet. Create a new event to populate this column.
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-interface ChecklistProps {
-  items: VenueDashboardData['checklist'];
-}
-
-function Checklist({ items }: ChecklistProps) {
-  return (
-    <div className="rounded-xl border border-grit-500/30 bg-ink-900/70 p-5 shadow-ink">
-      <h3 className="brand-heading text-lg text-bone-100">Onboarding checklist</h3>
-      <p className="text-xs text-grit-400">
-        Complete these to unlock automated collectibles, payouts, and analytics.
-      </p>
-      <div className="mt-4 space-y-3">
-        {items.map((item) => (
-          <label
-            key={item.id}
-            className={`flex cursor-pointer items-start gap-3 rounded-lg border border-grit-500/30 bg-ink-800/40 p-4 transition hover:border-acid-400/40 ${
-              item.complete ? 'opacity-60' : ''
-            }`}
-          >
-            <input type="checkbox" checked={item.complete} readOnly className="mt-1" />
-            <div>
-              <p className="text-sm font-medium text-bone-100">{item.label}</p>
-              <p className="text-xs text-grit-400">{item.description}</p>
-            </div>
-          </label>
-        ))}
       </div>
     </div>
   );

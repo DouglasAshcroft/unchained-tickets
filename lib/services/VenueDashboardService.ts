@@ -1,7 +1,14 @@
 import { subDays } from 'date-fns';
-import { EventStatus, TicketStatus } from '@prisma/client';
+import { EventStatus, TicketStatus, VenueChecklistTask } from '@prisma/client';
 import { prisma } from '@/lib/db/prisma';
-import type { VenueDashboardData, VenueDashboardEvent, VenueDashboardPosterTask } from '@/lib/mocks/venueDashboard';
+import type {
+  VenueDashboardData,
+  VenueDashboardEvent,
+  VenueDashboardPosterTask,
+  VenueDashboardSeatMap,
+} from '@/lib/mocks/venueDashboard';
+import { VENUE_CHECKLIST_DEFINITIONS } from '@/lib/config/venueChecklist';
+import { checklistIdToEnum } from '@/lib/utils/venueChecklist';
 
 const SOLD_STATUSES = new Set<TicketStatus>(['minted', 'transferred', 'used', 'revoked']);
 
@@ -21,6 +28,27 @@ class VenueDashboardService {
     if (!venue) {
       throw new Error('Venue not found');
     }
+
+    const [seatMapsRaw, checklistStatuses] = await Promise.all([
+      prisma.venueSeatMap.findMany({
+        where: { venueId },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          sections: {
+            include: {
+              rows: {
+                include: {
+                  seats: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.venueChecklistStatus.findMany({
+        where: { venueId },
+      }),
+    ]);
 
     const now = new Date();
     const thirtyDaysAgo = subDays(now, 30);
@@ -67,7 +95,7 @@ class VenueDashboardService {
         title: event.title,
         startsAt: event.startsAt.toISOString(),
         endsAt: event.endsAt?.toISOString() ?? null,
-        status: event.status,
+        status: event.status as 'draft' | 'published' | 'completed',
         tiers: tiers.length > 0 ? tiers : ['General Admission'],
         posterStatus,
         grossSales: Math.round(soldGrossCents / 100),
@@ -99,6 +127,32 @@ class VenueDashboardService {
         status: 'awaiting_upload',
       }));
 
+    const seatMaps: VenueDashboardSeatMap[] = seatMapsRaw.map((seatMap) => {
+      const sections = seatMap.sections.length;
+      let rows = 0;
+      let seats = 0;
+
+      for (const section of seatMap.sections) {
+        rows += section.rows.length;
+        for (const row of section.rows) {
+          seats += row.seats.length;
+        }
+      }
+
+      return {
+        id: seatMap.id,
+        name: seatMap.name,
+        description: seatMap.description,
+        status: seatMap.status,
+        version: seatMap.version,
+        sections,
+        rows,
+        seats,
+        createdAt: seatMap.createdAt.toISOString(),
+        structure: seatMap.structure,
+      };
+    });
+
     const upcomingEvents = events.filter(
       (event) => event.status === EventStatus.published && event.startsAt >= now
     ).length;
@@ -110,26 +164,40 @@ class VenueDashboardService {
       grossRevenue30d: Math.round(grossRevenue30dCents / 100),
     };
 
-    const checklist = [
-      {
-        id: 'poster-workflow',
-        label: 'Confirm collectible poster workflow',
-        description: 'Upload poster variants or enable generation prompts for each tier.',
-        complete: posterQueue.length === 0,
-      },
-      {
-        id: 'staff-accounts',
-        label: 'Invite venue staff',
-        description: 'Add front-of-house and door staff for ticket scanning access.',
-        complete: false,
-      },
-      {
-        id: 'payout-method',
-        label: 'Verify payout details',
-        description: 'Connect bank account or Base paymaster address for settlements.',
-        complete: false,
-      },
-    ];
+    const statusMap = new Map(
+      checklistStatuses.map((status) => [status.task, status])
+    );
+
+    const checklist = VENUE_CHECKLIST_DEFINITIONS.map((item) => {
+      const enumTask = checklistIdToEnum(item.id);
+      const persisted = statusMap.get(enumTask);
+      const complete =
+        item.type === 'auto'
+          ? enumTask === VenueChecklistTask.seat_map
+            ? seatMaps.length > 0
+            : Boolean(persisted?.completedAt)
+          : Boolean(persisted?.completedAt);
+
+      return {
+        id: item.id,
+        label: item.label,
+        description: item.description,
+        complete,
+        type: item.type,
+      };
+    });
+
+    const completedCount = checklist.filter((item) => item.complete).length;
+    const onboardingProgress = checklist.length
+      ? completedCount / checklist.length
+      : 0;
+
+    const onboardingStatus =
+      onboardingProgress === 0
+        ? 'incomplete'
+        : onboardingProgress === 1
+        ? 'complete'
+        : 'in_progress';
 
     return {
       venue: {
@@ -138,9 +206,8 @@ class VenueDashboardService {
         city: venue.city,
         state: venue.state,
         capacity: venue.capacity,
-        onboardingProgress: checklist.filter((item) => item.complete).length / checklist.length,
-        onboardingStatus:
-          checklist.every((item) => item.complete) ? 'complete' : 'in_progress',
+        onboardingProgress,
+        onboardingStatus,
       },
       stats,
       events: {
@@ -151,6 +218,7 @@ class VenueDashboardService {
       checklist,
       posterQueue,
       payouts: [],
+      seatMaps,
       support: {
         contacts: [
           { name: 'Nova Patel', role: 'Venue Success', email: 'nova@unchained.xyz' },

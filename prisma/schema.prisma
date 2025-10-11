@@ -16,6 +16,7 @@ enum UserRole {
   artist
   venue
   admin
+  dev
 }
 
 enum TicketStatus {
@@ -66,6 +67,32 @@ enum ScanResult {
   unknown
 }
 
+enum PricingType {
+  general_admission
+  reserved
+  mixed
+}
+
+enum SeatMapStatus {
+  draft
+  active
+  archived
+}
+
+enum SeatAvailabilityStatus {
+  available
+  held
+  sold
+  blocked
+}
+
+enum VenueChecklistTask {
+  seat_map
+  poster_workflow
+  staff_accounts
+  payout_details
+}
+
 // Core auth/users
 model User {
   id        Int      @id @default(autoincrement())
@@ -86,6 +113,7 @@ model User {
   scans       TicketScan[]     @relation("Scanner")
   payments    Payment[]
   charges     Charge[]
+  completedChecklistItems VenueChecklistStatus[] @relation("VenueChecklistCompletedBy")
 }
 
 model AuthCredential {
@@ -210,6 +238,8 @@ model Venue {
   owner  User?        @relation("VenueOwner", fields: [ownerUserId], references: [id])
   events Event[]
   clicks VenueClick[]
+  seatMaps VenueSeatMap[]
+  checklistStatuses VenueChecklistStatus[]
 
   // Performance indexes
   @@index([name]) // For text search
@@ -229,6 +259,9 @@ model Event {
   externalLink   String?
   mapsLink       String?
   status         EventStatus @default(draft)
+  featured       Boolean     @default(false)
+  featuredUntil  DateTime?
+  viewCount      Int         @default(0)
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
@@ -237,6 +270,8 @@ model Event {
   artists       EventArtist[]
   tickets       Ticket[]
   charges       Charge[]
+  ticketTypes   EventTicketType[]
+  seatMapAssignments EventSeatMapAssignment[]
 
   // Performance indexes
   @@index([title]) // For text search
@@ -245,6 +280,8 @@ model Event {
   @@index([venueId]) // For venue lookups
   @@index([artistId]) // For artist lookups
   @@index([startsAt, status]) // Composite for active events
+  @@index([featured, startsAt]) // For featured event queries
+  @@index([featured, featuredUntil]) // For featured expiry checks
 }
 
 model EventArtist {
@@ -264,6 +301,8 @@ model Ticket {
   id          String       @id @default(cuid())
   eventId     Int
   userId      Int?
+  ticketTypeId Int?
+  reservedSeatId Int?
   status      TicketStatus @default(reserved)
   priceCents  Int?
   currency    String?      @default("USD")
@@ -276,6 +315,8 @@ model Ticket {
 
   event    Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user     User?        @relation(fields: [userId], references: [id])
+  ticketType EventTicketType? @relation(fields: [ticketTypeId], references: [id], onDelete: SetNull)
+  reservedSeat EventReservedSeat? @relation(fields: [reservedSeatId], references: [id], onDelete: SetNull)
   scans    TicketScan[]
   payments Payment[]
   mints    NFTMint[]
@@ -287,6 +328,161 @@ model Ticket {
   @@index([userId]) // For user ticket lookups
   @@index([status]) // For status filtering
   @@index([eventId, status]) // Composite for event ticket status
+  @@index([ticketTypeId])
+  @@unique([reservedSeatId])
+}
+
+model EventTicketType {
+  id          Int          @id @default(autoincrement())
+  eventId     Int
+  name        String
+  description String?
+  pricingType PricingType  @default(general_admission)
+  priceCents  Int?
+  currency    String       @default("USD")
+  capacity    Int?
+  salesStart  DateTime?
+  salesEnd    DateTime?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  event        Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets      Ticket[]
+  reservedSeats EventReservedSeat[]
+
+  @@index([eventId])
+  @@index([pricingType])
+  @@index([isActive])
+}
+
+model VenueSeatMap {
+  id               Int           @id @default(autoincrement())
+  venueId          Int
+  name             String
+  description      String?
+  status           SeatMapStatus @default(draft)
+  version          Int           @default(1)
+  storagePath      String?
+  originalFileName String?
+  mimeType         String?
+  structure        Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  venue      Venue                     @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  sections   SeatSection[]
+  assignments EventSeatMapAssignment[]
+
+  @@index([venueId])
+  @@index([status])
+}
+
+model SeatSection {
+  id         Int      @id @default(autoincrement())
+  seatMapId  Int
+  name       String
+  label      String?
+  sortOrder  Int?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  seatMap VenueSeatMap @relation(fields: [seatMapId], references: [id], onDelete: Cascade)
+  rows    SeatRow[]
+
+  @@index([seatMapId])
+  @@unique([seatMapId, name])
+}
+
+model SeatRow {
+  id         Int      @id @default(autoincrement())
+  sectionId  Int
+  name       String
+  label      String?
+  sortOrder  Int?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  section SeatSection   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  seats   SeatPosition[]
+
+  @@index([sectionId])
+  @@unique([sectionId, name])
+}
+
+model SeatPosition {
+  id           Int      @id @default(autoincrement())
+  rowId        Int
+  seatNumber   String
+  displayLabel String?
+  sortOrder    Int?
+  isAccessible Boolean  @default(false)
+  isObstructed Boolean  @default(false)
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  row           SeatRow            @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  reservedSeats EventReservedSeat[]
+
+  @@index([rowId])
+  @@unique([rowId, seatNumber])
+}
+
+model EventSeatMapAssignment {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  seatMapId Int
+  isPrimary Boolean @default(false)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event   Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  seatMap VenueSeatMap @relation(fields: [seatMapId], references: [id], onDelete: Cascade)
+  reservedSeats EventReservedSeat[]
+
+  @@index([eventId])
+  @@index([seatMapId])
+  @@unique([eventId, seatMapId])
+}
+
+model EventReservedSeat {
+  id                         Int                     @id @default(autoincrement())
+  eventSeatMapAssignmentId   Int
+  seatPositionId             Int
+  ticketTypeId               Int?
+  status                     SeatAvailabilityStatus @default(available)
+  holdExpiresAt              DateTime?
+  holdReference              String?
+  notes                      String?
+  createdAt                  DateTime                @default(now())
+  updatedAt                  DateTime                @updatedAt
+
+  seatMapAssignment EventSeatMapAssignment @relation(fields: [eventSeatMapAssignmentId], references: [id], onDelete: Cascade)
+  seatPosition     SeatPosition           @relation(fields: [seatPositionId], references: [id], onDelete: Cascade)
+  ticketType       EventTicketType?       @relation(fields: [ticketTypeId], references: [id], onDelete: SetNull)
+  tickets          Ticket[]
+
+  @@unique([eventSeatMapAssignmentId, seatPositionId])
+  @@index([ticketTypeId])
+  @@index([status])
+}
+
+model VenueChecklistStatus {
+  id           Int                 @id @default(autoincrement())
+  venueId      Int
+  task         VenueChecklistTask
+  completedAt  DateTime?
+  completedBy  Int?
+
+  venue             Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  completedByUser   User? @relation("VenueChecklistCompletedBy", fields: [completedBy], references: [id])
+
+  @@unique([venueId, task])
+  @@index([task])
 }
 
 model TicketScan {

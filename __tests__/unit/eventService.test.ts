@@ -24,6 +24,16 @@ const mockArtistRepository = {
   findBySlug: vi.fn(),
 };
 
+const mockPrisma = {
+  $transaction: vi.fn(),
+  venueSeatMap: {
+    findFirst: vi.fn(),
+  },
+  seatPosition: {
+    findMany: vi.fn(),
+  },
+};
+
 vi.mock('@/lib/repositories/EventRepository', () => ({
   eventRepository: mockEventRepository,
 }));
@@ -34,6 +44,10 @@ vi.mock('@/lib/repositories/VenueRepository', () => ({
 
 vi.mock('@/lib/repositories/ArtistRepository', () => ({
   artistRepository: mockArtistRepository,
+}));
+
+vi.mock('@/lib/db/prisma', () => ({
+  prisma: mockPrisma,
 }));
 
 let eventService: (typeof import('@/lib/services/EventService'))['eventService'];
@@ -92,15 +106,46 @@ describe('EventService.createEvent', () => {
     vi.clearAllMocks();
   });
 
-  it('normalizes input and delegates to repository', async () => {
+  const buildTransactionMocks = () => {
+    const createdEvent = { id: 99, title: 'ChainFest' };
+    const assignmentRecord = { id: 777 };
+
+    const tx = {
+      event: {
+        create: vi.fn().mockResolvedValue(createdEvent),
+      },
+      eventTicketType: {
+        createMany: vi.fn(),
+      },
+      eventSeatMapAssignment: {
+        create: vi.fn().mockResolvedValue(assignmentRecord),
+      },
+      eventReservedSeat: {
+        createMany: vi.fn(),
+      },
+    };
+
+    mockPrisma.$transaction.mockImplementation(async (callback) =>
+      callback(tx as any)
+    );
+
+    return { tx, createdEvent, assignmentRecord };
+  };
+
+  it('normalizes input, persists ticket types, and returns hydrated event', async () => {
     const venueId = 5;
     const startsAt = '2025-01-10T20:00:00.000Z';
     const endsAt = '2025-01-10T23:00:00.000Z';
 
     mockVenueRepository.findById.mockResolvedValue({ id: venueId });
-
-    const createdEvent = { id: 99, title: 'ChainFest' };
-    mockEventRepository.create.mockResolvedValue(createdEvent);
+    const { tx, createdEvent } = buildTransactionMocks();
+    mockEventRepository.findById.mockResolvedValue({
+      ...createdEvent,
+      tickets: [],
+      ticketTypes: [],
+      seatMapAssignments: [],
+      artists: [],
+    });
 
     const result = await eventService.createEvent({
       title: '  ChainFest  ',
@@ -112,20 +157,51 @@ describe('EventService.createEvent', () => {
       externalLink: null,
       status: 'draft',
       primaryArtistId: null,
+      ticketTypes: [
+        {
+          name: 'GA',
+          pricingType: 'general_admission',
+          priceCents: 5000,
+          currency: 'usd',
+          capacity: 200,
+          isActive: true,
+        },
+      ],
     });
 
-    expect(mockEventRepository.create).toHaveBeenCalledWith({
-      title: 'ChainFest',
-      startsAt: new Date(startsAt),
-      endsAt: new Date(endsAt),
-      venueId,
-      artistId: null,
-      posterImageUrl: null,
-      externalLink: null,
-      mapsLink: 'https://maps.google.com/?q=ChainFest',
-      status: 'draft',
+    expect(tx.event.create).toHaveBeenCalledWith({
+      data: {
+        title: 'ChainFest',
+        startsAt: new Date(startsAt),
+        endsAt: new Date(endsAt),
+        venueId,
+        artistId: null,
+        posterImageUrl: null,
+        externalLink: null,
+        mapsLink: 'https://maps.google.com/?q=ChainFest',
+        status: 'draft',
+      },
     });
-    expect(result).toBe(createdEvent);
+    expect(tx.eventTicketType.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          eventId: createdEvent.id,
+          name: 'GA',
+          description: null,
+          pricingType: 'general_admission',
+          priceCents: 5000,
+          currency: 'USD',
+          capacity: 200,
+          salesStart: null,
+          salesEnd: null,
+          isActive: true,
+        },
+      ],
+    });
+    expect(tx.eventSeatMapAssignment.create).not.toHaveBeenCalled();
+    expect(tx.eventReservedSeat.createMany).not.toHaveBeenCalled();
+    expect(result.id).toBe(createdEvent.id);
+    expect(mockEventRepository.findById).toHaveBeenCalledWith(createdEvent.id);
   });
 
   it('throws if the venue does not exist', async () => {
@@ -140,9 +216,15 @@ describe('EventService.createEvent', () => {
         externalLink: null,
         mapsLink: null,
         status: 'draft',
+        ticketTypes: [
+          {
+            name: 'GA',
+            pricingType: 'general_admission',
+          },
+        ] as any,
       })
     ).rejects.toThrow('Venue not found');
-    expect(mockEventRepository.create).not.toHaveBeenCalled();
+    expect(mockPrisma.$transaction).not.toHaveBeenCalled();
   });
 
   it('guards against invalid status transitions on create', async () => {
@@ -157,9 +239,15 @@ describe('EventService.createEvent', () => {
         posterImageUrl: null,
         externalLink: null,
         mapsLink: null,
+        ticketTypes: [
+          {
+            name: 'GA',
+            pricingType: 'general_admission',
+          },
+        ] as any,
       })
     ).rejects.toThrow('New events can only be draft or published');
-    expect(mockEventRepository.create).not.toHaveBeenCalled();
+    expect(mockPrisma.$transaction).not.toHaveBeenCalled();
   });
 
   it('validates that end time is after start time', async () => {
@@ -175,9 +263,119 @@ describe('EventService.createEvent', () => {
         externalLink: null,
         mapsLink: null,
         status: 'draft',
+        ticketTypes: [
+          {
+            name: 'GA',
+            pricingType: 'general_admission',
+          },
+        ] as any,
       })
     ).rejects.toThrow('Event end time must be after the start time');
-    expect(mockEventRepository.create).not.toHaveBeenCalled();
+    expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('allows reserved tiers without an immediate seat map assignment', async () => {
+    mockVenueRepository.findById.mockResolvedValue({ id: 12 });
+    const createdEvent = { id: 301, title: 'Seated Show' };
+    buildTransactionMocks();
+    mockEventRepository.findById.mockResolvedValue({
+      ...createdEvent,
+      tickets: [],
+      ticketTypes: [],
+      seatMapAssignments: [],
+      artists: [],
+    });
+
+    await expect(
+      eventService.createEvent({
+        title: 'Seated Show',
+        startsAt: '2025-05-20T19:00:00.000Z',
+        venueId: 12,
+        posterImageUrl: null,
+        externalLink: null,
+        mapsLink: null,
+        status: 'draft',
+        ticketTypes: [
+          {
+            name: 'Balcony',
+            pricingType: 'reserved',
+          },
+        ] as any,
+      })
+    ).resolves.not.toThrow();
+  });
+
+  it('assigns reserved seats when seat map is provided', async () => {
+    const venueId = 22;
+    mockVenueRepository.findById.mockResolvedValue({ id: venueId });
+    mockPrisma.venueSeatMap.findFirst.mockResolvedValue({ id: 91, venueId });
+    mockPrisma.seatPosition.findMany.mockResolvedValue([
+      { id: 501 },
+      { id: 502 },
+    ]);
+
+    const { tx, createdEvent, assignmentRecord } = buildTransactionMocks();
+    mockEventRepository.findById.mockResolvedValue({
+      ...createdEvent,
+      tickets: [],
+      ticketTypes: [],
+      seatMapAssignments: [],
+      artists: [],
+    });
+
+    await eventService.createEvent({
+      title: 'Seated Show',
+      startsAt: '2025-05-20T19:00:00.000Z',
+      venueId,
+      seatMapId: 91,
+      posterImageUrl: null,
+      externalLink: null,
+      mapsLink: null,
+      status: 'draft',
+      ticketTypes: [
+        {
+          name: 'Balcony',
+          pricingType: 'reserved',
+          priceCents: 12000,
+          currency: 'usd',
+          capacity: 2,
+        },
+      ] as any,
+    });
+
+    expect(mockPrisma.venueSeatMap.findFirst).toHaveBeenCalledWith({
+      where: { id: 91, venueId },
+      select: { id: true },
+    });
+    expect(mockPrisma.seatPosition.findMany).toHaveBeenCalledWith({
+      where: {
+        row: {
+          section: {
+            seatMapId: 91,
+          },
+        },
+      },
+      select: { id: true },
+    });
+    expect(tx.eventSeatMapAssignment.create).toHaveBeenCalledWith({
+      data: {
+        eventId: createdEvent.id,
+        seatMapId: 91,
+        isPrimary: true,
+      },
+    });
+    expect(tx.eventReservedSeat.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          eventSeatMapAssignmentId: assignmentRecord.id,
+          seatPositionId: 501,
+        },
+        {
+          eventSeatMapAssignmentId: assignmentRecord.id,
+          seatPositionId: 502,
+        },
+      ],
+    });
   });
 });
 

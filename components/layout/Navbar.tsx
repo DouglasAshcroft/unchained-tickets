@@ -2,22 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { RBAC } from '@/lib/constants/roles';
-
-const WalletControls = dynamic(
-  () => import('./WalletControls').then((mod) => mod.WalletControls),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="px-3 py-2 text-sm text-grit-400 border border-grit-500/30 rounded-lg">
-        Loading wallet…
-      </div>
-    ),
-  }
-);
+import { WalletControls } from './WalletControls';
 
 export function Navbar() {
   const { isAuthenticated, hasAnyRole } = useAuth();
@@ -50,12 +38,20 @@ export function Navbar() {
               Venues
             </Link>
             {canAccessVenueDashboard && (
-              <Link
-                href="/dashboard/venue"
-                className="text-sm font-medium text-bone-100 hover:text-acid-400 transition-colors"
-              >
-                Venue Dashboard
-              </Link>
+              <>
+                <Link
+                  href="/dashboard/venue"
+                  className="text-sm font-medium text-bone-100 hover:text-acid-400 transition-colors"
+                >
+                  Venue Dashboard
+                </Link>
+                <Link
+                  href="/events/new"
+                  className="text-sm font-medium text-bone-100 hover:text-acid-400 transition-colors"
+                >
+                  Create Event
+                </Link>
+              </>
             )}
             <Link
               href="/artists"
@@ -124,13 +120,22 @@ export function Navbar() {
                 Venues
               </Link>
               {canAccessVenueDashboard && (
-                <Link
-                  href="/dashboard/venue"
-                  className="text-sm font-medium text-bone-100 hover:text-acid-400 transition-colors px-2 py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Venue Dashboard
-                </Link>
+                <>
+                  <Link
+                    href="/dashboard/venue"
+                    className="text-sm font-medium text-bone-100 hover:text-acid-400 transition-colors px-2 py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Venue Dashboard
+                  </Link>
+                  <Link
+                    href="/events/new"
+                    className="text-sm font-medium text-bone-100 hover:text-acid-400 transition-colors px-2 py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Create Event
+                  </Link>
+                </>
               )}
               <Link
                 href="/artists"

@@ -1,3 +1,5 @@
+import type { ChecklistTaskId } from '@/lib/config/venueChecklist';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
 
 interface ApiError extends Error {
@@ -48,16 +50,31 @@ class ApiClient {
         headers,
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      let data: any = null;
+
+      if (contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch {
+            data = { error: text };
+          }
+        }
+      }
 
       if (!response.ok) {
-        const error: ApiError = new Error(data.error || 'API request failed');
+        const message = data?.error || data?.message || 'API request failed';
+        const error: ApiError = new Error(message);
         error.status = response.status;
         error.data = data;
         throw error;
       }
 
-      return data;
+      return data as T;
     } catch (error) {
       if (error instanceof Error) {
         throw error;
@@ -131,6 +148,18 @@ class ApiClient {
     externalLink?: string | null;
     mapsLink?: string | null;
     status?: 'draft' | 'published';
+    seatMapId?: number;
+    ticketTypes: Array<{
+      name: string;
+      description?: string | null;
+      pricingType: 'general_admission' | 'reserved' | 'mixed';
+      priceCents?: number | null;
+      currency?: string;
+      capacity?: number | null;
+      salesStart?: string | null;
+      salesEnd?: string | null;
+      isActive?: boolean;
+    }>;
   }) {
     return this.request<any>(`/api/events`, {
       method: 'POST',
@@ -161,6 +190,31 @@ class ApiClient {
   // Venues endpoints
   async getVenueBySlug(slug: string) {
     return this.request<{ venue: any; events: any[] }>(`/api/venues/${slug}`);
+  }
+
+  async getVenueSeatMaps(venueId: number) {
+    return this.request<{ seatMaps: any[] }>(`/api/venues/${venueId}/seat-maps`);
+  }
+
+  async createVenueSeatMap(venueId: number, data: any) {
+    return this.request<{ seatMap: any }>(`/api/venues/${venueId}/seat-maps`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async setVenueChecklistItem(
+    venueId: number,
+    task: ChecklistTaskId,
+    complete: boolean
+  ) {
+    return this.request<{ task: string; complete: boolean }>(
+      `/api/venues/${venueId}/checklist/${task}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ complete }),
+      }
+    );
   }
 
   // Artists endpoints

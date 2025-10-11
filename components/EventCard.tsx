@@ -1,76 +1,111 @@
-'use client';
+"use client";
 
-import { memo } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Card } from './ui/Card';
+import { memo } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { Card } from "./ui/Card";
+import { sanitizePosterImageUrl } from "@/lib/utils/posterImage";
+import { toast } from "sonner";
 
 interface Event {
   id: number;
   title: string;
-  startsAt: string;
-  posterImageUrl?: string;
-  externalLink?: string;
-  mapsLink?: string;
+  startsAt: string | Date;
+  posterImageUrl?: string | null;
+  externalLink?: string | null;
+  mapsLink?: string | null;
   availableTickets?: number;
   featured?: boolean;
-  createdAt?: string;
+  createdAt?: string | Date;
   venue?: {
     id: number;
     name: string;
     slug: string;
-    city?: string;
-    state?: string;
-  };
+    city?: string | null;
+    state?: string | null;
+  } | null;
   primaryArtist?: {
     id: number;
     name: string;
     slug: string;
-  };
+  } | null;
 }
 
 interface EventCardProps {
   event: Event;
+  priority?: boolean;
 }
 
-function EventCard({ event }: EventCardProps) {
+function ViewDetailsButton({ externalLink, eventTitle }: { externalLink?: string | null; eventTitle: string }) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (!externalLink) {
+      e.preventDefault();
+      toast.error("We are still waiting on the event details", {
+        description: `Details for "${eventTitle}" are not yet available.`,
+      });
+    }
+  };
+
+  return (
+    <a
+      href={externalLink || "#"}
+      target={externalLink ? "_blank" : undefined}
+      rel={externalLink ? "noopener noreferrer" : undefined}
+      onClick={handleClick}
+      className="flex-1 text-center px-3 py-2 text-sm rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/5 transition-colors cursor-pointer"
+    >
+      View Details
+    </a>
+  );
+}
+
+function EventCard({ event, priority = false }: EventCardProps) {
   if (!event) return null;
 
-  const when = new Date(event.startsAt).toLocaleString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
+  const when = new Date(event.startsAt).toLocaleString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   });
 
-  const venueName = event?.venue?.name ?? 'Unknown venue';
-  const venueLocation = event?.venue?.city && event?.venue?.state
-    ? `${event.venue.city}, ${event.venue.state}`
-    : '';
+  const venueName = event?.venue?.name ?? "Unknown venue";
+  const venueLocation =
+    event?.venue?.city && event?.venue?.state
+      ? `${event.venue.city}, ${event.venue.state}`
+      : "";
+
+  const posterImageSrc = sanitizePosterImageUrl(event.posterImageUrl);
 
   // Determine badges
   const isSoldOut = event.availableTickets === 0;
   const isFeatured = event.featured === true;
-  const isNew = event.createdAt && new Date(event.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // Created within last 7 days
+  const isNew =
+    event.createdAt &&
+    new Date(event.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // Created within last 7 days
+
+  // Badge priority: SoldOut > Featured > New
+  const showFeaturedBadge = isFeatured && !isSoldOut;
 
   return (
-    <Card className="h-full min-h-[420px] flex flex-col" accentLeft data-testid={`event-card-${event.id}`}>
+    <Card
+      className="h-full min-h-[420px] flex flex-col"
+      accentLeft
+      data-testid={`event-card-${event.id}`}
+    >
       <div className="flex flex-1 flex-col">
         <div className="relative mb-3 aspect-[4/3] overflow-hidden rounded-lg bg-zinc-800">
-          {event.posterImageUrl ? (
-            <Image
-              src={event.posterImageUrl}
-              alt={event.title || 'Event poster'}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-              <span className="text-4xl">🎵</span>
-            </div>
-          )}
+          <Image
+            src={posterImageSrc}
+            alt={event.title || "Event poster"}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover"
+            priority={priority}
+            loading={priority ? undefined : "lazy"}
+            fetchPriority={priority ? "high" : undefined}
+          />
 
           {/* Badges */}
           <div className="absolute top-2 right-2 flex flex-col gap-2">
@@ -79,12 +114,12 @@ function EventCard({ event }: EventCardProps) {
                 Sold Out
               </span>
             )}
-            {isFeatured && !isSoldOut && (
-              <span className="px-2 py-1 text-xs font-bold uppercase tracking-wider rounded bg-acid-400 text-ink-900">
-                Featured
+            {showFeaturedBadge && (
+              <span className="px-2 py-1 text-xs font-bold uppercase tracking-wider rounded bg-acid-400 text-ink-900 shadow-lg">
+                ⭐ Featured
               </span>
             )}
-            {isNew && !isSoldOut && !isFeatured && (
+            {isNew && !isSoldOut && !showFeaturedBadge && (
               <span className="px-2 py-1 text-xs font-bold uppercase tracking-wider rounded bg-cobalt-500 text-bone-100">
                 New
               </span>
@@ -93,29 +128,24 @@ function EventCard({ event }: EventCardProps) {
         </div>
 
         <h2 className="brand-heading mb-2 text-center text-xl text-acid-400">
-          {event.title ?? 'Untitled Event'}
+          {event.title ?? "Untitled Event"}
         </h2>
 
         <p className="mb-1 text-center text-sm text-grit-300">{when}</p>
 
-        <p className="mb-1 text-center text-sm font-semibold text-bone-100">{venueName}</p>
+        <p className="mb-1 text-center text-sm font-semibold text-bone-100">
+          {venueName}
+        </p>
 
         {venueLocation && (
-          <p className="mb-3 text-center text-xs text-grit-400">{venueLocation}</p>
+          <p className="mb-3 text-center text-xs text-grit-400">
+            {venueLocation}
+          </p>
         )}
       </div>
 
       <div className="flex flex-wrap gap-2 mb-3">
-        {event.externalLink && (
-          <a
-            href={event.externalLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 text-center px-3 py-2 text-sm rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/5 transition-colors"
-          >
-            View Details
-          </a>
-        )}
+        <ViewDetailsButton externalLink={event.externalLink} eventTitle={event.title} />
 
         {event.mapsLink && (
           <a

@@ -6,6 +6,8 @@ import type {
   EventCreateInput,
   EventUpdateInput,
 } from '@/lib/validators/eventSchemas';
+import { sanitizePosterImageUrl } from '@/lib/utils/posterImage';
+import { prisma } from '@/lib/db/prisma';
 
 interface EventFilters {
   search?: string;
@@ -20,7 +22,11 @@ const normalizeNullableString = (value?: string | null) => {
 
 export class EventService {
   async getEvents(filters: EventFilters = {}) {
-    return await eventRepository.findMany(filters);
+    const events = await eventRepository.findMany(filters);
+    return events.map((event) => ({
+      ...event,
+      posterImageUrl: sanitizePosterImageUrl(event.posterImageUrl),
+    }));
   }
 
   async getEventById(id: number) {
@@ -52,6 +58,7 @@ export class EventService {
 
     return {
       ...event,
+      posterImageUrl: sanitizePosterImageUrl(event.posterImageUrl),
       supportingArtists,
       totalTickets,
       soldTickets,
@@ -99,7 +106,13 @@ export class EventService {
     }
 
     const events = await eventRepository.findByVenueId(venue.id);
-    return { venue, events };
+    return {
+      venue,
+      events: events.map((event) => ({
+        ...event,
+        posterImageUrl: sanitizePosterImageUrl(event.posterImageUrl),
+      })),
+    };
   }
 
   async getArtistWithEvents(slug: string) {
@@ -109,24 +122,28 @@ export class EventService {
     }
 
     const events = await eventRepository.findByArtistId(artist.id);
-    return { artist, events };
+    return {
+      artist,
+      events: events.map((event) => ({
+        ...event,
+        posterImageUrl: sanitizePosterImageUrl(event.posterImageUrl),
+      })),
+    };
   }
 
   async getAllVenues(filters?: { location?: string; minCapacity?: number }) {
     const venues = await venueRepository.findAll(filters);
-    return venues.map((venue) => ({
+    return venues.map(({ _count, ...venue }) => ({
       ...venue,
-      eventCount: venue.events.length,
-      events: undefined, // Remove events array, just keep count
+      eventCount: _count?.events ?? 0,
     }));
   }
 
   async getAllArtists(filters?: { genre?: string }) {
     const artists = await artistRepository.findAll(filters);
-    return artists.map((artist) => ({
+    return artists.map(({ _count, ...artist }) => ({
       ...artist,
-      eventCount: artist.events.length,
-      events: undefined, // Remove events array, just keep count
+      eventCount: _count?.events ?? 0,
     }));
   }
 
@@ -153,7 +170,7 @@ export class EventService {
 
     if (
       data.status &&
-      ![EventStatus.draft, EventStatus.published].includes(data.status)
+      !([EventStatus.draft, EventStatus.published] as string[]).includes(data.status)
     ) {
       throw new Error('New events can only be draft or published');
     }
@@ -165,23 +182,97 @@ export class EventService {
     const artistId =
       data.primaryArtistId !== undefined ? data.primaryArtistId ?? null : null;
 
-    const created = await eventRepository.create({
-      title: data.title.trim(),
-      startsAt,
-      endsAt,
-      venueId: data.venueId,
-      artistId,
-      posterImageUrl,
-      externalLink,
-      mapsLink,
-      status: data.status ?? EventStatus.draft,
-    });
+    const ticketTypesInput = data.ticketTypes ?? [];
 
-    if (!created) {
-      throw new Error('Event creation failed');
+    let seatMapId: number | null = null;
+    let seatPositionIds: number[] = [];
+
+    if (data.seatMapId) {
+      const seatMap = await prisma.venueSeatMap.findFirst({
+        where: { id: data.seatMapId, venueId: data.venueId },
+        select: { id: true },
+      });
+
+      if (!seatMap) {
+        throw new Error('Seat map not found for the selected venue');
+      }
+
+      const positions = await prisma.seatPosition.findMany({
+        where: {
+          row: {
+            section: {
+              seatMapId: seatMap.id,
+            },
+          },
+        },
+        select: { id: true },
+      });
+
+      if (positions.length === 0) {
+        throw new Error('Seat map must include at least one seat');
+      }
+
+      seatMapId = seatMap.id;
+      seatPositionIds = positions.map((position) => position.id);
     }
 
-    return created;
+    const created = await prisma.$transaction(async (tx) => {
+      const eventRecord = await tx.event.create({
+        data: {
+          title: data.title.trim(),
+          startsAt,
+          endsAt,
+          venueId: data.venueId,
+          artistId,
+          posterImageUrl,
+          externalLink,
+          mapsLink,
+          status: data.status ?? EventStatus.draft,
+        },
+      });
+
+      if (ticketTypesInput.length > 0) {
+        await tx.eventTicketType.createMany({
+          data: ticketTypesInput.map((ticketType) => ({
+            eventId: eventRecord.id,
+            name: ticketType.name.trim(),
+            description: ticketType.description?.trim() ?? null,
+            pricingType: ticketType.pricingType,
+            priceCents: ticketType.priceCents ?? null,
+            currency: (ticketType.currency ?? 'USD').toUpperCase(),
+            capacity: ticketType.capacity ?? null,
+            salesStart: ticketType.salesStart
+              ? new Date(ticketType.salesStart)
+              : null,
+            salesEnd: ticketType.salesEnd ? new Date(ticketType.salesEnd) : null,
+            isActive: ticketType.isActive ?? true,
+          })),
+        });
+      }
+
+      if (seatMapId) {
+        const assignment = await tx.eventSeatMapAssignment.create({
+          data: {
+            eventId: eventRecord.id,
+            seatMapId,
+            isPrimary: true,
+          },
+        });
+
+        if (seatPositionIds.length > 0) {
+          await tx.eventReservedSeat.createMany({
+            data: seatPositionIds.map((seatPositionId) => ({
+              eventSeatMapAssignmentId: assignment.id,
+              seatPositionId,
+            })),
+          });
+        }
+      }
+
+      return eventRecord;
+    });
+
+    return this.getEventById(created.id);
   }
 
   async updateEvent(id: number, data: EventUpdateInput) {

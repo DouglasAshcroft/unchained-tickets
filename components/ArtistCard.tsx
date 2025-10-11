@@ -8,7 +8,7 @@ interface Artist {
   id: number;
   name: string;
   slug: string;
-  genre?: string;
+  genre?: string | null;
   eventCount?: number;
 }
 

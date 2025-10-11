@@ -21,9 +21,13 @@ export class ArtistRepository {
           genre: { contains: filters.genre, mode: 'insensitive' },
         }),
       },
-      include: {
-        events: {
-          select: { id: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        genre: true,
+        _count: {
+          select: { events: true },
         },
       },
       orderBy: { name: 'asc' },

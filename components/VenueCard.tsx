@@ -2,16 +2,18 @@
 
 import { memo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card } from './ui/Card';
 
 interface Venue {
   id: number;
   name: string;
   slug: string;
-  location?: string;
-  city?: string;
-  state?: string;
-  capacity?: number;
+  imageUrl?: string | null;
+  location?: string | null;
+  city?: string | null;
+  state?: string | null;
+  capacity?: number | null;
   eventCount?: number;
 }
 
@@ -31,13 +33,19 @@ function VenueCard({ venue }: VenueCardProps) {
     ? '1 upcoming event'
     : `${venue.eventCount || 0} upcoming events`;
 
+  const venueImageSrc = venue.imageUrl || '/assets/textures/resistance-poster.jpg';
+
   return (
     <Card className="h-full min-h-[280px] flex flex-col" accentLeft data-testid={`venue-card-${venue.slug}`}>
       <div className="flex flex-1 flex-col">
-        <div className="relative mb-3 aspect-[16/9] overflow-hidden rounded-lg bg-gradient-to-br from-resistance-500/20 via-hack-green/20 to-acid-400/20">
-          <div className="absolute inset-0 flex items-center justify-center text-6xl">
-            🏛️
-          </div>
+        <div className="relative mb-3 aspect-[16/9] overflow-hidden rounded-lg bg-zinc-800">
+          <Image
+            src={venueImageSrc}
+            alt={venue.name}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover"
+          />
         </div>
 
         <h2 className="brand-heading mb-2 text-center text-xl text-acid-400">

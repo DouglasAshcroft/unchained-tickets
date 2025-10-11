@@ -13,7 +13,15 @@ const nextConfig: NextConfig = {
 
   // Let Next.js optimize these packages automatically
   experimental: {
-    optimizePackageImports: ['@coinbase/onchainkit', '@tanstack/react-query', 'date-fns', 'react-hot-toast'],
+    optimizePackageImports: [
+      '@coinbase/onchainkit',
+      '@tanstack/react-query',
+      'date-fns',
+      'react-hot-toast',
+      'wagmi',
+      'viem',
+      'fuse.js'
+    ],
   },
 
   webpack: (config) => {

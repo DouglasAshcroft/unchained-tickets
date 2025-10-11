@@ -6,15 +6,20 @@ import { Footer } from '@/components/layout/Footer';
 import { Card } from '@/components/ui/Card';
 import { eventService } from '@/lib/services/EventService';
 import PurchasePanel from './PurchasePanel';
+import { sanitizePosterImageUrl } from '@/lib/utils/posterImage';
+
+// Enable ISR - revalidate every 5 minutes
+export const revalidate = 300;
 
 type EventDetailPageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
-export default async function EventDetailPage({ params }: EventDetailPageProps) {
-  const eventId = Number(params.id);
+export default async function EventDetailPage(props: EventDetailPageProps) {
+  const { id } = await props.params;
+  const eventId = Number(id);
   if (Number.isNaN(eventId)) {
     notFound();
   }
@@ -35,6 +40,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     const venueLocation = event.venue?.city && event.venue?.state
       ? `${event.venue.city}, ${event.venue.state}`
       : '';
+    const posterImageSrc = sanitizePosterImageUrl(event.posterImageUrl);
 
     return (
       <div className="min-h-screen flex flex-col">
@@ -50,20 +56,14 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="relative aspect-square overflow-hidden rounded-lg bg-ink-800">
-              {event.posterImageUrl ? (
-                <Image
-                  src={event.posterImageUrl}
-                  alt={event.title || 'Event poster'}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
-                  priority
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-grit-400">
-                  <span className="text-6xl">🎵</span>
-                </div>
-              )}
+              <Image
+                src={posterImageSrc}
+                alt={event.title || 'Event poster'}
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
+                priority
+              />
             </div>
 
             <div className="space-y-6">
@@ -107,15 +107,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                   </div>
                 </div>
 
-                {event.description && (
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl">ℹ️</span>
-                    <div>
-                      <div className="font-semibold">About</div>
-                      <div className="text-grit-300">{event.description}</div>
-                    </div>
-                  </div>
-                )}
+                {/* TODO Phase 3.3: Add description field to Event schema */}
               </div>
 
               {event.supportingArtists && event.supportingArtists.length > 0 && (

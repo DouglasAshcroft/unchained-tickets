@@ -6,6 +6,7 @@ import { RootProvider } from "./rootProvider";
 import { Providers } from "./providers";
 import { ApiStatus } from "@/components/ApiStatus";
 import { getWagmiConfig } from "./wagmi.config";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const inter = Inter({
@@ -43,6 +44,7 @@ export default async function RootLayout({
           <Providers>
             {children}
             <ApiStatus />
+            <Toaster position="top-right" theme="dark" richColors />
           </Providers>
         </RootProvider>
       </body>

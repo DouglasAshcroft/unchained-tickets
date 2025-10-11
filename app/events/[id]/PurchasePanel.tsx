@@ -7,9 +7,10 @@ import { toast } from 'react-hot-toast';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
-const CheckoutModal = dynamic(() => import('@/components/CheckoutModal'), {
-  ssr: false,
-});
+const CheckoutModal = dynamic(
+  () => import('@/components/CheckoutModal').then((mod) => mod.CheckoutModal),
+  { ssr: false }
+);
 
 type PurchasePanelProps = {
   eventId: number;

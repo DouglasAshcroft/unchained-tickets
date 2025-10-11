@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { sanitizePosterImageUrl } from '@/lib/utils/posterImage';
 
 /**
  * Metadata API for NFT tickets
@@ -8,10 +9,10 @@ import { prisma } from '@/lib/db/prisma';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tokenId: string } }
+  { params }: { params: Promise<{ tokenId: string }> }
 ) {
   try {
-    const tokenId = params.tokenId;
+    const { tokenId } = await params;
 
     // Extract event ID from token ID
     // Token ID format: eventId * 1000000 + counter
@@ -54,7 +55,7 @@ export async function GET(
       description: isSouvenir
         ? `Commemorative NFT ticket for ${event.title} on ${new Date(event.startsAt).toLocaleDateString()}. This event has concluded and this ticket is now a collectible souvenir.`
         : `NFT ticket for ${event.title} at ${event.venue?.name || 'TBA'}. Admit one to the event on ${new Date(event.startsAt).toLocaleDateString()}.`,
-      image: event.posterImageUrl || `https://via.placeholder.com/800x1200?text=${encodeURIComponent(event.title)}`,
+      image: sanitizePosterImageUrl(event.posterImageUrl),
       external_url: event.externalLink || `${process.env.NEXT_PUBLIC_APP_URL}/events/${event.id}`,
       attributes: [
         {

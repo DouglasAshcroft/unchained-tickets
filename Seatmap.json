@@ -1,0 +1,61 @@
+[]
+Ticket name
+Participant 
+Pricing type
+
+General admission
+Price
+1.00
+Enter price in the event currency
+
+Capacity
+100
+Currency
+USD
+Sales start
+
+10/01/2025, 08:00 AM
+Sales end
+
+10/27/2025, 04:00 PM
+Description (optional)
+Base Batch 002 Builders Track: Participant 
+
+Active for sale
+Remove
+Ticket name
+Best in Show
+Pricing type
+
+Reserved seating
+Price
+5.00
+Enter price in the event currency
+
+Capacity
+1
+Currency
+USD
+Sales start
+
+10/01/2025, 08:00 AM
+Sales end
+
+10/27/2025, 04:00 PM
+Description (optional)
+Base Batch 002 Builders Track: Best in Show
+
+Active for sale
+Remove
+Seat map assignment
+Reserved or mixed tiers need a seat map. Choose an existing map for this venue or upload a new layout in JSON format.
+
+Seat map
+
+Select a seat map
+Select or upload a seat map for reserved or mixed tiers.
+
+Upload seat map JSON
+Expect a JSON structure with sections → rows → seats. Each seat should include a seatNumber and optional flags like isAccessible.
+
+No seat maps uploaded for this venue yet. Upload one above.

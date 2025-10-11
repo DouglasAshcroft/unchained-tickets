@@ -10,10 +10,24 @@ export type VenueDashboardEvent = {
 };
 
 export type VenueDashboardChecklistItem = {
-  id: string;
+  id: ChecklistTaskId;
   label: string;
   description: string;
   complete: boolean;
+  type: 'auto' | 'manual';
+};
+
+export type VenueDashboardSeatMap = {
+  id: number;
+  name: string;
+  description?: string | null;
+  status: string;
+  version: number;
+  sections: number;
+  rows: number;
+  seats: number;
+  createdAt: string;
+  structure?: unknown;
 };
 
 export type VenueDashboardPosterTask = {
@@ -57,6 +71,7 @@ export type VenueDashboardData = {
   checklist: VenueDashboardChecklistItem[];
   posterQueue: VenueDashboardPosterTask[];
   payouts: VenueDashboardPayout[];
+  seatMaps: VenueDashboardSeatMap[];
   support: {
     contacts: {
       name: string;
@@ -94,7 +109,7 @@ export const mockVenueDashboard: VenueDashboardData = {
         startsAt: '2025-07-12T20:00:00Z',
         status: 'draft',
         tiers: ['GA', 'VIP Balconies'],
-        posterStatus: 'awaiting_upload',
+        posterStatus: 'pending' as const,
         grossSales: 0,
       },
       {
@@ -103,7 +118,7 @@ export const mockVenueDashboard: VenueDashboardData = {
         startsAt: '2025-08-01T02:00:00Z',
         status: 'draft',
         tiers: ['GA', 'Underworld Lounge'],
-        posterStatus: 'awaiting_approval',
+        posterStatus: 'pending' as const,
         grossSales: 0,
       },
     ],
@@ -142,22 +157,32 @@ export const mockVenueDashboard: VenueDashboardData = {
   },
   checklist: [
     {
-      id: 'poster-workflow',
+      id: 'poster_workflow',
       label: 'Confirm collectible poster workflow',
       description: 'Upload poster variants or enable generation prompts for each tier.',
       complete: false,
+      type: 'manual',
     },
     {
-      id: 'staff-accounts',
+      id: 'seat_map',
+      label: 'Upload venue seat map',
+      description: 'Provide a JSON or CAD export so buyers can pick seats.',
+      complete: false,
+      type: 'auto',
+    },
+    {
+      id: 'staff_accounts',
       label: 'Invite venue staff',
       description: 'Add front-of-house and door staff for ticket scanning access.',
       complete: false,
+      type: 'manual',
     },
     {
-      id: 'payout-method',
+      id: 'payout_details',
       label: 'Verify payout details',
       description: 'Connect bank account or Base paymaster address for settlements.',
       complete: true,
+      type: 'manual',
     },
   ],
   posterQueue: [
@@ -194,6 +219,7 @@ export const mockVenueDashboard: VenueDashboardData = {
       status: 'pending',
     },
   ],
+  seatMaps: [],
   support: {
     contacts: [
       {
@@ -223,3 +249,4 @@ export const mockVenueDashboard: VenueDashboardData = {
     ],
   },
 };
+import type { ChecklistTaskId } from '@/lib/config/venueChecklist';
