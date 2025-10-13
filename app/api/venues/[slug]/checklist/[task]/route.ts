@@ -12,7 +12,7 @@ import { checklistIdToEnum } from '@/lib/utils/venueChecklist';
 // TODO: Investigate and fix checklist completion patch flow. Response currently logs "Internal error"
 //       when toggling manual tasks. Likely needs auth context and venue scoping.
 const paramsSchema = z.object({
-  venueId: z.string(),
+  slug: z.string(),
   task: z.enum(CHECKLIST_TASK_IDS),
 });
 
@@ -22,15 +22,22 @@ const bodySchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: Promise<{ venueId: string; task: string }> }
+  context: { params: Promise<{ slug: string; task: string }> }
 ) {
   try {
     const params = paramsSchema.parse(await context.params);
-    const venueId = parseInt(params.venueId, 10);
 
-    if (Number.isNaN(venueId) || venueId <= 0) {
-      return NextResponse.json({ error: 'Venue id must be a positive integer' }, { status: 400 });
+    // Find venue by slug
+    const venue = await prisma.venue.findUnique({
+      where: { slug: params.slug },
+      select: { id: true },
+    });
+
+    if (!venue) {
+      return NextResponse.json({ error: 'Venue not found' }, { status: 404 });
     }
+
+    const venueId = venue.id;
 
     const taskId: ChecklistTaskId = params.task;
 

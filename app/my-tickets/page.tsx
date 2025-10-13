@@ -9,6 +9,15 @@ import { Button } from '@/components/ui/Button';
 import { QRCode } from '@/components/ui/QRCode';
 import { Badge } from '@/components/ui/Badge';
 import Link from 'next/link';
+import Image from 'next/image';
+
+interface Perk {
+  name: string;
+  maxQuantity: number;
+  consumed: number;
+  description?: string | null;
+  instructions?: string | null;
+}
 
 interface Ticket {
   id: string;
@@ -20,6 +29,9 @@ interface Ticket {
   tokenId?: string;
   qrCode: string;
   status: 'active' | 'used' | 'expired';
+  onChainState?: 'ACTIVE' | 'USED' | 'SOUVENIR'; // 0=ACTIVE, 1=USED, 2=SOUVENIR
+  posterImageUrl?: string;
+  perks?: Perk[]; // Available perks for this ticket tier
 }
 
 interface Purchase {
@@ -35,10 +47,44 @@ interface Purchase {
 
 export default function MyTicketsPage() {
   const { address, isConnected } = useAccount();
-  const [showQRCode, setShowQRCode] = useState<string | null>(null);
+  const [openQRCodes, setOpenQRCodes] = useState<Record<string, boolean>>({});
   const [tickets, setTickets] = useState<Ticket[]>([]);
 
   const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
+
+  // Enrich tickets with on-chain state and metadata
+  const enrichTicketsWithOnChainData = async (ticketsToEnrich: Ticket[]) => {
+    const enrichedTickets = await Promise.all(
+      ticketsToEnrich.map(async (ticket) => {
+        if (!ticket.tokenId) return ticket;
+
+        try {
+          // Fetch metadata which includes on-chain state
+          const metadataResponse = await fetch(`/api/metadata/${ticket.tokenId}`);
+          if (!metadataResponse.ok) return ticket;
+
+          const metadata = await metadataResponse.json();
+
+          // Extract on-chain state from attributes
+          const onChainStateAttr = metadata.attributes?.find(
+            (attr: any) => attr.trait_type === 'On-Chain State'
+          );
+          const onChainState = onChainStateAttr?.value as 'ACTIVE' | 'USED' | 'SOUVENIR' | undefined;
+
+          return {
+            ...ticket,
+            onChainState,
+            posterImageUrl: metadata.image,
+          };
+        } catch (error) {
+          console.error(`Failed to enrich ticket ${ticket.id}:`, error);
+          return ticket;
+        }
+      })
+    );
+
+    setTickets(enrichedTickets);
+  };
 
   // Load and validate tickets from localStorage (dev mode) or blockchain (production)
   useEffect(() => {
@@ -69,6 +115,20 @@ export default function MyTicketsPage() {
 
           // Convert valid purchases to tickets format
           const loadedTickets: Ticket[] = validTickets.flatMap((purchase: any) => {
+            const ticketType = purchase.eventData?.ticketTypes?.find(
+              (type: any) =>
+                typeof type.name === 'string' &&
+                type.name.toLowerCase() === String(purchase.tier).toLowerCase()
+            );
+
+            const tierPerks: Perk[] = (ticketType?.perks ?? []).map((perk: any) => ({
+              name: perk.name,
+              maxQuantity: perk.quantity ?? 1,
+              consumed: 0,
+              description: perk.description,
+              instructions: perk.instructions,
+            }));
+
             // Create one ticket per quantity
             return Array.from({ length: purchase.quantity }, (_, index) => ({
               id: `${purchase.id}-${index}`,
@@ -80,10 +140,34 @@ export default function MyTicketsPage() {
               tokenId: `${purchase.transactionId.slice(0, 10)}...${index}`,
               qrCode: `UNCHAINED-TICKET:${purchase.eventId}:${purchase.id}:${index}:${purchase.transactionId}`,
               status: 'active' as const,
+              perks: tierPerks,
             }));
           });
 
           setTickets(loadedTickets);
+          setOpenQRCodes((prev) => {
+            const next: Record<string, boolean> = { ...prev };
+            Object.keys(next).forEach((id) => {
+              if (!loadedTickets.some((ticket) => ticket.id === id)) {
+                delete next[id];
+              }
+            });
+
+            loadedTickets.forEach((ticket) => {
+              if (ticket.status === 'active' && ticket.onChainState !== 'SOUVENIR') {
+                if (next[ticket.id] === undefined) {
+                  next[ticket.id] = true;
+                }
+              } else {
+                next[ticket.id] = false;
+              }
+            });
+
+            return next;
+          });
+
+          // Fetch on-chain state and poster images for each ticket
+          enrichTicketsWithOnChainData(loadedTickets);
 
           // Clean up invalid purchases from localStorage
           if (invalidTickets.length > 0) {
@@ -110,7 +194,15 @@ export default function MyTicketsPage() {
   // In dev mode, no wallet connection required
   const shouldShowWalletPrompt = !isDevMode && !isConnected;
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, onChainState?: string) => {
+    // Prioritize on-chain state if available
+    if (onChainState === 'SOUVENIR') {
+      return <Badge tone="success">🎨 Souvenir</Badge>;
+    }
+    if (onChainState === 'USED') {
+      return <Badge tone="info">Used</Badge>;
+    }
+
     switch (status) {
       case 'active':
         return <Badge tone="success">Active</Badge>;
@@ -202,7 +294,7 @@ export default function MyTicketsPage() {
                       </h3>
                       <p className="text-sm text-grit-400">{ticket.venue}</p>
                     </div>
-                    {getStatusBadge(ticket.status)}
+                    {getStatusBadge(ticket.status, ticket.onChainState)}
                   </div>
 
                   {/* Event Details */}
@@ -234,10 +326,81 @@ export default function MyTicketsPage() {
                     )}
                   </div>
 
-                  {/* QR Code Section */}
-                  {ticket.status === 'active' && (
+                  {/* Perks Section - Only for active tickets */}
+                  {ticket.perks && ticket.perks.length > 0 && ticket.status === 'active' && (
                     <div className="pt-4 border-t border-grit-500/30">
-                      {showQRCode === ticket.id ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-lg">🎁</span>
+                          <h4 className="font-semibold text-hack-green">Included Perks</h4>
+                        </div>
+                        <div className="space-y-2">
+                          {ticket.perks.map((perk, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between bg-grit-500/20 p-3 rounded-lg"
+                            >
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-bone-100">{perk.name}</p>
+                                <p className="text-xs text-grit-400">
+                                  {perk.consumed} of {perk.maxQuantity} used
+                                </p>
+                                {perk.description && (
+                                  <p className="mt-1 text-xs text-grit-400">{perk.description}</p>
+                                )}
+                                {perk.instructions && (
+                                  <p className="mt-1 text-xs text-grit-500">Redeem: {perk.instructions}</p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {perk.consumed < perk.maxQuantity ? (
+                                  <Badge tone="success">
+                                    {perk.maxQuantity - perk.consumed} left
+                                  </Badge>
+                                ) : (
+                                  <Badge tone="error">Used</Badge>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-xs text-grit-400 mt-2">
+                          Present your ticket QR code to venue staff to redeem perks
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Souvenir Section */}
+                  {ticket.onChainState === 'SOUVENIR' && ticket.posterImageUrl && (
+                    <div className="pt-4 border-t border-grit-500/30">
+                      <div className="space-y-3">
+                        <div className="bg-gradient-to-br from-resistance-500/10 via-hack-green/10 to-acid-400/10 p-4 rounded-lg border border-acid-400/30">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-2xl">🎨</span>
+                            <h4 className="font-semibold text-acid-400">Event Memento</h4>
+                          </div>
+                          <div className="relative w-full aspect-video mb-3">
+                            <Image
+                              src={ticket.posterImageUrl}
+                              alt={`${ticket.eventTitle} Souvenir`}
+                              fill
+                              className="rounded-lg object-cover"
+                            />
+                          </div>
+                          <p className="text-sm text-grit-300">
+                            Your ticket has been transformed into a collectible souvenir NFT.
+                            This commemorates your attendance at {ticket.eventTitle}.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* QR Code Section - Only for active tickets */}
+                  {ticket.status === 'active' && ticket.onChainState !== 'SOUVENIR' && (
+                    <div className="pt-4 border-t border-grit-500/30">
+                      {openQRCodes[ticket.id] ? (
                         <div className="space-y-3">
                           <div className="bg-bone-100 p-4 rounded-lg">
                             <QRCode
@@ -249,7 +412,12 @@ export default function MyTicketsPage() {
                           <Button
                             variant="secondary"
                             className="w-full"
-                            onClick={() => setShowQRCode(null)}
+                            onClick={() =>
+                              setOpenQRCodes((prev) => ({
+                                ...prev,
+                                [ticket.id]: false,
+                              }))
+                            }
                           >
                             Hide QR Code
                           </Button>
@@ -258,7 +426,12 @@ export default function MyTicketsPage() {
                         <Button
                           variant="primary"
                           className="w-full"
-                          onClick={() => setShowQRCode(ticket.id)}
+                          onClick={() =>
+                            setOpenQRCodes((prev) => ({
+                              ...prev,
+                              [ticket.id]: true,
+                            }))
+                          }
                         >
                           Show QR Code
                         </Button>

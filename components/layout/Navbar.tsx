@@ -51,6 +51,12 @@ export function Navbar() {
                 >
                   Create Event
                 </Link>
+                <Link
+                  href="/staff/scanner"
+                  className="text-sm font-medium text-bone-100 hover:text-acid-400 transition-colors"
+                >
+                  Staff Scanner
+                </Link>
               </>
             )}
             <Link
@@ -134,6 +140,13 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Create Event
+                  </Link>
+                  <Link
+                    href="/staff/scanner"
+                    className="text-sm font-medium text-bone-100 hover:text-acid-400 transition-colors px-2 py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Staff Scanner
                   </Link>
                 </>
               )}

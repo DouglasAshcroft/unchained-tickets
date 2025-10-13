@@ -18,6 +18,14 @@ import { api } from "@/lib/api/client";
 
 type PricingType = "general_admission" | "reserved" | "mixed";
 
+type TicketPerkForm = {
+  id: string;
+  name: string;
+  description: string;
+  instructions: string;
+  quantity: string;
+};
+
 type TicketTypeForm = {
   id: string;
   name: string;
@@ -29,6 +37,7 @@ type TicketTypeForm = {
   salesStart: string;
   salesEnd: string;
   isActive: boolean;
+  perks: TicketPerkForm[];
 };
 
 type WizardStep = "basics" | "schedule" | "tickets" | "review";
@@ -44,6 +53,19 @@ const generateTicketTypeId = () =>
     ? crypto.randomUUID()
     : `ticket-${Math.random().toString(36).slice(2, 10)}`;
 
+const generateTicketPerkId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `perk-${Math.random().toString(36).slice(2, 10)}`;
+
+const createEmptyTicketPerk = (): TicketPerkForm => ({
+  id: generateTicketPerkId(),
+  name: "",
+  description: "",
+  instructions: "",
+  quantity: "1",
+});
+
 const createEmptyTicketType = (): TicketTypeForm => ({
   id: generateTicketTypeId(),
   name: "",
@@ -55,6 +77,7 @@ const createEmptyTicketType = (): TicketTypeForm => ({
   salesStart: "",
   salesEnd: "",
   isActive: true,
+  perks: [],
 });
 
 const steps: StepDefinition[] = [
@@ -90,6 +113,7 @@ type FormState = {
   startsAt: string;
   endsAt: string;
   venueId: string;
+  primaryArtistId: string;
   status: "draft" | "published";
   ticketTypes: TicketTypeForm[];
 };
@@ -104,6 +128,7 @@ const initialState: FormState = {
   startsAt: "",
   endsAt: "",
   venueId: "",
+  primaryArtistId: "",
   status: "draft",
   ticketTypes: [createEmptyTicketType()],
 };
@@ -118,6 +143,13 @@ type VenueOption = {
   latitude?: number | null;
   longitude?: number | null;
   mapsLink?: string | null;
+};
+
+type ArtistOption = {
+  id: number;
+  name: string;
+  slug: string;
+  genre?: string | null;
 };
 
 const isValidUrl = (value: string) => {
@@ -172,6 +204,11 @@ export default function NewEventPage() {
   const suggestionBoxRef = useRef<HTMLDivElement>(null);
   const posterInputRef = useRef<HTMLInputElement>(null);
   const [mapsLocked, setMapsLocked] = useState(false);
+  const [artistQuery, setArtistQuery] = useState("");
+  const [selectedArtist, setSelectedArtist] = useState<ArtistOption | null>(null);
+  const [showArtistSuggestions, setShowArtistSuggestions] = useState(false);
+  const artistInputRef = useRef<HTMLInputElement>(null);
+  const artistSuggestionBoxRef = useRef<HTMLDivElement>(null);
 
   const currentStep = steps[currentStepIndex];
 
@@ -194,8 +231,18 @@ export default function NewEventPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const {
+    data: artists = [],
+    isLoading: isLoadingArtists,
+    isError: isArtistsError,
+  } = useQuery({
+    queryKey: ["artists"],
+    queryFn: () => api.getArtists(),
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const fuse = useMemo(() => {
+
+  const venueFuse = useMemo(() => {
     if (!venues.length) return null;
     return new Fuse<VenueOption>(venues as VenueOption[], {
       keys: ["name", "city", "state", "addressLine1"],
@@ -210,12 +257,34 @@ export default function NewEventPage() {
     if (!trimmedQuery) {
       return (venues as VenueOption[]).slice(0, 7);
     }
-    if (!fuse) return [] as VenueOption[];
-    return fuse
+    if (!venueFuse) return [] as VenueOption[];
+    return venueFuse
       .search(trimmedQuery)
       .slice(0, 7)
       .map((result) => result.item);
-  }, [venues, venueQuery, fuse]);
+  }, [venues, venueQuery, venueFuse]);
+
+  const artistFuse = useMemo(() => {
+    if (!artists.length) return null;
+    return new Fuse<ArtistOption>(artists as ArtistOption[], {
+      keys: ["name", "genre", "slug"],
+      threshold: 0.35,
+      includeScore: true,
+    });
+  }, [artists]);
+
+  const artistSuggestions = useMemo(() => {
+    if (!artists.length) return [] as ArtistOption[];
+    const trimmedQuery = artistQuery.trim();
+    if (!trimmedQuery) {
+      return (artists as ArtistOption[]).slice(0, 7);
+    }
+    if (!artistFuse) return [] as ArtistOption[];
+    return artistFuse
+      .search(trimmedQuery)
+      .slice(0, 7)
+      .map((result) => result.item);
+  }, [artists, artistQuery, artistFuse]);
 
   useEffect(() => {
     if (!venues.length || !formData.venueId) return;
@@ -239,6 +308,24 @@ export default function NewEventPage() {
   }, [venues, formData.venueId, selectedVenue]);
 
   useEffect(() => {
+    if (!formData.primaryArtistId) {
+      setSelectedArtist(null);
+      return;
+    }
+
+    if (!artists.length) return;
+
+    const match = (artists as ArtistOption[]).find(
+      (artist) => String(artist.id) === formData.primaryArtistId
+    );
+
+    if (!match) return;
+
+    setSelectedArtist(match);
+    setArtistQuery(match.name);
+  }, [artists, formData.primaryArtistId]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       if (
@@ -254,7 +341,21 @@ export default function NewEventPage() {
       ) {
         return;
       }
+      if (
+        artistSuggestionBoxRef.current &&
+        artistSuggestionBoxRef.current.contains(target)
+      ) {
+        return;
+      }
+      if (
+        artistInputRef.current &&
+        (artistInputRef.current === target ||
+          artistInputRef.current.contains(target))
+      ) {
+        return;
+      }
       setShowVenueSuggestions(false);
+      setShowArtistSuggestions(false);
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -278,6 +379,23 @@ export default function NewEventPage() {
           capacity = parseInt(trimmedCapacity, 10);
         }
 
+        const perksPayload = ticket.perks
+          .filter((perk) => perk.name.trim().length > 0)
+          .map((perk) => {
+            const trimmedQuantity = perk.quantity.trim();
+            const parsedQuantity = parseInt(trimmedQuantity || "1", 10);
+            const quantity = Number.isNaN(parsedQuantity)
+              ? 1
+              : Math.max(parsedQuantity, 1);
+
+            return {
+              name: perk.name.trim(),
+              description: perk.description.trim() || null,
+              instructions: perk.instructions.trim() || null,
+              quantity,
+            };
+          });
+
         return {
           name: ticket.name.trim(),
           description: ticket.description.trim() || null,
@@ -292,8 +410,13 @@ export default function NewEventPage() {
             ? new Date(ticket.salesEnd).toISOString()
             : null,
           isActive: ticket.isActive,
+          perks: perksPayload,
         };
       });
+
+      const parsedArtistId = formData.primaryArtistId
+        ? Number.parseInt(formData.primaryArtistId, 10)
+        : NaN;
 
       const payload = {
         title: formData.title.trim(),
@@ -302,6 +425,7 @@ export default function NewEventPage() {
           ? new Date(formData.endsAt).toISOString()
           : null,
         venueId,
+        primaryArtistId: Number.isNaN(parsedArtistId) ? null : parsedArtistId,
         posterImageUrl: posterPreview || formData.posterImageUrl || null,
         externalLink: formData.externalLink || null,
         mapsLink: formData.mapsLink || null,
@@ -381,6 +505,12 @@ export default function NewEventPage() {
     field: keyof TicketTypeForm
   ) => errors[`ticketTypes.${ticketId}.${String(field)}`];
 
+  const getTicketPerkFieldError = (
+    ticketId: string,
+    perkId: string,
+    field: keyof TicketPerkForm
+  ) => errors[`ticketTypes.${ticketId}.perks.${perkId}.${String(field)}`];
+
   const handleTicketTypeChange = <K extends keyof TicketTypeForm>(
     ticketId: string,
     field: K,
@@ -404,6 +534,67 @@ export default function NewEventPage() {
       ...prev,
       ticketTypes: [...prev.ticketTypes, createEmptyTicketType()],
     }));
+  };
+
+  const handleTicketPerkChange = <K extends keyof TicketPerkForm>(
+    ticketId: string,
+    perkId: string,
+    field: K,
+    value: TicketPerkForm[K]
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      ticketTypes: prev.ticketTypes.map((ticket) =>
+        ticket.id === ticketId
+          ? {
+              ...ticket,
+              perks: ticket.perks.map((perk) =>
+                perk.id === perkId ? { ...perk, [field]: value } : perk
+              ),
+            }
+          : ticket
+      ),
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [`ticketTypes.${ticketId}.perks.${perkId}.${String(field)}`]: undefined,
+    }));
+  };
+
+  const handleAddTicketPerk = (ticketId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      ticketTypes: prev.ticketTypes.map((ticket) =>
+        ticket.id === ticketId
+          ? { ...ticket, perks: [...ticket.perks, createEmptyTicketPerk()] }
+          : ticket
+      ),
+    }));
+  };
+
+  const handleRemoveTicketPerk = (ticketId: string, perkId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      ticketTypes: prev.ticketTypes.map((ticket) =>
+        ticket.id === ticketId
+          ? {
+              ...ticket,
+              perks: ticket.perks.filter((perk) => perk.id !== perkId),
+            }
+          : ticket
+      ),
+    }));
+
+    setErrors((prev) => {
+      const next = { ...prev } as Record<string, string | undefined>;
+      Object.keys(next).forEach((key) => {
+        if (key.startsWith(`ticketTypes.${ticketId}.perks.${perkId}`)) {
+          delete next[key];
+        }
+      });
+      return next;
+    });
   };
 
   const handleRemoveTicketType = (ticketId: string) => {
@@ -514,6 +705,52 @@ export default function NewEventPage() {
     setErrors((prev) => ({
       ...prev,
       venueId: undefined,
+    }));
+  };
+
+  const handleArtistInputChange = (value: string) => {
+    if (selectedArtist && value === selectedArtist.name) {
+      setArtistQuery(value);
+      return;
+    }
+
+    setArtistQuery(value);
+    setShowArtistSuggestions(true);
+
+    if (selectedArtist) {
+      setSelectedArtist(null);
+      setFormData((prev) => ({
+        ...prev,
+        primaryArtistId: "",
+      }));
+    }
+  };
+
+  const handleArtistSelect = (artist: ArtistOption) => {
+    setSelectedArtist(artist);
+    setArtistQuery(artist.name);
+    setShowArtistSuggestions(false);
+    setFormData((prev) => ({
+      ...prev,
+      primaryArtistId: String(artist.id),
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      primaryArtistId: undefined,
+    }));
+  };
+
+  const clearSelectedArtist = () => {
+    setSelectedArtist(null);
+    setArtistQuery("");
+    setShowArtistSuggestions(false);
+    setFormData((prev) => ({
+      ...prev,
+      primaryArtistId: "",
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      primaryArtistId: undefined,
     }));
   };
 
@@ -644,6 +881,31 @@ export default function NewEventPage() {
               "Sales end must be after the start.";
           }
         }
+
+        ticket.perks.forEach((perk) => {
+          const trimmedPerkName = perk.name.trim();
+          if (!trimmedPerkName) {
+            stepErrors[`ticketTypes.${ticket.id}.perks.${perk.id}.name`] =
+              "Perk name is required.";
+          }
+
+          const quantityValue = perk.quantity.trim();
+          const parsedQuantity = Number.parseInt(quantityValue || "0", 10);
+          if (!Number.isFinite(parsedQuantity) || parsedQuantity < 1) {
+            stepErrors[`ticketTypes.${ticket.id}.perks.${perk.id}.quantity`] =
+              "Quantity must be at least 1.";
+          }
+
+          if (perk.description.length > 500) {
+            stepErrors[`ticketTypes.${ticket.id}.perks.${perk.id}.description`] =
+              "Description must be 500 characters or fewer.";
+          }
+
+          if (perk.instructions.length > 500) {
+            stepErrors[`ticketTypes.${ticket.id}.perks.${perk.id}.instructions`] =
+              "Instructions must be 500 characters or fewer.";
+          }
+        });
       });
 
     }
@@ -700,6 +962,92 @@ export default function NewEventPage() {
         }
         error={errors.title}
       />
+
+      <div>
+        <label
+          className="block mb-2 text-sm font-medium text-bone-100"
+          htmlFor="artist-search"
+        >
+          Primary artist / performer
+        </label>
+        {isLoadingArtists ? (
+          <div className="rounded-md border border-grit-500/30 p-6">
+            <LoadingSpinner size="sm" text="Loading artists..." />
+          </div>
+        ) : isArtistsError ? (
+          <Card className="border-signal-500/50 bg-signal-500/10 text-signal-200">
+            Unable to load artists. Refresh to retry or add the performer later.
+          </Card>
+        ) : (
+          <>
+            <div className="relative" ref={artistSuggestionBoxRef}>
+              <input
+                ref={artistInputRef}
+                type="text"
+                id="artist-search"
+                value={artistQuery}
+                onChange={(event) => handleArtistInputChange(event.target.value)}
+                onFocus={() => setShowArtistSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowArtistSuggestions(false), 120)}
+                placeholder="Search by artist name or genre"
+                autoComplete="off"
+                className={`w-full rounded-md bg-ink-800 px-3 py-2 text-bone-100 placeholder-grit-400 focus:outline-none focus:ring-2 ${
+                  errors.primaryArtistId
+                    ? "border border-signal-500 focus:ring-signal-500/50"
+                    : "border border-grit-500/30 focus:ring-acid-400/50"
+                }`}
+              />
+              {showArtistSuggestions && artistSuggestions.length > 0 && (
+                <div className="absolute z-50 mt-2 max-h-60 w-full overflow-auto rounded-lg border border-grit-500/30 bg-ink-900/95 shadow-2xl backdrop-blur-sm">
+                  {artistSuggestions.map((artist) => (
+                    <button
+                      key={artist.id}
+                      type="button"
+                      className="block w-full px-3 py-2 text-left transition-colors hover:bg-acid-400/10"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        handleArtistSelect(artist);
+                      }}
+                    >
+                      <div className="text-sm font-medium text-bone-100">
+                        {artist.name}
+                      </div>
+                      <div className="text-xs text-grit-400">
+                        {artist.genre || "Genre TBD"}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showArtistSuggestions && artistSuggestions.length === 0 && (
+                <div className="absolute z-50 mt-2 w-full rounded-lg border border-grit-500/30 bg-ink-900/95 px-3 py-2 text-xs text-grit-400">
+                  No matching artists. Keep typing or ping the Unchained team to onboard them.
+                </div>
+              )}
+            </div>
+            {errors.primaryArtistId && (
+              <p className="mt-2 text-sm text-signal-500">
+                {errors.primaryArtistId}
+              </p>
+            )}
+            {selectedArtist && (
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-grit-400">
+                <span>
+                  Featuring {selectedArtist.name}
+                  {selectedArtist.genre ? ` · ${selectedArtist.genre}` : ""}
+                </span>
+                <button
+                  type="button"
+                  className="text-signal-400 hover:text-signal-300"
+                  onClick={clearSelectedArtist}
+                >
+                  Clear performer
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       <div>
         <label
@@ -1131,6 +1479,135 @@ export default function NewEventPage() {
                     placeholder="Notes for staff, perks included, or seating instructions."
                   />
                 </div>
+
+                <div className="md:col-span-2 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-bone-100">
+                      Ticket perks (optional)
+                    </span>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="px-3 py-1 text-xs"
+                      onClick={() => handleAddTicketPerk(ticket.id)}
+                    >
+                      Add perk
+                    </Button>
+                  </div>
+
+                  {ticket.perks.length === 0 ? (
+                    <Card className="border-dashed border-grit-500/30 bg-ink-800/40 p-4 text-sm text-grit-300">
+                      No perks added yet. Add perks to surface drink tickets, merch bundles, or meet & greet access during checkout and scanning.
+                    </Card>
+                  ) : (
+                    <div className="space-y-3">
+                      {ticket.perks.map((perk, perkIndex) => (
+                        <div
+                          key={perk.id}
+                          className="rounded-lg border border-grit-500/30 bg-ink-900/40 p-4"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="text-sm font-semibold text-bone-100">
+                              Perk {perkIndex + 1}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTicketPerk(ticket.id, perk.id)}
+                              className="text-xs text-signal-400 hover:text-signal-300"
+                            >
+                              Remove perk
+                            </button>
+                          </div>
+
+                          <div className="mt-3 grid gap-4 md:grid-cols-2">
+                            <Input
+                              label="Perk name"
+                              placeholder="e.g., Complimentary drink"
+                              value={perk.name}
+                              onChange={(event) =>
+                                handleTicketPerkChange(
+                                  ticket.id,
+                                  perk.id,
+                                  "name",
+                                  event.target.value
+                                )
+                              }
+                              error={getTicketPerkFieldError(ticket.id, perk.id, "name")}
+                            />
+
+                            <Input
+                              label="Quantity"
+                              type="number"
+                              min="1"
+                              step="1"
+                              placeholder="1"
+                              value={perk.quantity}
+                              onChange={(event) =>
+                                handleTicketPerkChange(
+                                  ticket.id,
+                                  perk.id,
+                                  "quantity",
+                                  event.target.value
+                                )
+                              }
+                              error={getTicketPerkFieldError(ticket.id, perk.id, "quantity")}
+                            />
+
+                            <div className="md:col-span-2">
+                              <label className="mb-2 block text-sm font-medium text-bone-100">
+                                Description (optional)
+                              </label>
+                              <textarea
+                                className="w-full rounded-md border border-grit-500/30 bg-ink-800 px-3 py-2 text-sm text-bone-100 placeholder-grit-400 focus:outline-none focus:ring-2 focus:ring-acid-400/50"
+                                rows={2}
+                                value={perk.description}
+                                onChange={(event) =>
+                                  handleTicketPerkChange(
+                                    ticket.id,
+                                    perk.id,
+                                    "description",
+                                    event.target.value
+                                  )
+                                }
+                                placeholder="Explain what the perk includes."
+                              />
+                              {getTicketPerkFieldError(ticket.id, perk.id, "description") && (
+                                <p className="mt-1 text-sm text-signal-500">
+                                  {getTicketPerkFieldError(ticket.id, perk.id, "description")}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="md:col-span-2">
+                              <label className="mb-2 block text-sm font-medium text-bone-100">
+                                Redemption instructions (optional)
+                              </label>
+                              <textarea
+                                className="w-full rounded-md border border-grit-500/30 bg-ink-800 px-3 py-2 text-sm text-bone-100 placeholder-grit-400 focus:outline-none focus:ring-2 focus:ring-acid-400/50"
+                                rows={2}
+                                value={perk.instructions}
+                                onChange={(event) =>
+                                  handleTicketPerkChange(
+                                    ticket.id,
+                                    perk.id,
+                                    "instructions",
+                                    event.target.value
+                                  )
+                                }
+                                placeholder="Add pickup details for staff to follow."
+                              />
+                              {getTicketPerkFieldError(ticket.id, perk.id, "instructions") && (
+                                <p className="mt-1 text-sm text-signal-500">
+                                  {getTicketPerkFieldError(ticket.id, perk.id, "instructions")}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1189,6 +1666,11 @@ export default function NewEventPage() {
       ? venues.find((venue: any) => String(venue.id) === formData.venueId)
           ?.name ?? "Selected venue"
       : "Not set";
+    const artistPreview = selectedArtist
+      ? `${selectedArtist.name}${selectedArtist.genre ? ` · ${selectedArtist.genre}` : ""}`
+      : formData.primaryArtistId
+      ? "Performer selected"
+      : "Not set";
 
     return (
       <div className="space-y-6">
@@ -1220,6 +1702,12 @@ export default function NewEventPage() {
                   Venue
                 </div>
                 <div className="text-bone-100">{venuePreview}</div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-widest text-grit-400">
+                  Performer
+                </div>
+                <div className="text-bone-100">{artistPreview}</div>
               </div>
               <div>
                 <div className="text-xs uppercase tracking-widest text-grit-400">
@@ -1288,6 +1776,37 @@ export default function NewEventPage() {
                       {ticket.description && (
                         <div className="mt-2 text-xs text-grit-400">
                           {ticket.description}
+                        </div>
+                      )}
+                      {ticket.perks.length > 0 && (
+                        <div className="mt-3">
+                          <div className="text-xs uppercase tracking-widest text-grit-400">
+                            Included perks
+                          </div>
+                          <div className="mt-2 space-y-2">
+                            {ticket.perks.map((perk) => (
+                              <div key={perk.id} className="rounded-md bg-ink-800/80 px-3 py-2 text-xs text-grit-300">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-bone-100 font-medium">
+                                    {perk.name || "Unnamed perk"}
+                                  </span>
+                                  <span className="text-grit-400">
+                                    Qty {perk.quantity || "1"}
+                                  </span>
+                                </div>
+                                {perk.description && (
+                                  <div className="mt-1 text-grit-400">
+                                    {perk.description}
+                                  </div>
+                                )}
+                                {perk.instructions && (
+                                  <div className="mt-1 text-grit-500">
+                                    Redeem: {perk.instructions}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>

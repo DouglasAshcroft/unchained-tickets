@@ -159,6 +159,12 @@ class ApiClient {
       salesStart?: string | null;
       salesEnd?: string | null;
       isActive?: boolean;
+      perks?: Array<{
+        name: string;
+        description?: string | null;
+        instructions?: string | null;
+        quantity?: number;
+      }>;
     }>;
   }) {
     return this.request<any>(`/api/events`, {
@@ -220,6 +226,13 @@ class ApiClient {
   // Artists endpoints
   async getArtistBySlug(slug: string) {
     return this.request<{ artist: any; events: any[] }>(`/api/artists/${slug}`);
+  }
+
+  async getArtists(params?: { genre?: string }) {
+    const searchParams = new URLSearchParams();
+    if (params?.genre) searchParams.append('genre', params.genre);
+    const query = searchParams.toString();
+    return this.request<any[]>(`/api/artists${query ? `?${query}` : ''}`);
   }
 
   // Search endpoint

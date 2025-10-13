@@ -33,6 +33,10 @@ export class ArtistRepository {
       orderBy: { name: 'asc' },
     });
   }
+
+  async findById(id: number) {
+    return await prisma.artist.findUnique({ where: { id } });
+  }
 }
 
 export const artistRepository = new ArtistRepository();

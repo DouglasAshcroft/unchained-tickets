@@ -114,32 +114,6 @@ export default function EventsPageClient({ cities }: EventsPageClientProps) {
       return aOrder - bOrder;
     }) || [];
 
-  // Static genre list for navigation (always visible)
-  const staticGenres = [
-    { name: '🎸 Rock', slug: 'rock' },
-    { name: '🎤 Pop', slug: 'pop' },
-    { name: '🎤 Hip-Hop', slug: 'hip-hop' },
-    { name: '🎧 Electronic', slug: 'electronic' },
-    { name: '🤠 Country', slug: 'country' },
-    { name: '🎵 R&B', slug: 'rnb' },
-    { name: '🎺 Jazz', slug: 'jazz' },
-    { name: '🎸 Indie Rock', slug: 'indie-rock' },
-    { name: '🤘 Metal', slug: 'metal' },
-    { name: '🎵 Alternative', slug: 'alternative' },
-    { name: '💥 Punk', slug: 'punk' },
-    { name: '🌴 Reggae', slug: 'reggae' },
-    { name: '🎻 Folk', slug: 'folk' },
-    { name: '✨ Soul', slug: 'soul' },
-    { name: '🎷 Funk', slug: 'funk' },
-    { name: '🎸 Blues', slug: 'blues' },
-    { name: '🎻 Classical', slug: 'classical' },
-    { name: '🕺 Disco', slug: 'disco' },
-    { name: '🎹 Synthwave', slug: 'synthwave' },
-    { name: '💭 Dream Pop', slug: 'dream-pop' },
-    { name: '🎸 Psychedelic Rock', slug: 'psychedelic-rock' },
-    { name: '🎧 Indie Pop', slug: 'indie-pop' },
-  ];
-
   return (
     <>
       <header className="mb-8">

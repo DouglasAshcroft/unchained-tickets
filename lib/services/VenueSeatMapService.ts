@@ -8,12 +8,12 @@ import {
   SeatSectionInput,
 } from '@/lib/validators/seatMapSchemas';
 
-const toJsonValue = (value?: Record<string, unknown> | null): Prisma.JsonValue | undefined => {
+const toJsonValue = (value?: Record<string, unknown> | null): Prisma.InputJsonValue | undefined => {
   if (!value) {
     return undefined;
   }
 
-  return JSON.parse(JSON.stringify(value)) as Prisma.JsonValue;
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 };
 
 const sanitizeSeat = (seat: SeatInput, fallbackOrder: number) => ({
@@ -176,7 +176,7 @@ class VenueSeatMapService {
           description: payload.description?.trim() ?? null,
           status: payload.status ?? SeatMapStatus.draft,
           version: payload.version ?? 1,
-          structure: structure as Prisma.JsonValue,
+          structure: JSON.parse(JSON.stringify(structure)) as Prisma.InputJsonValue,
         },
       });
 

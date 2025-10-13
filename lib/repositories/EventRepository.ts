@@ -146,6 +146,18 @@ export class EventRepository {
             isActive: true,
             createdAt: true,
             updatedAt: true,
+            perks: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                instructions: true,
+                quantity: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+              orderBy: { createdAt: 'asc' },
+            },
           },
           orderBy: { createdAt: 'asc' },
         },

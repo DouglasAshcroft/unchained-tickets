@@ -14,12 +14,24 @@ const optionalIsoDateField = z
   .string()
   .datetime({ message: 'Invalid ISO-8601 datetime string' });
 
+const TicketTypePerkSchema = z.object({
+  name: z.string().trim().min(2, 'Perk name is required').max(160),
+  description: z.string().trim().max(500).optional().nullable(),
+  instructions: z.string().trim().max(500).optional().nullable(),
+  quantity: z
+    .number({ message: 'Perk quantity must be provided as a number' })
+    .int('Quantity must be an integer')
+    .min(1, 'Quantity must be at least 1')
+    .optional()
+    .default(1),
+});
+
 const TicketTypeCreateSchema = z.object({
   name: z.string().trim().min(2, 'Ticket name is required').max(160),
   description: z.string().trim().max(500).optional().nullable(),
   pricingType: z.nativeEnum(PricingType),
   priceCents: z
-    .number({ invalid_type_error: 'Provide price in cents as a number' })
+    .number({ message: 'Provide price in cents as a number' })
     .int('Price must be an integer number of cents')
     .min(0, 'Price cannot be negative')
     .optional()
@@ -30,7 +42,7 @@ const TicketTypeCreateSchema = z.object({
     .regex(/^[A-Za-z]{3}$/i, { message: 'Currency must be a 3-letter code' })
     .optional(),
   capacity: z
-    .number({ invalid_type_error: 'Capacity must be a whole number' })
+    .number({ message: 'Capacity must be a whole number' })
     .int('Capacity must be a whole number')
     .min(1, 'Capacity must be at least 1')
     .optional()
@@ -38,6 +50,7 @@ const TicketTypeCreateSchema = z.object({
   salesStart: z.union([optionalIsoDateField, z.null()]).optional(),
   salesEnd: z.union([optionalIsoDateField, z.null()]).optional(),
   isActive: z.boolean().optional(),
+  perks: z.array(TicketTypePerkSchema).optional().default([]),
 });
 
 export const EventCreateSchema = z.object({
@@ -66,3 +79,4 @@ export const EventUpdateSchema = EventCreateSchema.partial().refine(
 export type EventCreateInput = z.infer<typeof EventCreateSchema>;
 export type EventUpdateInput = z.infer<typeof EventUpdateSchema>;
 export type EventTicketTypeInput = z.infer<typeof TicketTypeCreateSchema>;
+export type EventTicketTypePerkInput = z.infer<typeof TicketTypePerkSchema>;

@@ -179,6 +179,13 @@ export class EventService {
     const externalLink = normalizeNullableString(data.externalLink);
     const mapsLink = normalizeNullableString(data.mapsLink);
 
+    if (data.primaryArtistId) {
+      const artist = await artistRepository.findById(data.primaryArtistId);
+      if (!artist) {
+        throw new Error('Artist not found');
+      }
+    }
+
     const artistId =
       data.primaryArtistId !== undefined ? data.primaryArtistId ?? null : null;
 
@@ -232,22 +239,36 @@ export class EventService {
       });
 
       if (ticketTypesInput.length > 0) {
-        await tx.eventTicketType.createMany({
-          data: ticketTypesInput.map((ticketType) => ({
-            eventId: eventRecord.id,
-            name: ticketType.name.trim(),
-            description: ticketType.description?.trim() ?? null,
-            pricingType: ticketType.pricingType,
-            priceCents: ticketType.priceCents ?? null,
-            currency: (ticketType.currency ?? 'USD').toUpperCase(),
-            capacity: ticketType.capacity ?? null,
-            salesStart: ticketType.salesStart
-              ? new Date(ticketType.salesStart)
-              : null,
-            salesEnd: ticketType.salesEnd ? new Date(ticketType.salesEnd) : null,
-            isActive: ticketType.isActive ?? true,
-          })),
-        });
+        for (const ticketType of ticketTypesInput) {
+          const createdTicketType = await tx.eventTicketType.create({
+            data: {
+              eventId: eventRecord.id,
+              name: ticketType.name.trim(),
+              description: ticketType.description?.trim() ?? null,
+              pricingType: ticketType.pricingType,
+              priceCents: ticketType.priceCents ?? null,
+              currency: (ticketType.currency ?? 'USD').toUpperCase(),
+              capacity: ticketType.capacity ?? null,
+              salesStart: ticketType.salesStart
+                ? new Date(ticketType.salesStart)
+                : null,
+              salesEnd: ticketType.salesEnd ? new Date(ticketType.salesEnd) : null,
+              isActive: ticketType.isActive ?? true,
+            },
+          });
+
+          if (ticketType.perks && ticketType.perks.length > 0) {
+            await tx.ticketPerk.createMany({
+              data: ticketType.perks.map((perk) => ({
+                ticketTypeId: createdTicketType.id,
+                name: perk.name.trim(),
+                description: perk.description?.trim() ?? null,
+                instructions: perk.instructions?.trim() ?? null,
+                quantity: perk.quantity ?? 1,
+              })),
+            });
+          }
+        }
       }
 
       if (seatMapId) {
@@ -285,6 +306,13 @@ export class EventService {
       const venue = await venueRepository.findById(data.venueId);
       if (!venue) {
         throw new Error('Venue not found');
+      }
+    }
+
+    if (data.primaryArtistId !== undefined && data.primaryArtistId !== null) {
+      const artist = await artistRepository.findById(data.primaryArtistId);
+      if (!artist) {
+        throw new Error('Artist not found');
       }
     }
 

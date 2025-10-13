@@ -1,7 +1,7 @@
 import { SeatMapStatus } from "@prisma/client";
 import { z } from "zod";
 
-const SeatMetadataSchema = z.record(z.any()).optional();
+const SeatMetadataSchema = z.record(z.string(), z.any()).optional();
 
 const SeatSchema = z.object({
   seatNumber: z.string().trim().min(1, "Seat number is required"),

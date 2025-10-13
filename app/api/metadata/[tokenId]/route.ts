@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { sanitizePosterImageUrl } from '@/lib/utils/posterImage';
+import { getTicketState } from '@/lib/services/NFTMintingService';
 
 /**
  * Metadata API for NFT tickets
@@ -44,8 +45,19 @@ export async function GET(
       .filter((name): name is string => Boolean(name))
       .join(', ');
 
-    // Determine if this is a souvenir (post-event)
-    const isSouvenir = new Date() > new Date(event.endsAt || event.startsAt);
+    // Check on-chain ticket state
+    // TicketState: 0 = ACTIVE, 1 = USED, 2 = SOUVENIR
+    let ticketState = 0;
+    let isSouvenir = false;
+
+    try {
+      ticketState = await getTicketState(BigInt(tokenId));
+      isSouvenir = ticketState === 2; // SOUVENIR state
+    } catch (error) {
+      console.warn('[Metadata API] Could not fetch on-chain state, falling back to time-based check:', error);
+      // Fallback: time-based determination
+      isSouvenir = new Date() > new Date(event.endsAt || event.startsAt);
+    }
 
     // Build metadata
     const metadata = {
@@ -87,7 +99,11 @@ export async function GET(
         },
         {
           trait_type: 'Ticket Type',
-          value: isSouvenir ? 'Souvenir' : 'Active',
+          value: isSouvenir ? 'Souvenir' : ticketState === 1 ? 'Used' : 'Active',
+        },
+        {
+          trait_type: 'On-Chain State',
+          value: ticketState === 0 ? 'Active' : ticketState === 1 ? 'Used' : 'Souvenir',
         },
       ],
       properties: {

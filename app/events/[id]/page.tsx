@@ -131,6 +131,7 @@ export default async function EventDetailPage(props: EventDetailPageProps) {
                 eventId={event.id}
                 eventTitle={event.title}
                 availableTickets={event.availableTickets ?? 0}
+                ticketTypes={event.ticketTypes ?? []}
               />
 
               <div className="flex gap-3">

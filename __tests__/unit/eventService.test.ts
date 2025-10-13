@@ -22,6 +22,7 @@ const mockArtistRepository = {
   search: vi.fn(),
   findAll: vi.fn(),
   findBySlug: vi.fn(),
+  findById: vi.fn(),
 };
 
 const mockPrisma = {
@@ -31,6 +32,9 @@ const mockPrisma = {
   },
   seatPosition: {
     findMany: vi.fn(),
+  },
+  ticketPerk: {
+    createMany: vi.fn(),
   },
 };
 
@@ -115,12 +119,15 @@ describe('EventService.createEvent', () => {
         create: vi.fn().mockResolvedValue(createdEvent),
       },
       eventTicketType: {
-        createMany: vi.fn(),
+        create: vi.fn().mockResolvedValue({ id: 321, name: 'GA' }),
       },
       eventSeatMapAssignment: {
         create: vi.fn().mockResolvedValue(assignmentRecord),
       },
       eventReservedSeat: {
+        createMany: vi.fn(),
+      },
+      ticketPerk: {
         createMany: vi.fn(),
       },
     };
@@ -182,22 +189,21 @@ describe('EventService.createEvent', () => {
         status: 'draft',
       },
     });
-    expect(tx.eventTicketType.createMany).toHaveBeenCalledWith({
-      data: [
-        {
-          eventId: createdEvent.id,
-          name: 'GA',
-          description: null,
-          pricingType: 'general_admission',
-          priceCents: 5000,
-          currency: 'USD',
-          capacity: 200,
-          salesStart: null,
-          salesEnd: null,
-          isActive: true,
-        },
-      ],
+    expect(tx.eventTicketType.create).toHaveBeenCalledWith({
+      data: {
+        eventId: createdEvent.id,
+        name: 'GA',
+        description: null,
+        pricingType: 'general_admission',
+        priceCents: 5000,
+        currency: 'USD',
+        capacity: 200,
+        salesStart: null,
+        salesEnd: null,
+        isActive: true,
+      },
     });
+    expect(tx.ticketPerk.createMany).not.toHaveBeenCalled();
     expect(tx.eventSeatMapAssignment.create).not.toHaveBeenCalled();
     expect(tx.eventReservedSeat.createMany).not.toHaveBeenCalled();
     expect(result.id).toBe(createdEvent.id);
@@ -224,6 +230,79 @@ describe('EventService.createEvent', () => {
         ] as any,
       })
     ).rejects.toThrow('Venue not found');
+    expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('creates perks for ticket types when provided', async () => {
+    const venueId = 8;
+    mockVenueRepository.findById.mockResolvedValue({ id: venueId });
+
+    const { tx, createdEvent } = buildTransactionMocks();
+    tx.eventTicketType.create.mockResolvedValueOnce({ id: 555, name: 'VIP' });
+    mockEventRepository.findById.mockResolvedValue({
+      ...createdEvent,
+      tickets: [],
+      ticketTypes: [],
+      seatMapAssignments: [],
+      artists: [],
+    });
+
+    await eventService.createEvent({
+      title: 'VIP Bash',
+      startsAt: '2025-03-01T18:00:00.000Z',
+      venueId,
+      posterImageUrl: '',
+      mapsLink: '',
+      externalLink: '',
+      status: 'draft',
+      primaryArtistId: null,
+      ticketTypes: [
+        {
+          name: 'VIP',
+          pricingType: 'general_admission',
+          perks: [
+            {
+              name: 'Welcome Drink',
+              description: 'Includes one complimentary cocktail',
+              instructions: 'Redeem at the main bar',
+              quantity: 2,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(tx.ticketPerk.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          ticketTypeId: 555,
+          name: 'Welcome Drink',
+          description: 'Includes one complimentary cocktail',
+          instructions: 'Redeem at the main bar',
+          quantity: 2,
+        },
+      ],
+    });
+  });
+
+  it('throws if primary artist does not exist', async () => {
+    mockVenueRepository.findById.mockResolvedValue({ id: 5 });
+    mockArtistRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      eventService.createEvent({
+        title: 'Missing Artist',
+        startsAt: '2025-04-01T20:00:00.000Z',
+        venueId: 5,
+        primaryArtistId: 999,
+        ticketTypes: [
+          {
+            name: 'GA',
+            pricingType: 'general_admission',
+          },
+        ] as any,
+      })
+    ).rejects.toThrow('Artist not found');
     expect(mockPrisma.$transaction).not.toHaveBeenCalled();
   });
 
