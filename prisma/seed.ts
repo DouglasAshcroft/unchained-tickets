@@ -235,117 +235,181 @@ async function main() {
     return genreImages[index % genreImages.length];
   }
 
-  for (let i = 0; i < 50; i++) {
-    const venue = venues[i % venues.length];
-    const artist = artists[i % artists.length];
+  // Smart event distribution: each venue gets 2-4 events over 6 months
+  const usedArtists = new Set<number>(); // Track artist usage to ensure diversity
+  const venueEventDates = new Map<number, Set<string>>(); // Track dates per venue to avoid duplicates
+  let eventCounter = 0;
+  let featuredCounter = 0;
+  let posterIndex = 0;
 
-    // Spread events over 6 months (180 days)
-    const daysOffset = Math.floor(i * (180 / 50));
-    const eventDate = new Date(baseDate);
-    eventDate.setDate(eventDate.getDate() + daysOffset);
+  // Shuffle venues to randomize which get more events
+  const shuffledVenues = [...venues].sort(() => Math.random() - 0.5);
 
-    // Determine status based on date
-    let status: 'draft' | 'published' | 'canceled' | 'completed';
-    const now = new Date();
-    const isPast = eventDate < now;
+  for (const venue of shuffledVenues) {
+    if (eventCounter >= 50) break;
 
-    if (isPast) {
-      status = i % 7 === 0 ? 'canceled' : 'completed';
-    } else {
-      status = i % 10 === 0 ? 'draft' : 'published';
-    }
+    // Each venue gets 2-4 events
+    const eventsForVenue = 2 + Math.floor(Math.random() * 3);
 
-    // Random start time between 19:00 and 22:00
-    const startHour = 19 + Math.floor(Math.random() * 4);
-    eventDate.setHours(startHour, 0, 0, 0);
+    for (let j = 0; j < eventsForVenue && eventCounter < 50; j++) {
+      // Select a random artist that hasn't been used with this venue
+      const availableArtists = artists.filter(a => !usedArtists.has(a.id));
+      const artist = availableArtists.length > 0
+        ? availableArtists[Math.floor(Math.random() * availableArtists.length)]
+        : artists[Math.floor(Math.random() * artists.length)];
 
-    const endDate = new Date(eventDate);
-    endDate.setHours(startHour + 3, 0, 0, 0); // 3 hour events
+      usedArtists.add(artist.id);
+      if (usedArtists.size >= artists.length) usedArtists.clear(); // Reset when all used
 
-    // Spread createdAt dates over past 90 days for realistic "New" badge distribution
-    const createdDaysAgo = Math.floor(i * (90 / 50)); // 0-90 days ago
-    const createdAt = new Date();
-    createdAt.setDate(createdAt.getDate() - createdDaysAgo);
+      // Generate date ensuring no duplicates at same venue
+      let eventDate: Date;
+      let dateKey: string;
+      let attempts = 0;
 
-    // Mark first 8 published events as featured (for Featured Venues & Artists section)
-    const isFeatured = status === 'published' && i < 8;
-    const featuredUntil = isFeatured ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null; // 30 days
+      do {
+        // Distribute: 30% past (days -60 to -1), 20% current (days 0-14), 50% future (days 15-120)
+        const rand = Math.random();
+        let daysOffset: number;
 
-    const event = await prisma.event.create({
-      data: {
-        title: `${eventTitles[i]} - ${artist.name}`,
-        startsAt: eventDate,
-        endsAt: endDate,
-        venueId: venue.id,
-        artistId: artist.id,
-        status,
-        featured: isFeatured,
-        featuredUntil,
-        externalLink: `https://tickets.unchained.xyz/event-${i + 1}`,
-        mapsLink: `https://www.google.com/maps?q=${encodeURIComponent(venue.name)}`,
-        posterImageUrl: posterImages[i], // Use unique image per event
-        createdAt: createdAt, // Set realistic creation date
-      },
-    });
+        if (rand < 0.3) {
+          daysOffset = -60 + Math.floor(Math.random() * 60); // Past
+        } else if (rand < 0.5) {
+          daysOffset = Math.floor(Math.random() * 15); // Current
+        } else {
+          daysOffset = 15 + Math.floor(Math.random() * 106); // Future
+        }
 
-    await prisma.eventArtist.create({
-      data: {
-        eventId: event.id,
-        artistId: artist.id,
-        isPrimary: true,
-        sortOrder: 1,
-      },
-    });
+        eventDate = new Date(baseDate);
+        eventDate.setDate(eventDate.getDate() + daysOffset);
+        dateKey = eventDate.toISOString().split('T')[0];
 
-    // Create ticket types for each event
-    const gaPrice = 3500 + Math.floor(Math.random() * 3000); // $35-$65
-    const vipPrice = gaPrice + 2000 + Math.floor(Math.random() * 3000); // +$20-$50 more
+        attempts++;
+      } while (
+        venueEventDates.get(venue.id)?.has(dateKey) &&
+        attempts < 10
+      );
 
-    const gaTicketType = await prisma.eventTicketType.create({
-      data: {
-        eventId: event.id,
-        name: 'General Admission',
-        description: 'Standard entry to the event',
-        pricingType: 'general_admission',
-        priceCents: gaPrice,
-        currency: 'USD',
-        capacity: 100,
-        isActive: true,
-      },
-    });
+      // Track this date for this venue
+      if (!venueEventDates.has(venue.id)) {
+        venueEventDates.set(venue.id, new Set());
+      }
+      venueEventDates.get(venue.id)!.add(dateKey);
 
-    const vipTicketType = await prisma.eventTicketType.create({
-      data: {
-        eventId: event.id,
-        name: 'VIP',
-        description: 'Premium seating with exclusive perks',
-        pricingType: 'general_admission',
-        priceCents: vipPrice,
-        currency: 'USD',
-        capacity: 50,
-        isActive: true,
-      },
-    });
+      // Determine status based on date
+      let status: 'draft' | 'published' | 'canceled' | 'completed';
+      const now = new Date();
+      const isPast = eventDate < now;
 
-    // Create 20 tickets per event with varied pricing
-    for (let j = 1; j <= 20; j++) {
-      const isVIP = j > 10;
-      const ticketType = isVIP ? vipTicketType : gaTicketType;
+      if (isPast) {
+        status = Math.random() < 0.1 ? 'canceled' : 'completed';
+      } else {
+        status = Math.random() < 0.1 ? 'draft' : 'published';
+      }
 
-      await prisma.ticket.create({
+      // Random start time between 19:00 and 22:00
+      const startHour = 19 + Math.floor(Math.random() * 4);
+      eventDate.setHours(startHour, 0, 0, 0);
+
+      const endDate = new Date(eventDate);
+      endDate.setHours(startHour + 3, 0, 0, 0); // 3 hour events
+
+      // Spread createdAt dates realistically
+      const createdDaysAgo = Math.floor(Math.random() * 90);
+      const createdAt = new Date();
+      createdAt.setDate(createdAt.getDate() - createdDaysAgo);
+
+      // Mark first 8 published future events as featured
+      const isFeatured = status === 'published' && !isPast && featuredCounter < 8;
+      if (isFeatured) featuredCounter++;
+      const featuredUntil = isFeatured ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null;
+
+      // Get genre-specific poster image
+      const posterImageUrl = getPosterForGenre(artist.genre, posterIndex);
+      posterIndex++;
+
+      const event = await prisma.event.create({
         data: {
-          eventId: event.id,
-          ticketTypeId: ticketType.id,
-          status: 'reserved',
-          priceCents: ticketType.priceCents,
-          currency: 'USD',
-          seatSection: isVIP ? 'VIP' : 'GA',
-          seatRow: String.fromCharCode(65 + Math.floor((j - 1) / 5)), // A-D
-          seat: String(j),
+          title: `${eventTitles[eventCounter % eventTitles.length]} - ${artist.name}`,
+          startsAt: eventDate,
+          endsAt: endDate,
+          venueId: venue.id,
+          artistId: artist.id,
+          status,
+          featured: isFeatured,
+          featuredUntil,
+          externalLink: `https://tickets.unchained.xyz/event-${eventCounter + 1}`,
+          mapsLink: `https://www.google.com/maps?q=${encodeURIComponent(venue.name)}`,
+          posterImageUrl,
+          createdAt: createdAt,
         },
       });
+
+      await prisma.eventArtist.create({
+        data: {
+          eventId: event.id,
+          artistId: artist.id,
+          isPrimary: true,
+          sortOrder: 1,
+        },
+      });
+
+      // Create ticket types for each event
+      const gaPrice = 3500 + Math.floor(Math.random() * 3000); // $35-$65
+      const vipPrice = gaPrice + 2000 + Math.floor(Math.random() * 3000); // +$20-$50 more
+
+      const gaTicketType = await prisma.eventTicketType.create({
+        data: {
+          eventId: event.id,
+          name: 'General Admission',
+          description: 'Standard entry to the event',
+          pricingType: 'general_admission',
+          priceCents: gaPrice,
+          currency: 'USD',
+          capacity: 100,
+          isActive: true,
+        },
+      });
+
+      const vipTicketType = await prisma.eventTicketType.create({
+        data: {
+          eventId: event.id,
+          name: 'VIP',
+          description: 'Premium seating with exclusive perks',
+          pricingType: 'general_admission',
+          priceCents: vipPrice,
+          currency: 'USD',
+          capacity: 50,
+          isActive: true,
+        },
+      });
+
+      // Create 20 tickets per event with varied pricing
+      for (let k = 1; k <= 20; k++) {
+        const isVIP = k > 10;
+        const ticketType = isVIP ? vipTicketType : gaTicketType;
+
+        await prisma.ticket.create({
+          data: {
+            eventId: event.id,
+            ticketTypeId: ticketType.id,
+            status: 'reserved',
+            priceCents: ticketType.priceCents,
+            currency: 'USD',
+            seatSection: isVIP ? 'VIP' : 'GA',
+            seatRow: String.fromCharCode(65 + Math.floor((k - 1) / 5)), // A-D
+            seat: String(k),
+          },
+        });
+      }
+
+      eventCounter++;
     }
   }
+
+  console.log(`✅ Created ${eventCounter} events with smart distribution`);
+
+  // Seed venue checklists
+  await seedVenueChecklists(venues, admin);
 
   // Advocacy System Test Data
   await seedAdvocacyTestData();
@@ -359,6 +423,53 @@ async function main() {
   console.log(`📅 Event date range: Oct 2025 - Mar 2026`);
   console.log(`🏷️  Event statuses: draft, published, canceled, completed`);
   console.log(`🎯 Created advocacy test data: external events, waitlist, impressions`);
+}
+
+async function seedVenueChecklists(venues: any[], adminUser: any) {
+  console.log('📋 Seeding venue onboarding checklists...');
+
+  const CHECKLIST_TASKS = ['seat_map', 'poster_workflow', 'staff_accounts', 'payout_details'];
+
+  // Completion patterns: 0%, 25%, 50%, 75%, 100%
+  const completionPatterns = [
+    [], // 0% complete
+    ['seat_map'], // 25% complete
+    ['seat_map', 'poster_workflow'], // 50% complete
+    ['seat_map', 'poster_workflow', 'staff_accounts'], // 75% complete
+    ['seat_map', 'poster_workflow', 'staff_accounts', 'payout_details'], // 100% complete
+  ];
+
+  // Distribute completion levels across venues
+  for (let i = 0; i < venues.length; i++) {
+    const venue = venues[i];
+    const patternIndex = i % completionPatterns.length;
+    const completedTasks = completionPatterns[patternIndex];
+
+    for (const task of CHECKLIST_TASKS) {
+      const isCompleted = completedTasks.includes(task);
+
+      await prisma.venueChecklistStatus.upsert({
+        where: {
+          venueId_task: {
+            venueId: venue.id,
+            task: task as any,
+          },
+        },
+        update: {
+          completedAt: isCompleted ? new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000) : null,
+          completedBy: isCompleted ? adminUser.id : null,
+        },
+        create: {
+          venueId: venue.id,
+          task: task as any,
+          completedAt: isCompleted ? new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000) : null,
+          completedBy: isCompleted ? adminUser.id : null,
+        },
+      });
+    }
+  }
+
+  console.log(`✅ Created checklists for ${venues.length} venues with varied completion`);
 }
 
 async function seedAdvocacyTestData() {

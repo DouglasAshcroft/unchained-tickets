@@ -17,7 +17,13 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "db:push": "prisma db push",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:down:volumes": "docker compose down -v",
+    "docker:logs": "docker compose logs -f postgres",
+    "docker:reset": "docker compose down -v && docker compose up -d && sleep 5 && npx prisma migrate deploy && npx prisma db push --skip-generate && npm run db:seed",
+    "docker:fresh": "docker stop unchained-db 2>/dev/null || true && docker rm unchained-db 2>/dev/null || true && npm run docker:reset"
   },
   "dependencies": {
     "@coinbase/cdp-sdk": "^1.38.4",
