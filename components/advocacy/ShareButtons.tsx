@@ -14,9 +14,8 @@ interface ShareButtonsProps {
   text: string;
 }
 
-export function ShareButtons({ url, title, text }: ShareButtonsProps) {
+export function ShareButtons({ url, text }: ShareButtonsProps) {
   const encodedUrl = encodeURIComponent(url);
-  const encodedTitle = encodeURIComponent(title);
   const encodedText = encodeURIComponent(text);
 
   const shareLinks = {
@@ -27,22 +26,6 @@ export function ShareButtons({ url, title, text }: ShareButtonsProps) {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(url);
     alert('Link copied to clipboard!');
-  };
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title,
-          text,
-          url,
-        });
-      } catch (error) {
-        // User cancelled or error occurred
-      }
-    } else {
-      handleCopyLink();
-    }
   };
 
   return (
@@ -70,7 +53,7 @@ export function ShareButtons({ url, title, text }: ShareButtonsProps) {
       </a>
 
       <button
-        onClick={handleShare}
+        onClick={handleCopyLink}
         className="p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
         aria-label="Copy link"
       >

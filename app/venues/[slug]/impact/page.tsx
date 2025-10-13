@@ -4,7 +4,7 @@
  * Shows marketing value and advocacy stats for a specific venue
  */
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db/prisma';
 import { notFound } from 'next/navigation';
 import { valueTrackingService } from '@/lib/services/ValueTrackingService';
 import Link from 'next/link';
@@ -12,10 +12,11 @@ import Link from 'next/link';
 export default async function VenueImpactPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
+  const { slug } = await params;
   const venue = await prisma.venue.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
     select: {
       id: true,
       name: true,
@@ -54,7 +55,7 @@ export default async function VenueImpactPage({
         {/* Header */}
         <div className="mb-8">
           <Link
-            href={`/venues/${params.slug}`}
+            href={`/venues/${slug}`}
             className="text-purple-600 hover:text-purple-700 text-sm font-medium mb-4 inline-block"
           >
             ← Back to Venue

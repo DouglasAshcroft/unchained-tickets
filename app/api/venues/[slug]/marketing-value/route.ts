@@ -5,17 +5,18 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db/prisma';
 import { valueTrackingService } from '@/lib/services/ValueTrackingService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const { slug } = await params;
     // Get venue
     const venue = await prisma.venue.findUnique({
-      where: { slug: params.slug },
+      where: { slug },
       select: { name: true },
     });
 

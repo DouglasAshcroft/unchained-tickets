@@ -59,7 +59,7 @@ export function WaitlistForm({ onSuccess }: WaitlistFormProps) {
         <div className="flex items-start gap-3">
           <div className="text-2xl">✅</div>
           <div className="flex-1">
-            <h3 className="font-semibold text-green-900 mb-2">You're on the list!</h3>
+            <h3 className="font-semibold text-green-900 mb-2">You&apos;re on the list!</h3>
             <p className="text-sm text-green-700 mb-4">
               Check your email for confirmation and next steps.
             </p>
@@ -139,7 +139,7 @@ export function WaitlistForm({ onSuccess }: WaitlistFormProps) {
       </button>
 
       <p className="text-xs text-gray-500 text-center">
-        By joining, you'll get early access to fair ticketing features and exclusive updates.
+        By joining, you&apos;ll get early access to fair ticketing features and exclusive updates.
       </p>
     </form>
   );

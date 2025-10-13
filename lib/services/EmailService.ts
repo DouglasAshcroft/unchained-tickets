@@ -5,7 +5,7 @@
  * Demo-safe: logs emails in dev mode instead of sending
  */
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db/prisma';
 import { isDemoMode } from '@/lib/config/eventMode';
 import type { AdvocacyEmailData } from '@/lib/types/advocacy';
 

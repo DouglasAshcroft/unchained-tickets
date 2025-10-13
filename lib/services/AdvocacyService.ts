@@ -4,7 +4,7 @@
  * Core business logic for advocacy system
  */
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db/prisma';
 import { calculateTier, getNextTierProgress } from '@/lib/config/advocacyTiers';
 import { emailService } from './EmailService';
 import type { AdvocacySubmission, AdvocacyStats, LeaderboardEntry } from '@/lib/types/advocacy';

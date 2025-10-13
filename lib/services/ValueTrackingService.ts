@@ -5,7 +5,7 @@
  * Calculates estimated advertising value using CPM/CPC model
  */
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db/prisma';
 
 // Pricing model (industry standard)
 const CPM = 5.0; // $5 per 1000 impressions

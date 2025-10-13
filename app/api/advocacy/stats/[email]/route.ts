@@ -9,10 +9,11 @@ import { advocacyService } from '@/lib/services/AdvocacyService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { email: string } }
+  { params }: { params: Promise<{ email: string }> }
 ) {
   try {
-    const email = decodeURIComponent(params.email);
+    const { email: rawEmail } = await params;
+    const email = decodeURIComponent(rawEmail);
 
     const stats = await advocacyService.getAdvocacyStats(email);
 

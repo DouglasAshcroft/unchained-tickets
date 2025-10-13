@@ -5,7 +5,7 @@
  * Only used in production mode (NEXT_PUBLIC_EVENT_MODE=serper)
  */
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db/prisma';
 import { isSerperEnabled } from '@/lib/config/eventMode';
 
 interface SerperEvent {

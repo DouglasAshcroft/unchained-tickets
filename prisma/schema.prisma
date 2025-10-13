@@ -114,6 +114,8 @@ model User {
   payments                Payment[]
   charges                 Charge[]
   completedChecklistItems VenueChecklistStatus[] @relation("VenueChecklistCompletedBy")
+  supportSessions         VenueSupportSession[]  @relation("VenueSupportSessions")
+  auditLogs               AdminAuditLog[]        @relation("AdminAuditLogs")
 }
 
 model AuthCredential {
@@ -235,11 +237,12 @@ model Venue {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  owner             User?                  @relation("VenueOwner", fields: [ownerUserId], references: [id])
+  owner             User?                   @relation("VenueOwner", fields: [ownerUserId], references: [id])
   events            Event[]
   clicks            VenueClick[]
   seatMaps          VenueSeatMap[]
   checklistStatuses VenueChecklistStatus[]
+  supportSessions   VenueSupportSession[]   @relation("VenueSupportSessions")
 
   // Performance indexes
   @@index([name]) // For text search
@@ -700,4 +703,41 @@ model VenueMarketingValue {
   createdAt           DateTime @default(now())
 
   @@index([venueName])
+}
+
+// Admin Support Access System
+model VenueSupportSession {
+  id               Int       @id @default(autoincrement())
+  userId           Int
+  supportedVenueId Int
+  startedAt        DateTime  @default(now())
+  endedAt          DateTime?
+  ipAddress        String?
+  userAgent        String?
+  createdAt        DateTime  @default(now())
+
+  user  User  @relation("VenueSupportSessions", fields: [userId], references: [id], onDelete: Cascade)
+  venue Venue @relation("VenueSupportSessions", fields: [supportedVenueId], references: [id], onDelete: Cascade)
+
+  @@index([userId, endedAt])
+  @@index([supportedVenueId])
+  @@index([startedAt])
+}
+
+model AdminAuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  action     String // "venue_support_start", "venue_support_switch", "venue_support_end"
+  targetType String? // "venue", "event", "user"
+  targetId   Int?
+  metadata   Json? // Store additional context
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User @relation("AdminAuditLogs", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@index([targetType, targetId])
 }

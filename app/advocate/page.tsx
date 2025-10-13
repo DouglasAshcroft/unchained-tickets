@@ -149,7 +149,7 @@ export default function AdvocatePage() {
           <h3 className="font-semibold text-purple-900 mb-2">How Advocacy Works</h3>
           <ul className="text-sm text-purple-800 space-y-2">
             <li>• Find events on external platforms (Ticketmaster, etc.)</li>
-            <li>• Sign up to advocate and we'll email the venue on your behalf</li>
+            <li>• Sign up to advocate and we&apos;ll email the venue on your behalf</li>
             <li>• Track your impact and unlock rewards as you advocate</li>
             <li>• Help venues understand that fans want fair ticketing</li>
           </ul>

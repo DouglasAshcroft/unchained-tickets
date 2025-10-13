@@ -6,7 +6,7 @@
  * Displays user's current advocacy tier
  */
 
-import { ADVOCACY_TIERS, type AdvocacyTier } from '@/lib/config/advocacyTiers';
+import { ADVOCACY_TIERS } from '@/lib/config/advocacyTiers';
 
 interface TierBadgeProps {
   tierId: string;

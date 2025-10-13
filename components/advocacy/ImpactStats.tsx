@@ -6,9 +6,8 @@
  * Displays advocacy impact statistics
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { TierBadge } from './TierBadge';
-import { getNextTierProgress } from '@/lib/config/advocacyTiers';
 
 interface ImpactStatsProps {
   email: string;
@@ -30,11 +29,7 @@ export function ImpactStats({ email }: ImpactStatsProps) {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchStats();
-  }, [email]);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await fetch(`/api/advocacy/stats/${encodeURIComponent(email)}`);
       if (response.ok) {
@@ -46,7 +41,11 @@ export function ImpactStats({ email }: ImpactStatsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [email]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   if (loading) {
     return (
@@ -91,7 +90,7 @@ export function ImpactStats({ email }: ImpactStatsProps) {
 
         {!stats.tierProgress.next && (
           <p className="text-purple-700 font-medium">
-            🎉 Maximum tier achieved! You're a legend!
+            🎉 Maximum tier achieved! You&apos;re a legend!
           </p>
         )}
       </div>
@@ -117,7 +116,7 @@ export function ImpactStats({ email }: ImpactStatsProps) {
       <div className="bg-green-50 border border-green-200 rounded-lg p-4">
         <h4 className="font-semibold text-green-900 mb-2">Your Estimated Impact</h4>
         <p className="text-sm text-green-700">
-          You've helped generate awareness worth approximately{' '}
+          You&apos;ve helped generate awareness worth approximately{' '}
           <span className="font-bold">${(stats.advocacyCount * 25).toFixed(2)}</span> in
           grassroots marketing value for fair ticketing.
         </p>

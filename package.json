@@ -38,6 +38,7 @@
     "graphql-request": "^6.1.0",
     "html5-qrcode": "^2.3.8",
     "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.545.0",
     "next": "^15.5.4",
     "qr": "^0.5.2",
     "react": "^19.0.0",

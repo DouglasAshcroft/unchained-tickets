@@ -5,16 +5,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db/prisma';
 import { cookies } from 'next/headers';
 import { valueTrackingService } from '@/lib/services/ValueTrackingService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const eventId = parseInt(params.id, 10);
+    const { id } = await params;
+    const eventId = parseInt(id, 10);
     if (isNaN(eventId)) {
       return NextResponse.json(
         { error: 'Invalid event ID' },

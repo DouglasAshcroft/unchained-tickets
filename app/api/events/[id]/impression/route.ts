@@ -10,10 +10,11 @@ import { cookies } from 'next/headers';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const eventId = parseInt(params.id, 10);
+    const { id } = await params;
+    const eventId = parseInt(id, 10);
     if (isNaN(eventId)) {
       return NextResponse.json(
         { error: 'Invalid event ID' },

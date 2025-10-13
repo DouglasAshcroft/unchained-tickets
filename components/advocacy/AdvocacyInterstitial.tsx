@@ -92,13 +92,13 @@ export function AdvocacyInterstitial({ event, onClose }: AdvocacyInterstitialPro
 
             <h2 className="text-2xl font-bold mb-2">Thank You! 🎉</h2>
             <p className="text-gray-600 mb-6">
-              Your voice has been heard! We've sent an email to {event.venue.name} on your behalf.
+              Your voice has been heard! We&apos;ve sent an email to {event.venue.name} on your behalf.
               {isDemoMode() && ' (Demo mode - no actual email sent)'}
             </p>
 
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
               <p className="text-sm text-purple-900 font-medium mb-2">
-                You're now part of the movement! 🌱
+                You&apos;re now part of the movement! 🌱
               </p>
               <p className="text-xs text-purple-700">
                 Check your email for your advocacy stats and next steps.
