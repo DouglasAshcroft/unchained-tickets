@@ -274,6 +274,63 @@ class ApiClient {
     };
   }
 
+  // Profile endpoints
+  async getProfile() {
+    return this.request<any>('/api/profile');
+  }
+
+  async updateProfile(data: Partial<{
+    name: string;
+    phone: string;
+    avatarUrl: string;
+    bio: string;
+    location: string;
+    favoriteGenres: string[];
+    locationEnabled: boolean;
+    latitude: number;
+    longitude: number;
+  }>) {
+    return this.request<any>('/api/profile', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateProfileSettings(data: Partial<{
+    notificationsEnabled: boolean;
+    emailMarketing: boolean;
+    theme: string;
+    language: string;
+    timezone: string;
+  }>) {
+    return this.request<any>('/api/profile/settings', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async toggleFavoriteArtist(artistId: number) {
+    return this.request<{ action: 'added' | 'removed'; artistId: number }>(
+      '/api/profile/favorite-artists',
+      {
+        method: 'POST',
+        body: JSON.stringify({ artistId }),
+      }
+    );
+  }
+
+  async getAdvocacyStats() {
+    return this.request<{
+      advocacyCount: number;
+      totalVenuesReached: number;
+      currentTier: number;
+    }>('/api/profile/advocacy-stats');
+  }
+
+  async getVenueStaff() {
+    return this.request<any[]>('/api/profile/venue-staff');
+  }
+
   // Health check
   async healthCheck() {
     return this.request<any>('/api/health');

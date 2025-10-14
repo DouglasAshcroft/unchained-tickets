@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { api } from '@/lib/api/client';
 import LocationSelector, {
   type LocationOption,
   type SelectedLocation,
@@ -22,7 +24,30 @@ type GenreData = {
 };
 
 export default function EventsPageClient({ cities }: EventsPageClientProps) {
+  const { user, isAuthenticated } = useAuth();
   const [selectedLocation, setSelectedLocation] = useState<SelectedLocation>(null);
+  const [locationSource, setLocationSource] = useState<'profile' | 'manual' | null>(null);
+
+  // Load profile location as default on mount
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      api.getProfile()
+        .then((profile) => {
+          if (profile.location && !selectedLocation) {
+            // Parse location string format "City, State"
+            const parts = profile.location.split(',').map(s => s.trim());
+            if (parts.length === 2) {
+              const [city, state] = parts;
+              setSelectedLocation({ city, state });
+              setLocationSource('profile');
+            }
+          }
+        })
+        .catch((error) => {
+          console.error('Error fetching profile location:', error);
+        });
+    }
+  }, [isAuthenticated, user]); // Don't include selectedLocation in deps to avoid infinite loop
 
   const { data, isLoading, error } = useQuery<GenreData>({
     queryKey: ['events-by-genre', selectedLocation],
@@ -187,10 +212,33 @@ export default function EventsPageClient({ cities }: EventsPageClientProps) {
               Browse events by location and genre. Select your city to see what&apos;s happening near you.
             </p>
 
+            {/* Profile Location Indicator */}
+            {locationSource === 'profile' && selectedLocation && (
+              <div className="flex items-center justify-between bg-resistance-500/10 border border-resistance-500/30 rounded-lg p-3">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-grit-300">
+                    📍 Showing events near <span className="text-bone-100 font-medium">{selectedLocation.city}, {selectedLocation.state}</span> (from your profile)
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedLocation(null);
+                    setLocationSource('manual');
+                  }}
+                  className="text-sm text-acid-400 hover:brightness-110 transition-all px-3 py-1 rounded border border-acid-400/30"
+                >
+                  Change
+                </button>
+              </div>
+            )}
+
             <LocationSelector
               cities={cities}
               selectedLocation={selectedLocation}
-              onLocationChange={setSelectedLocation}
+              onLocationChange={(location) => {
+                setSelectedLocation(location);
+                setLocationSource(location ? 'manual' : null);
+              }}
             />
           </div>
 

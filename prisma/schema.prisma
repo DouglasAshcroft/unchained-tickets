@@ -102,6 +102,18 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Profile fields
+  phone              String?
+  avatarUrl          String?
+  bio                String?   @db.Text
+  location           String? // City, State or full address
+  favoriteGenres     String[] // Array of genre preferences
+  stripeCustomerId   String?  @unique
+  defaultPaymentMethodId String? // Stripe payment method ID
+  locationEnabled    Boolean  @default(false)
+  latitude           Decimal? @db.Decimal(9, 6)
+  longitude          Decimal? @db.Decimal(9, 6)
+
   // Relations
   credentials             AuthCredential[]
   sessions                Session[]
@@ -116,6 +128,13 @@ model User {
   completedChecklistItems VenueChecklistStatus[] @relation("VenueChecklistCompletedBy")
   supportSessions         VenueSupportSession[]  @relation("VenueSupportSessions")
   auditLogs               AdminAuditLog[]        @relation("AdminAuditLogs")
+  profile                 UserProfile?
+  venueStaff              VenueStaff[]
+  favoriteArtists         FavoriteArtist[]
+  invitedStaff            VenueStaff[]           @relation("StaffInviter")
+
+  @@index([email])
+  @@index([stripeCustomerId])
 }
 
 model AuthCredential {
@@ -211,9 +230,10 @@ model Artist {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  owner      User?         @relation("ArtistOwner", fields: [ownerUserId], references: [id])
-  events     Event[]       @relation("PrimaryArtist")
-  eventLinks EventArtist[]
+  owner          User?            @relation("ArtistOwner", fields: [ownerUserId], references: [id])
+  events         Event[]          @relation("PrimaryArtist")
+  eventLinks     EventArtist[]
+  favoritedBy    FavoriteArtist[]
 
   // Performance indexes
   @@index([name]) // For text search
@@ -243,6 +263,7 @@ model Venue {
   seatMaps          VenueSeatMap[]
   checklistStatuses VenueChecklistStatus[]
   supportSessions   VenueSupportSession[]   @relation("VenueSupportSessions")
+  staff             VenueStaff[]
 
   // Performance indexes
   @@index([name]) // For text search
@@ -722,6 +743,65 @@ model VenueSupportSession {
   @@index([userId, endedAt])
   @@index([supportedVenueId])
   @@index([startedAt])
+}
+
+// User Profile Extensions
+model UserProfile {
+  id                     Int      @id @default(autoincrement())
+  userId                 Int      @unique
+  notificationsEnabled   Boolean  @default(true)
+  emailMarketing         Boolean  @default(false)
+  theme                  String   @default("dark") // "dark" | "light"
+  language               String   @default("en")
+  timezone               String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FavoriteArtist {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  artistId  Int
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, artistId])
+  @@index([userId])
+  @@index([artistId])
+}
+
+// Venue Staff Management
+enum VenueStaffRole {
+  OWNER
+  MANAGER
+  STAFF
+  SCANNER
+}
+
+model VenueStaff {
+  id        Int             @id @default(autoincrement())
+  venueId   Int
+  userId    Int
+  role      VenueStaffRole  @default(STAFF)
+  isActive  Boolean         @default(true)
+  invitedBy Int?
+  invitedAt DateTime        @default(now())
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  venue    Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inviter  User?  @relation("StaffInviter", fields: [invitedBy], references: [id])
+
+  @@unique([venueId, userId])
+  @@index([venueId])
+  @@index([userId])
+  @@index([role])
+  @@index([invitedBy])
 }
 
 model AdminAuditLog {
