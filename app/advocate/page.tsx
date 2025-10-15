@@ -4,16 +4,15 @@
  * Email signup to join the advocacy movement
  */
 
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
-import Link from 'next/link';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+import Link from "next/link";
 
 export default function AdvocatePage() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
@@ -24,16 +23,14 @@ export default function AdvocatePage() {
     setSubmitting(true);
 
     // Store email in localStorage for profile intake
-    localStorage.setItem('advocate_email', email);
+    localStorage.setItem("advocate_email", email);
 
     // Redirect to profile page for full intake
-    router.push('/profile?new=true');
+    router.push("/profile?new=true");
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-ink-900 to-ink-800">
-      <Navbar />
-
       <main className="flex-1">
         <div className="container mx-auto px-4 py-12 max-w-4xl">
           {/* Header */}
@@ -52,9 +49,12 @@ export default function AdvocatePage() {
           {/* Email Signup Form */}
           <div className="max-w-2xl mx-auto">
             <div className="bg-ink-800/50 border border-resistance-500/30 rounded-xl p-8 mb-8">
-              <h2 className="text-2xl font-bold mb-4 text-bone-100 text-center">Sign Up to Advocate</h2>
+              <h2 className="text-2xl font-bold mb-4 text-bone-100 text-center">
+                Sign Up to Advocate
+              </h2>
               <p className="text-grit-300 mb-6 text-center">
-                Enter your email to start advocating for fair ticketing at your favorite venues
+                Enter your email to start advocating for fair ticketing at your
+                favorite venues
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -71,13 +71,16 @@ export default function AdvocatePage() {
                   disabled={submitting}
                   className="w-full px-6 py-4 bg-resistance-500 text-bone-100 rounded-lg hover:brightness-110 transition-all font-semibold text-lg disabled:opacity-50"
                 >
-                  {submitting ? 'Joining...' : 'Join the Resistance →'}
+                  {submitting ? "Joining..." : "Join the Resistance →"}
                 </button>
               </form>
 
               <p className="text-sm text-grit-400 mt-6 text-center">
-                Already have an account?{' '}
-                <Link href="/profile" className="text-acid-400 hover:brightness-110 transition-all">
+                Already have an account?{" "}
+                <Link
+                  href="/profile"
+                  className="text-acid-400 hover:brightness-110 transition-all"
+                >
                   Go to your profile
                 </Link>
               </p>
@@ -85,15 +88,22 @@ export default function AdvocatePage() {
 
             {/* How It Works */}
             <div className="bg-ink-800/50 border border-grit-500/30 rounded-xl p-8">
-              <h3 className="text-xl font-bold mb-6 text-bone-100 text-center">How Advocacy Works</h3>
+              <h3 className="text-xl font-bold mb-6 text-bone-100 text-center">
+                How Advocacy Works
+              </h3>
               <div className="space-y-4">
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-resistance-500 flex items-center justify-center text-bone-100 font-bold">
                     1
                   </div>
                   <div>
-                    <h4 className="font-semibold text-bone-100 mb-1">Create Your Profile</h4>
-                    <p className="text-sm text-grit-300">Sign up and tell us about your music preferences and favorite venues.</p>
+                    <h4 className="font-semibold text-bone-100 mb-1">
+                      Create Your Profile
+                    </h4>
+                    <p className="text-sm text-grit-300">
+                      Sign up and tell us about your music preferences and
+                      favorite venues.
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
@@ -101,8 +111,13 @@ export default function AdvocatePage() {
                     2
                   </div>
                   <div>
-                    <h4 className="font-semibold text-bone-100 mb-1">Advocate for Venues</h4>
-                    <p className="text-sm text-grit-300">We'll help you reach out to venues to request fair, transparent ticketing.</p>
+                    <h4 className="font-semibold text-bone-100 mb-1">
+                      Advocate for Venues
+                    </h4>
+                    <p className="text-sm text-grit-300">
+                      We'll help you reach out to venues to request fair,
+                      transparent ticketing.
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
@@ -110,18 +125,20 @@ export default function AdvocatePage() {
                     3
                   </div>
                   <div>
-                    <h4 className="font-semibold text-bone-100 mb-1">Track Your Impact</h4>
-                    <p className="text-sm text-grit-300">Earn rewards, climb tiers, and see the venues you've helped bring on board.</p>
+                    <h4 className="font-semibold text-bone-100 mb-1">
+                      Track Your Impact
+                    </h4>
+                    <p className="text-sm text-grit-300">
+                      Earn rewards, climb tiers, and see the venues you've
+                      helped bring on board.
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

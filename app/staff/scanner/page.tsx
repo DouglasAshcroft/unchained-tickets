@@ -1,12 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { QRScanner } from '@/components/ui/QRScanner';
+import { useState } from "react";
+
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { QRScanner } from "@/components/ui/QRScanner";
 
 interface Perk {
   id: number;
@@ -29,11 +28,13 @@ interface ScannedTicket {
 }
 
 export default function StaffScannerPage() {
-  const [qrInput, setQrInput] = useState('');
-  const [scannedTicket, setScannedTicket] = useState<ScannedTicket | null>(null);
+  const [qrInput, setQrInput] = useState("");
+  const [scannedTicket, setScannedTicket] = useState<ScannedTicket | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [scanMode, setScanMode] = useState<'camera' | 'manual'>('camera');
+  const [scanMode, setScanMode] = useState<"camera" | "manual">("camera");
 
   const processQRCode = async (qrCode: string) => {
     setLoading(true);
@@ -41,25 +42,27 @@ export default function StaffScannerPage() {
 
     try {
       // Parse QR code: UNCHAINED-TICKET:eventId:purchaseId:index:txHash
-      const parts = qrCode.split(':');
-      if (parts.length < 4 || parts[0] !== 'UNCHAINED-TICKET') {
-        throw new Error('Invalid QR code format');
+      const parts = qrCode.split(":");
+      if (parts.length < 4 || parts[0] !== "UNCHAINED-TICKET") {
+        throw new Error("Invalid QR code format");
       }
 
       const ticketId = `${parts[2]}-${parts[3]}`;
 
       // Validate ticket
-      const response = await fetch(`/api/tickets/validate?ticketId=${ticketId}`);
+      const response = await fetch(
+        `/api/tickets/validate?ticketId=${ticketId}`
+      );
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to validate ticket');
+        throw new Error(data.error || "Failed to validate ticket");
       }
 
       const data = await response.json();
 
       if (!data.valid) {
-        throw new Error(data.error || 'Invalid ticket');
+        throw new Error(data.error || "Invalid ticket");
       }
 
       setScannedTicket({
@@ -67,11 +70,9 @@ export default function StaffScannerPage() {
         eventName: data.ticket.eventName,
         venueName: data.ticket.venueName,
         tierName:
-          data.ticket.tierName ||
-          data.ticket.seatInfo ||
-          'General Admission',
+          data.ticket.tierName || data.ticket.seatInfo || "General Admission",
         seatInfo: data.ticket.seatInfo,
-        walletAddress: '0x...' + qrCode.slice(-8), // Mock wallet from QR
+        walletAddress: "0x..." + qrCode.slice(-8), // Mock wallet from QR
         perks: (data.ticket.perks || []).map((perk: any) => ({
           id: perk.id,
           name: perk.name,
@@ -83,7 +84,7 @@ export default function StaffScannerPage() {
         })),
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to scan ticket');
+      setError(err instanceof Error ? err.message : "Failed to scan ticket");
       setScannedTicket(null);
     } finally {
       setLoading(false);
@@ -97,7 +98,7 @@ export default function StaffScannerPage() {
 
   const handleManualScan = async () => {
     if (!qrInput.trim()) {
-      setError('Please enter a QR code');
+      setError("Please enter a QR code");
       return;
     }
     processQRCode(qrInput);
@@ -110,15 +111,15 @@ export default function StaffScannerPage() {
     if (!perk) return;
 
     if (perk.remainingQuantity <= 0) {
-      alert('This perk has already been fully redeemed.');
+      alert("This perk has already been fully redeemed.");
       return;
     }
 
     try {
       // In production, this would call the smart contract via API
-      const response = await fetch('/api/perks/redeem', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/perks/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ticketId: scannedTicket.id,
           walletAddress: scannedTicket.walletAddress,
@@ -129,7 +130,7 @@ export default function StaffScannerPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to redeem perk');
+        throw new Error(errorData.error || "Failed to redeem perk");
       }
 
       const result = await response.json();
@@ -137,12 +138,15 @@ export default function StaffScannerPage() {
       // Update local state
       setScannedTicket({
         ...scannedTicket,
-        perks: scannedTicket.perks?.map(perk =>
+        perks: scannedTicket.perks?.map((perk) =>
           perk.id === ticketPerkId
             ? {
                 ...perk,
-                redeemedQuantity: result.redeemedQuantity ?? perk.redeemedQuantity + 1,
-                remainingQuantity: result.remainingQuantity ?? Math.max(perk.remainingQuantity - 1, 0),
+                redeemedQuantity:
+                  result.redeemedQuantity ?? perk.redeemedQuantity + 1,
+                remainingQuantity:
+                  result.remainingQuantity ??
+                  Math.max(perk.remainingQuantity - 1, 0),
               }
             : perk
         ),
@@ -150,23 +154,23 @@ export default function StaffScannerPage() {
 
       alert(`✅ ${perk.name} redeemed successfully!`);
     } catch (err) {
-      alert(`❌ Failed to redeem perk: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      alert(
+        `❌ Failed to redeem perk: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`
+      );
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
-
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {/* Header */}
         <div className="mb-8">
           <h1 className="brand-heading text-4xl font-bold mb-2 bg-gradient-to-r from-resistance-500 via-hack-green to-acid-400 bg-clip-text text-transparent">
             Venue Staff Scanner
           </h1>
-          <p className="text-grit-300">
-            Scan tickets and redeem perks
-          </p>
+          <p className="text-grit-300">Scan tickets and redeem perks</p>
         </div>
 
         {/* Scanner Input */}
@@ -175,15 +179,15 @@ export default function StaffScannerPage() {
             {/* Mode Toggle */}
             <div className="flex gap-2">
               <Button
-                variant={scanMode === 'camera' ? 'primary' : 'secondary'}
-                onClick={() => setScanMode('camera')}
+                variant={scanMode === "camera" ? "primary" : "secondary"}
+                onClick={() => setScanMode("camera")}
                 className="flex-1"
               >
                 📷 Camera
               </Button>
               <Button
-                variant={scanMode === 'manual' ? 'primary' : 'secondary'}
-                onClick={() => setScanMode('manual')}
+                variant={scanMode === "manual" ? "primary" : "secondary"}
+                onClick={() => setScanMode("manual")}
                 className="flex-1"
               >
                 ⌨️ Manual Entry
@@ -191,7 +195,7 @@ export default function StaffScannerPage() {
             </div>
 
             {/* Camera Scanner */}
-            {scanMode === 'camera' && (
+            {scanMode === "camera" && (
               <QRScanner
                 onScan={handleCameraScan}
                 onError={(err) => setError(err)}
@@ -199,7 +203,7 @@ export default function StaffScannerPage() {
             )}
 
             {/* Manual Input */}
-            {scanMode === 'manual' && (
+            {scanMode === "manual" && (
               <div>
                 <label className="block text-sm font-medium text-bone-100 mb-2">
                   Enter Ticket QR Code
@@ -209,7 +213,7 @@ export default function StaffScannerPage() {
                     type="text"
                     value={qrInput}
                     onChange={(e) => setQrInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleManualScan()}
+                    onKeyPress={(e) => e.key === "Enter" && handleManualScan()}
                     placeholder="UNCHAINED-TICKET:..."
                     className="flex-1 px-4 py-2 bg-grit-500/30 border border-grit-500 rounded-lg text-bone-100 focus:outline-none focus:border-hack-green"
                   />
@@ -218,7 +222,7 @@ export default function StaffScannerPage() {
                     onClick={handleManualScan}
                     disabled={loading}
                   >
-                    {loading ? 'Scanning...' : 'Scan'}
+                    {loading ? "Scanning..." : "Scan"}
                   </Button>
                 </div>
               </div>
@@ -249,24 +253,34 @@ export default function StaffScannerPage() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-grit-400 mb-1">Event</p>
-                    <p className="text-bone-100 font-medium">{scannedTicket.eventName}</p>
+                    <p className="text-bone-100 font-medium">
+                      {scannedTicket.eventName}
+                    </p>
                   </div>
                   <div>
                     <p className="text-grit-400 mb-1">Venue</p>
-                    <p className="text-bone-100 font-medium">{scannedTicket.venueName}</p>
+                    <p className="text-bone-100 font-medium">
+                      {scannedTicket.venueName}
+                    </p>
                   </div>
                   <div>
                     <p className="text-grit-400 mb-1">Tier</p>
                     <p className="text-bone-100 font-medium">
-                      {scannedTicket.tierName || scannedTicket.seatInfo || 'General Admission'}
+                      {scannedTicket.tierName ||
+                        scannedTicket.seatInfo ||
+                        "General Admission"}
                     </p>
                     {scannedTicket.seatInfo && (
-                      <p className="text-xs text-grit-500">{scannedTicket.seatInfo}</p>
+                      <p className="text-xs text-grit-500">
+                        {scannedTicket.seatInfo}
+                      </p>
                     )}
                   </div>
                   <div>
                     <p className="text-grit-400 mb-1">Wallet</p>
-                    <p className="text-bone-100 font-mono text-xs">{scannedTicket.walletAddress}</p>
+                    <p className="text-bone-100 font-mono text-xs">
+                      {scannedTicket.walletAddress}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -276,7 +290,9 @@ export default function StaffScannerPage() {
                 <div className="pt-4 border-t border-grit-500/30">
                   <div className="flex items-center gap-2 mb-4">
                     <span className="text-xl">🎁</span>
-                    <h3 className="font-semibold text-hack-green">Available Perks</h3>
+                    <h3 className="font-semibold text-hack-green">
+                      Available Perks
+                    </h3>
                   </div>
 
                   <div className="space-y-3">
@@ -286,15 +302,22 @@ export default function StaffScannerPage() {
                         className="flex flex-col gap-3 rounded-lg border border-grit-500/30 bg-grit-500/10 p-4 md:flex-row md:items-center md:justify-between"
                       >
                         <div className="flex-1">
-                          <p className="font-medium text-bone-100">{perk.name}</p>
+                          <p className="font-medium text-bone-100">
+                            {perk.name}
+                          </p>
                           <p className="text-xs text-grit-400">
-                            {perk.redeemedQuantity} of {perk.quantity} redeemed ({perk.remainingQuantity} remaining)
+                            {perk.redeemedQuantity} of {perk.quantity} redeemed
+                            ({perk.remainingQuantity} remaining)
                           </p>
                           {perk.description && (
-                            <p className="mt-1 text-xs text-grit-400">{perk.description}</p>
+                            <p className="mt-1 text-xs text-grit-400">
+                              {perk.description}
+                            </p>
                           )}
                           {perk.instructions && (
-                            <p className="mt-1 text-xs text-grit-300">Redeem: {perk.instructions}</p>
+                            <p className="mt-1 text-xs text-grit-300">
+                              Redeem: {perk.instructions}
+                            </p>
                           )}
                         </div>
                         <div className="flex items-center gap-3">
@@ -328,7 +351,7 @@ export default function StaffScannerPage() {
                   variant="secondary"
                   onClick={() => {
                     setScannedTicket(null);
-                    setQrInput('');
+                    setQrInput("");
                   }}
                   className="w-full"
                 >
@@ -339,8 +362,6 @@ export default function StaffScannerPage() {
           </Card>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 }

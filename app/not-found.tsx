@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 
 export default function NotFound() {
   return (
@@ -12,7 +12,8 @@ export default function NotFound() {
         </h1>
 
         <p className="mt-3 mb-6 text-base text-grit-300">
-          The Resistance can&apos;t be reached right now. We&apos;ll get a message to you when it&apos;s safe.
+          The Resistance can&apos;t be reached right now. We&apos;ll get a
+          message to you when it&apos;s safe to return.
         </p>
 
         <div className="flex justify-center gap-4">

@@ -115,7 +115,9 @@ interface ChecklistProps {
 function Checklist({ items, onToggle, pendingTaskId }: ChecklistProps) {
   return (
     <div className="rounded-xl border border-grit-500/30 bg-ink-900/70 p-5 shadow-ink">
-      <h3 className="brand-heading text-lg text-bone-100">Onboarding checklist</h3>
+      <h3 className="brand-heading text-lg text-bone-100">
+        Onboarding checklist
+      </h3>
       <p className="text-xs text-grit-400">
         Complete these to unlock automated collectibles, payouts, and analytics.
       </p>
@@ -124,17 +126,19 @@ function Checklist({ items, onToggle, pendingTaskId }: ChecklistProps) {
           <div
             key={item.id}
             className={`rounded-lg border border-grit-500/30 bg-ink-800/40 p-4 transition ${
-              item.type === 'manual' ? 'hover:border-acid-400/40 cursor-pointer' : 'opacity-80'
+              item.type === "manual"
+                ? "hover:border-acid-400/40 cursor-pointer"
+                : "opacity-80"
             }`}
             onClick={() => {
-              if (item.type !== 'manual' || pendingTaskId) return;
+              if (item.type !== "manual" || pendingTaskId) return;
               onToggle(item.id, !item.complete);
             }}
-            role={item.type === 'manual' ? 'button' : undefined}
-            tabIndex={item.type === 'manual' ? 0 : -1}
+            role={item.type === "manual" ? "button" : undefined}
+            tabIndex={item.type === "manual" ? 0 : -1}
             onKeyDown={(event) => {
-              if (item.type !== 'manual' || pendingTaskId) return;
-              if (event.key === 'Enter' || event.key === ' ') {
+              if (item.type !== "manual" || pendingTaskId) return;
+              if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
                 onToggle(item.id, !item.complete);
               }
@@ -144,19 +148,22 @@ function Checklist({ items, onToggle, pendingTaskId }: ChecklistProps) {
               <input
                 type="checkbox"
                 checked={item.complete}
-                disabled={item.type !== 'manual' || pendingTaskId === item.id}
+                disabled={item.type !== "manual" || pendingTaskId === item.id}
                 onChange={(event) => {
                   event.stopPropagation();
-                  if (item.type !== 'manual' || pendingTaskId === item.id) return;
+                  if (item.type !== "manual" || pendingTaskId === item.id)
+                    return;
                   onToggle(item.id, event.target.checked);
                 }}
                 className="mt-1"
               />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-bone-100">{item.label}</p>
+                  <p className="text-sm font-medium text-bone-100">
+                    {item.label}
+                  </p>
                   <span className="rounded-full border border-grit-500/40 px-2 py-0.5 text-[10px] uppercase tracking-widest text-grit-400">
-                    {item.type === 'manual' ? 'Manual' : 'Auto'}
+                    {item.type === "manual" ? "Manual" : "Auto"}
                   </span>
                 </div>
                 <p className="text-xs text-grit-400">{item.description}</p>

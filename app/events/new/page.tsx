@@ -1,5 +1,5 @@
 "use client";
-
+//TODO: Break into smaller components reusing subcomponents where possible
 import { useState, useMemo, useEffect, useRef } from "react";
 import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -8,8 +8,7 @@ import { toast } from "react-hot-toast";
 import { format, addHours } from "date-fns";
 import Fuse from "fuse.js";
 import Image from "next/image";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -205,13 +204,14 @@ export default function NewEventPage() {
   const posterInputRef = useRef<HTMLInputElement>(null);
   const [mapsLocked, setMapsLocked] = useState(false);
   const [artistQuery, setArtistQuery] = useState("");
-  const [selectedArtist, setSelectedArtist] = useState<ArtistOption | null>(null);
+  const [selectedArtist, setSelectedArtist] = useState<ArtistOption | null>(
+    null
+  );
   const [showArtistSuggestions, setShowArtistSuggestions] = useState(false);
   const artistInputRef = useRef<HTMLInputElement>(null);
   const artistSuggestionBoxRef = useRef<HTMLDivElement>(null);
 
   const currentStep = steps[currentStepIndex];
-
 
   const hasReservedPricing = useMemo(
     () =>
@@ -240,7 +240,6 @@ export default function NewEventPage() {
     queryFn: () => api.getArtists(),
     staleTime: 5 * 60 * 1000,
   });
-
 
   const venueFuse = useMemo(() => {
     if (!venues.length) return null;
@@ -500,10 +499,8 @@ export default function NewEventPage() {
     setErrors((prev) => ({ ...prev, posterImageUrl: undefined }));
   };
 
-  const getTicketFieldError = (
-    ticketId: string,
-    field: keyof TicketTypeForm
-  ) => errors[`ticketTypes.${ticketId}.${String(field)}`];
+  const getTicketFieldError = (ticketId: string, field: keyof TicketTypeForm) =>
+    errors[`ticketTypes.${ticketId}.${String(field)}`];
 
   const getTicketPerkFieldError = (
     ticketId: string,
@@ -618,7 +615,6 @@ export default function NewEventPage() {
       return next;
     });
   };
-
 
   const handleStartTimeChange = (value: string) => {
     setFormData((prev) => {
@@ -897,17 +893,18 @@ export default function NewEventPage() {
           }
 
           if (perk.description.length > 500) {
-            stepErrors[`ticketTypes.${ticket.id}.perks.${perk.id}.description`] =
-              "Description must be 500 characters or fewer.";
+            stepErrors[
+              `ticketTypes.${ticket.id}.perks.${perk.id}.description`
+            ] = "Description must be 500 characters or fewer.";
           }
 
           if (perk.instructions.length > 500) {
-            stepErrors[`ticketTypes.${ticket.id}.perks.${perk.id}.instructions`] =
-              "Instructions must be 500 characters or fewer.";
+            stepErrors[
+              `ticketTypes.${ticket.id}.perks.${perk.id}.instructions`
+            ] = "Instructions must be 500 characters or fewer.";
           }
         });
       });
-
     }
 
     if (stepId === "review") {
@@ -986,9 +983,13 @@ export default function NewEventPage() {
                 type="text"
                 id="artist-search"
                 value={artistQuery}
-                onChange={(event) => handleArtistInputChange(event.target.value)}
+                onChange={(event) =>
+                  handleArtistInputChange(event.target.value)
+                }
                 onFocus={() => setShowArtistSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowArtistSuggestions(false), 120)}
+                onBlur={() =>
+                  setTimeout(() => setShowArtistSuggestions(false), 120)
+                }
                 placeholder="Search by artist name or genre"
                 autoComplete="off"
                 className={`w-full rounded-md bg-ink-800 px-3 py-2 text-bone-100 placeholder-grit-400 focus:outline-none focus:ring-2 ${
@@ -1021,7 +1022,8 @@ export default function NewEventPage() {
               )}
               {showArtistSuggestions && artistSuggestions.length === 0 && (
                 <div className="absolute z-50 mt-2 w-full rounded-lg border border-grit-500/30 bg-ink-900/95 px-3 py-2 text-xs text-grit-400">
-                  No matching artists. Keep typing or ping the Unchained team to onboard them.
+                  No matching artists. Keep typing or ping the Unchained team to
+                  onboard them.
                 </div>
               )}
             </div>
@@ -1329,10 +1331,13 @@ export default function NewEventPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="text-lg font-semibold text-bone-100">Ticket tiers</div>
+          <div className="text-lg font-semibold text-bone-100">
+            Ticket tiers
+          </div>
           <p className="text-sm text-grit-300">
-            Configure pricing, inventory, and sales windows. Seat maps now live in the
-            venue dashboard onboarding flow, so you only upload layouts once.
+            Configure pricing, inventory, and sales windows. Seat maps now live
+            in the venue dashboard onboarding flow, so you only upload layouts
+            once.
           </p>
         </div>
         <Button type="button" onClick={handleAddTicketType}>
@@ -1351,10 +1356,16 @@ export default function NewEventPage() {
               <div className="flex flex-col gap-4 md:grid md:grid-cols-2">
                 <Input
                   label="Ticket name"
-                  placeholder={index === 0 ? "General Admission" : "VIP Balcony"}
+                  placeholder={
+                    index === 0 ? "General Admission" : "VIP Balcony"
+                  }
                   value={ticket.name}
                   onChange={(event) =>
-                    handleTicketTypeChange(ticket.id, "name", event.target.value)
+                    handleTicketTypeChange(
+                      ticket.id,
+                      "name",
+                      event.target.value
+                    )
                   }
                   error={getTicketFieldError(ticket.id, "name")}
                 />
@@ -1398,7 +1409,11 @@ export default function NewEventPage() {
                   placeholder="75.00"
                   value={ticket.price}
                   onChange={(event) =>
-                    handleTicketTypeChange(ticket.id, "price", event.target.value)
+                    handleTicketTypeChange(
+                      ticket.id,
+                      "price",
+                      event.target.value
+                    )
                   }
                   error={getTicketFieldError(ticket.id, "price")}
                   helperText="Enter price in the event currency"
@@ -1412,7 +1427,11 @@ export default function NewEventPage() {
                   placeholder="250"
                   value={ticket.capacity}
                   onChange={(event) =>
-                    handleTicketTypeChange(ticket.id, "capacity", event.target.value)
+                    handleTicketTypeChange(
+                      ticket.id,
+                      "capacity",
+                      event.target.value
+                    )
                   }
                   error={getTicketFieldError(ticket.id, "capacity")}
                 />
@@ -1497,7 +1516,9 @@ export default function NewEventPage() {
 
                   {ticket.perks.length === 0 ? (
                     <Card className="border-dashed border-grit-500/30 bg-ink-800/40 p-4 text-sm text-grit-300">
-                      No perks added yet. Add perks to surface drink tickets, merch bundles, or meet & greet access during checkout and scanning.
+                      No perks added yet. Add perks to surface drink tickets,
+                      merch bundles, or meet & greet access during checkout and
+                      scanning.
                     </Card>
                   ) : (
                     <div className="space-y-3">
@@ -1512,7 +1533,9 @@ export default function NewEventPage() {
                             </div>
                             <button
                               type="button"
-                              onClick={() => handleRemoveTicketPerk(ticket.id, perk.id)}
+                              onClick={() =>
+                                handleRemoveTicketPerk(ticket.id, perk.id)
+                              }
                               className="text-xs text-signal-400 hover:text-signal-300"
                             >
                               Remove perk
@@ -1532,7 +1555,11 @@ export default function NewEventPage() {
                                   event.target.value
                                 )
                               }
-                              error={getTicketPerkFieldError(ticket.id, perk.id, "name")}
+                              error={getTicketPerkFieldError(
+                                ticket.id,
+                                perk.id,
+                                "name"
+                              )}
                             />
 
                             <Input
@@ -1550,7 +1577,11 @@ export default function NewEventPage() {
                                   event.target.value
                                 )
                               }
-                              error={getTicketPerkFieldError(ticket.id, perk.id, "quantity")}
+                              error={getTicketPerkFieldError(
+                                ticket.id,
+                                perk.id,
+                                "quantity"
+                              )}
                             />
 
                             <div className="md:col-span-2">
@@ -1571,9 +1602,17 @@ export default function NewEventPage() {
                                 }
                                 placeholder="Explain what the perk includes."
                               />
-                              {getTicketPerkFieldError(ticket.id, perk.id, "description") && (
+                              {getTicketPerkFieldError(
+                                ticket.id,
+                                perk.id,
+                                "description"
+                              ) && (
                                 <p className="mt-1 text-sm text-signal-500">
-                                  {getTicketPerkFieldError(ticket.id, perk.id, "description")}
+                                  {getTicketPerkFieldError(
+                                    ticket.id,
+                                    perk.id,
+                                    "description"
+                                  )}
                                 </p>
                               )}
                             </div>
@@ -1596,9 +1635,17 @@ export default function NewEventPage() {
                                 }
                                 placeholder="Add pickup details for staff to follow."
                               />
-                              {getTicketPerkFieldError(ticket.id, perk.id, "instructions") && (
+                              {getTicketPerkFieldError(
+                                ticket.id,
+                                perk.id,
+                                "instructions"
+                              ) && (
                                 <p className="mt-1 text-sm text-signal-500">
-                                  {getTicketPerkFieldError(ticket.id, perk.id, "instructions")}
+                                  {getTicketPerkFieldError(
+                                    ticket.id,
+                                    perk.id,
+                                    "instructions"
+                                  )}
                                 </p>
                               )}
                             </div>
@@ -1625,7 +1672,10 @@ export default function NewEventPage() {
                     }
                     className="h-4 w-4 rounded border-grit-500/40 bg-ink-800 text-acid-400 focus:outline-none focus:ring-2 focus:ring-acid-400/50"
                   />
-                  <label htmlFor={`ticket-active-${ticket.id}`} className="text-sm text-bone-100">
+                  <label
+                    htmlFor={`ticket-active-${ticket.id}`}
+                    className="text-sm text-bone-100"
+                  >
                     Active for sale
                   </label>
                 </div>
@@ -1646,9 +1696,9 @@ export default function NewEventPage() {
       {hasReservedPricing && (
         <Card className="bg-ink-800/60 border-dashed border-grit-500/40">
           <p className="text-sm text-grit-300">
-            Reserved seating tiers are best paired with a venue seat map. Upload and manage
-            layouts once from the venue dashboard’s onboarding checklist—events will pick up the
-            latest version automatically.
+            Reserved seating tiers are best paired with a venue seat map. Upload
+            and manage layouts once from the venue dashboard’s onboarding
+            checklist—events will pick up the latest version automatically.
           </p>
         </Card>
       )}
@@ -1667,7 +1717,9 @@ export default function NewEventPage() {
           ?.name ?? "Selected venue"
       : "Not set";
     const artistPreview = selectedArtist
-      ? `${selectedArtist.name}${selectedArtist.genre ? ` · ${selectedArtist.genre}` : ""}`
+      ? `${selectedArtist.name}${
+          selectedArtist.genre ? ` · ${selectedArtist.genre}` : ""
+        }`
       : formData.primaryArtistId
       ? "Performer selected"
       : "Not set";
@@ -1759,11 +1811,16 @@ export default function NewEventPage() {
                         </div>
                         <div className="flex flex-col items-start gap-1 text-xs text-grit-300 md:flex-row md:items-center md:gap-4">
                           <span>
-                            Price: <span className="text-bone-100">{pricePreview}</span>
+                            Price:{" "}
+                            <span className="text-bone-100">
+                              {pricePreview}
+                            </span>
                           </span>
                           <span>
                             Capacity:{" "}
-                            <span className="text-bone-100">{capacityPreview}</span>
+                            <span className="text-bone-100">
+                              {capacityPreview}
+                            </span>
                           </span>
                           <span>
                             Currency:{" "}
@@ -1785,7 +1842,10 @@ export default function NewEventPage() {
                           </div>
                           <div className="mt-2 space-y-2">
                             {ticket.perks.map((perk) => (
-                              <div key={perk.id} className="rounded-md bg-ink-800/80 px-3 py-2 text-xs text-grit-300">
+                              <div
+                                key={perk.id}
+                                className="rounded-md bg-ink-800/80 px-3 py-2 text-xs text-grit-300"
+                              >
                                 <div className="flex items-center justify-between gap-2">
                                   <span className="text-bone-100 font-medium">
                                     {perk.name || "Unnamed perk"}
@@ -1900,8 +1960,6 @@ export default function NewEventPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-ink-900 via-ink-900/95 to-ink-900">
-      <Navbar />
-
       <main className="flex-1 w-full">
         <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="mb-10">
@@ -1985,8 +2043,6 @@ export default function NewEventPage() {
           </Card>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

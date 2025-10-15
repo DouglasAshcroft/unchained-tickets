@@ -4,14 +4,13 @@
  * Shows top advocates globally
  */
 
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { TierBadge } from '@/components/advocacy/TierBadge';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
-import Link from 'next/link';
-import type { LeaderboardEntry } from '@/lib/types/advocacy';
+import { useEffect, useState } from "react";
+import { TierBadge } from "@/components/advocacy/TierBadge";
+
+import Link from "next/link";
+import type { LeaderboardEntry } from "@/lib/types/advocacy";
 
 export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -23,13 +22,13 @@ export default function LeaderboardPage() {
 
   const fetchLeaderboard = async () => {
     try {
-      const response = await fetch('/api/advocacy/leaderboard?limit=50');
+      const response = await fetch("/api/advocacy/leaderboard?limit=50");
       if (response.ok) {
         const data = await response.json();
         setLeaderboard(data);
       }
     } catch (error) {
-      console.error('Failed to fetch leaderboard:', error);
+      console.error("Failed to fetch leaderboard:", error);
     } finally {
       setLoading(false);
     }
@@ -37,8 +36,6 @@ export default function LeaderboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-ink-900 to-ink-800">
-      <Navbar />
-
       <main className="flex-1">
         <div className="container mx-auto px-4 py-12 max-w-5xl">
           {/* Header */}
@@ -92,8 +89,8 @@ export default function LeaderboardPage() {
                         key={entry.rank}
                         className={
                           entry.rank <= 3
-                            ? 'bg-gradient-to-r from-resistance-500/10 to-acid-400/10'
-                            : 'hover:bg-ink-700/50'
+                            ? "bg-gradient-to-r from-resistance-500/10 to-acid-400/10"
+                            : "hover:bg-ink-700/50"
                         }
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -144,7 +141,10 @@ export default function LeaderboardPage() {
               </div>
               <div className="bg-ink-800/50 border border-grit-500/30 rounded-lg p-6 text-center">
                 <div className="text-3xl font-bold text-acid-400 mb-1">
-                  {leaderboard.reduce((sum, entry) => sum + entry.advocacyCount, 0)}
+                  {leaderboard.reduce(
+                    (sum, entry) => sum + entry.advocacyCount,
+                    0
+                  )}
                 </div>
                 <div className="text-sm text-grit-400">Total Advocacies</div>
               </div>
@@ -159,10 +159,12 @@ export default function LeaderboardPage() {
 
           {/* CTA */}
           <div className="mt-8 bg-gradient-to-r from-resistance-500 to-acid-400 rounded-xl p-8 text-ink-900 text-center">
-            <h2 className="text-2xl font-bold mb-4">Want to climb the ranks?</h2>
+            <h2 className="text-2xl font-bold mb-4">
+              Want to climb the ranks?
+            </h2>
             <p className="mb-6 opacity-90 max-w-2xl mx-auto">
-              Start advocating for fair ticketing at your favorite venues. Every voice matters in
-              building a better music industry.
+              Start advocating for fair ticketing at your favorite venues. Every
+              voice matters in building a better music industry.
             </p>
             <Link
               href="/events"
@@ -173,8 +175,6 @@ export default function LeaderboardPage() {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

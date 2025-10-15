@@ -7,10 +7,9 @@ import { api } from '@/lib/api/client';
 import { PersonalInfoSection } from '@/components/profile/PersonalInfoSection';
 import { LocationSection } from '@/components/profile/LocationSection';
 import { MusicPreferencesSection } from '@/components/profile/MusicPreferencesSection';
-import { PaymentMethodsSection } from '@/components/profile/PaymentMethodsSection';
+import { WalletsAndPaymentSection } from '@/components/profile/WalletsAndPaymentSection';
 import { AdvocacyStatsSection } from '@/components/profile/AdvocacyStatsSection';
 import { VenueStaffSection } from '@/components/profile/VenueStaffSection';
-import { ConnectedWalletsSection } from '@/components/profile/ConnectedWalletsSection';
 import { SettingsSection } from '@/components/profile/SettingsSection';
 import { OnboardingBanner } from '@/components/profile/OnboardingBanner';
 
@@ -86,7 +85,7 @@ export default function ProfilePage() {
   const [advocacyStats, setAdvocacyStats] = useState<AdvocacyStats | null>(null);
   const [venueStaff, setVenueStaff] = useState<VenueStaffMembership[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState('profile-location');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [advocateEmail, setAdvocateEmail] = useState<string | null>(null);
 
@@ -208,25 +207,23 @@ export default function ProfilePage() {
   };
 
   const tabs = [
-    { id: 'profile', label: 'Personal Info' },
-    { id: 'location-music', label: 'Location & Music' },
-    { id: 'wallets', label: 'Connected Wallets' },
-    { id: 'payment', label: 'Payment Methods' },
+    { id: 'profile-location', label: 'Personal Info & Location' },
+    { id: 'wallets-payment', label: 'Wallets & Payment' },
     { id: 'advocacy', label: 'Advocacy' },
     { id: 'venue-staff', label: 'Venue Staff', hidden: venueStaff.length === 0 },
     { id: 'settings', label: 'Settings' },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-ink-900 to-ink-800 text-bone-100">
+    <div className="bg-gradient-to-b from-ink-900 to-ink-800 text-bone-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="brand-heading text-4xl font-bold mb-2 bg-gradient-to-r from-resistance-500 via-hack-green to-acid-400 bg-clip-text text-transparent">
-            My Profile
-          </h1>
-          <p className="text-grit-300">Manage your account settings and preferences</p>
-        </div>
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="brand-heading text-4xl font-bold mb-2 bg-gradient-to-r from-resistance-500 via-hack-green to-acid-400 bg-clip-text text-transparent">
+              My Profile
+            </h1>
+            <p className="text-grit-300">Manage your account settings and preferences</p>
+          </div>
 
         {/* Onboarding Banner for New Users */}
         {showOnboarding && (
@@ -260,12 +257,9 @@ export default function ProfilePage() {
 
         {/* Tab Content */}
         <div className="space-y-6">
-          {activeTab === 'profile' && (
-            <PersonalInfoSection profile={profile} onUpdate={handleUpdateProfile} />
-          )}
-
-          {activeTab === 'location-music' && (
+          {activeTab === 'profile-location' && (
             <>
+              <PersonalInfoSection profile={profile} onUpdate={handleUpdateProfile} />
               <LocationSection profile={profile} onUpdate={handleUpdateProfile} />
               <MusicPreferencesSection
                 profile={profile}
@@ -275,14 +269,10 @@ export default function ProfilePage() {
             </>
           )}
 
-          {activeTab === 'wallets' && (
-            <ConnectedWalletsSection wallets={profile.wallets} />
-          )}
-
-          {activeTab === 'payment' && (
-            <PaymentMethodsSection
+          {activeTab === 'wallets-payment' && (
+            <WalletsAndPaymentSection
+              wallets={profile.wallets}
               stripeCustomerId={profile.stripeCustomerId}
-              hasWallet={profile.wallets.length > 0}
             />
           )}
 

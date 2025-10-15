@@ -129,12 +129,20 @@ export function AdvocacyStatsSection({ stats }: AdvocacyStatsSectionProps) {
           </div>
         </div>
 
-        <Link
-          href="/advocate"
-          className="mt-6 block w-full py-3 bg-resistance-500 hover:brightness-110 rounded-lg text-center font-medium transition-all text-bone-100"
-        >
-          Continue Advocating
-        </Link>
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Link
+            href="/advocate"
+            className="py-3 bg-resistance-500 hover:brightness-110 rounded-lg text-center font-medium transition-all text-bone-100"
+          >
+            Continue Advocating
+          </Link>
+          <Link
+            href="/advocate/leaderboard"
+            className="py-3 bg-ink-700 border border-grit-500/30 hover:border-resistance-500/50 rounded-lg text-center font-medium transition-all text-bone-100"
+          >
+            View Global Leaderboard
+          </Link>
+        </div>
       </div>
 
       {/* Tier Breakdown */}

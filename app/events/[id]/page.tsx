@@ -1,12 +1,11 @@
-import Image from 'next/image';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
-import { Card } from '@/components/ui/Card';
-import { eventService } from '@/lib/services/EventService';
-import PurchasePanel from './PurchasePanel';
-import { sanitizePosterImageUrl } from '@/lib/utils/posterImage';
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import { Card } from "@/components/ui/Card";
+import { eventService } from "@/lib/services/EventService";
+import PurchasePanel from "./PurchasePanel";
+import { sanitizePosterImageUrl } from "@/lib/utils/posterImage";
 
 // Enable ISR - revalidate every 5 minutes
 export const revalidate = 300;
@@ -27,25 +26,24 @@ export default async function EventDetailPage(props: EventDetailPageProps) {
   try {
     const event = await eventService.getEventById(eventId);
 
-    const eventDate = event.startsAt.toLocaleString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
+    const eventDate = event.startsAt.toLocaleString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
     });
 
-    const venueName = event.venue?.name ?? 'Unknown venue';
-    const venueLocation = event.venue?.city && event.venue?.state
-      ? `${event.venue.city}, ${event.venue.state}`
-      : '';
+    const venueName = event.venue?.name ?? "Unknown venue";
+    const venueLocation =
+      event.venue?.city && event.venue?.state
+        ? `${event.venue.city}, ${event.venue.state}`
+        : "";
     const posterImageSrc = sanitizePosterImageUrl(event.posterImageUrl);
 
     return (
       <div className="min-h-screen flex flex-col">
-        <Navbar />
-
         <main className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
           <Link
             href="/events"
@@ -58,7 +56,7 @@ export default async function EventDetailPage(props: EventDetailPageProps) {
             <div className="relative aspect-square overflow-hidden rounded-lg bg-ink-800">
               <Image
                 src={posterImageSrc}
-                alt={event.title || 'Event poster'}
+                alt={event.title || "Event poster"}
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover"
@@ -102,7 +100,9 @@ export default async function EventDetailPage(props: EventDetailPageProps) {
                       {venueName}
                     </Link>
                     {venueLocation && (
-                      <div className="text-sm text-grit-400">{venueLocation}</div>
+                      <div className="text-sm text-grit-400">
+                        {venueLocation}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -110,22 +110,25 @@ export default async function EventDetailPage(props: EventDetailPageProps) {
                 {/* TODO Phase 3.3: Add description field to Event schema */}
               </div>
 
-              {event.supportingArtists && event.supportingArtists.length > 0 && (
-                <div>
-                  <h3 className="brand-heading text-lg mb-3 text-bone-100">Supporting Artists</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {event.supportingArtists.map((artist) => (
-                      <Link
-                        key={artist.id}
-                        href={`/artists/${artist.slug}`}
-                        className="px-3 py-1 rounded-full border border-acid-400/30 text-sm text-acid-400 hover:bg-acid-400/10 transition-colors"
-                      >
-                        {artist.name}
-                      </Link>
-                    ))}
+              {event.supportingArtists &&
+                event.supportingArtists.length > 0 && (
+                  <div>
+                    <h3 className="brand-heading text-lg mb-3 text-bone-100">
+                      Supporting Artists
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {event.supportingArtists.map((artist) => (
+                        <Link
+                          key={artist.id}
+                          href={`/artists/${artist.slug}`}
+                          className="px-3 py-1 rounded-full border border-acid-400/30 text-sm text-acid-400 hover:bg-acid-400/10 transition-colors"
+                        >
+                          {artist.name}
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               <PurchasePanel
                 eventId={event.id}
@@ -159,19 +162,18 @@ export default async function EventDetailPage(props: EventDetailPageProps) {
             </div>
           </div>
         </main>
-
-        <Footer />
       </div>
     );
   } catch (error) {
-    console.error('Event not found', error);
+    console.error("Event not found", error);
     return (
       <div className="min-h-screen flex flex-col">
-        <Navbar />
         <main className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
           <Card className="text-center py-12">
             <h2 className="brand-heading text-2xl mb-4">Event Not Found</h2>
-            <p className="text-grit-300 mb-6">This event could not be found or has been removed.</p>
+            <p className="text-grit-300 mb-6">
+              This event could not be found or has been removed.
+            </p>
             <Link href="/events" className="inline-flex">
               <span className="px-4 py-2 rounded-lg border border-acid-400 text-acid-400 hover:bg-acid-400/10 transition-colors">
                 Back to Events
@@ -179,7 +181,6 @@ export default async function EventDetailPage(props: EventDetailPageProps) {
             </Link>
           </Card>
         </main>
-        <Footer />
       </div>
     );
   }

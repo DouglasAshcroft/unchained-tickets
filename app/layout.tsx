@@ -5,6 +5,8 @@ import { cookieToInitialState } from "wagmi";
 import { RootProvider } from "./rootProvider";
 import { Providers } from "./providers";
 import { ApiStatus } from "@/components/ApiStatus";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import { getWagmiConfig } from "./wagmi.config";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -42,7 +44,13 @@ export default async function RootLayout({
       <body className={`${inter.variable} antialiased font-sans`}>
         <RootProvider initialState={initialState}>
           <Providers>
-            {children}
+            <div className="min-h-screen flex flex-col">
+              <Navbar />
+              <main className="flex-1">
+                {children}
+              </main>
+              <Footer />
+            </div>
             <ApiStatus />
             <Toaster position="top-right" theme="dark" richColors />
           </Providers>

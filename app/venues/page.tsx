@@ -1,7 +1,5 @@
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
-import { eventService } from '@/lib/services/EventService';
-import VenuesBrowser, { type VenueListItem } from './VenuesBrowser';
+import { eventService } from "@/lib/services/EventService";
+import VenuesBrowser, { type VenueListItem } from "./VenuesBrowser";
 
 // Enable ISR - revalidate every 10 minutes
 export const revalidate = 600;
@@ -13,7 +11,9 @@ type VenuesPageProps = {
   }>;
 };
 
-function serializeVenues(venues: Awaited<ReturnType<typeof eventService.getAllVenues>>): VenueListItem[] {
+function serializeVenues(
+  venues: Awaited<ReturnType<typeof eventService.getAllVenues>>
+): VenueListItem[] {
   return venues.map((venue) => ({
     id: venue.id,
     name: venue.name,
@@ -30,9 +30,17 @@ function serializeVenues(venues: Awaited<ReturnType<typeof eventService.getAllVe
 }
 
 export default async function VenuesPage(props: VenuesPageProps) {
-  const resolvedSearchParams = props.searchParams ? await props.searchParams : undefined;
-  const initialSearch = typeof resolvedSearchParams?.search === 'string' ? resolvedSearchParams.search : '';
-  const initialLocation = typeof resolvedSearchParams?.location === 'string' ? resolvedSearchParams.location : '';
+  const resolvedSearchParams = props.searchParams
+    ? await props.searchParams
+    : undefined;
+  const initialSearch =
+    typeof resolvedSearchParams?.search === "string"
+      ? resolvedSearchParams.search
+      : "";
+  const initialLocation =
+    typeof resolvedSearchParams?.location === "string"
+      ? resolvedSearchParams.location
+      : "";
 
   let serializedVenues: VenueListItem[] = [];
   let initialError: string | null = null;
@@ -41,13 +49,13 @@ export default async function VenuesPage(props: VenuesPageProps) {
     const venues = await eventService.getAllVenues();
     serializedVenues = serializeVenues(venues);
   } catch (error) {
-    console.error('Failed to load venues', error);
-    initialError = 'Venues are temporarily unavailable. Please try again later.';
+    console.error("Failed to load venues", error);
+    initialError =
+      "Venues are temporarily unavailable. Please try again later.";
   }
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <VenuesBrowser
           initialVenues={serializedVenues}
@@ -56,7 +64,6 @@ export default async function VenuesPage(props: VenuesPageProps) {
           initialLocation={initialLocation}
         />
       </main>
-      <Footer />
     </div>
   );
 }

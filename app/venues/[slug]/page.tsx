@@ -1,11 +1,10 @@
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import EventCard from '@/components/EventCard';
-import { eventService } from '@/lib/services/EventService';
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import EventCard from "@/components/EventCard";
+import { eventService } from "@/lib/services/EventService";
 
 type VenueDetailPageProps = {
   params: Promise<{
@@ -26,14 +25,15 @@ export default async function VenueDetailPage(props: VenueDetailPageProps) {
       venue.state,
       venue.postalCode,
     ].filter(Boolean);
-    const fullAddress = addressParts.join(', ');
+    const fullAddress = addressParts.join(", ");
 
     return (
       <div className="min-h-screen flex flex-col">
-        <Navbar />
-
         <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
-          <Link href="/venues" className="inline-flex items-center text-acid-400 hover:brightness-110 mb-6 transition-all">
+          <Link
+            href="/venues"
+            className="inline-flex items-center text-acid-400 hover:brightness-110 mb-6 transition-all"
+          >
             ← Back to Venues
           </Link>
 
@@ -43,13 +43,15 @@ export default async function VenueDetailPage(props: VenueDetailPageProps) {
             </h1>
 
             <div className="flex flex-wrap gap-4 text-grit-300">
-              {(venue.city && venue.state) && (
+              {venue.city && venue.state && (
                 <div className="flex items-center gap-2">
                   <span className="text-xl">📍</span>
-                  <span>{venue.city}, {venue.state}</span>
+                  <span>
+                    {venue.city}, {venue.state}
+                  </span>
                 </div>
               )}
-              {typeof venue.capacity === 'number' && (
+              {typeof venue.capacity === "number" && (
                 <div className="flex items-center gap-2">
                   <span className="text-xl">👥</span>
                   <span>Capacity: {venue.capacity.toLocaleString()}</span>
@@ -60,7 +62,9 @@ export default async function VenueDetailPage(props: VenueDetailPageProps) {
             {fullAddress && (
               <div className="mt-4">
                 <a
-                  href={`https://maps.google.com/?q=${encodeURIComponent(fullAddress)}`}
+                  href={`https://maps.google.com/?q=${encodeURIComponent(
+                    fullAddress
+                  )}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 hover:border-acid-400/50 hover:bg-acid-400/10 transition-colors"
@@ -73,7 +77,7 @@ export default async function VenueDetailPage(props: VenueDetailPageProps) {
 
           <section>
             <h2 className="text-2xl font-bold mb-6">
-              {events.length > 0 ? 'Upcoming Events' : 'No Upcoming Events'}
+              {events.length > 0 ? "Upcoming Events" : "No Upcoming Events"}
             </h2>
 
             {events.length > 0 ? (
@@ -84,7 +88,9 @@ export default async function VenueDetailPage(props: VenueDetailPageProps) {
               </div>
             ) : (
               <Card className="text-center py-12">
-                <p className="text-grit-400">No upcoming events at this venue.</p>
+                <p className="text-grit-400">
+                  No upcoming events at this venue.
+                </p>
                 <Link href="/events" className="mt-4 inline-block">
                   <Button>Browse All Events</Button>
                 </Link>
@@ -92,12 +98,10 @@ export default async function VenueDetailPage(props: VenueDetailPageProps) {
             )}
           </section>
         </main>
-
-        <Footer />
       </div>
     );
   } catch (error) {
-    console.error('Venue not found', error);
+    console.error("Venue not found", error);
     notFound();
   }
 }

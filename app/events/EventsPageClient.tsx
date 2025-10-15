@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { api } from '@/lib/api/client';
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { api } from "@/lib/api/client";
 import LocationSelector, {
   type LocationOption,
   type SelectedLocation,
-} from '@/components/LocationSelector';
-import GenreCarousel, { type EventListItem } from '@/components/GenreCarousel';
-import GenrePicker from '@/components/GenrePicker';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+} from "@/components/LocationSelector";
+import GenreCarousel, { type EventListItem } from "@/components/GenreCarousel";
+import GenrePicker from "@/components/GenrePicker";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 type EventsPageClientProps = {
   cities: LocationOption[];
@@ -25,44 +25,48 @@ type GenreData = {
 
 export default function EventsPageClient({ cities }: EventsPageClientProps) {
   const { user, isAuthenticated } = useAuth();
-  const [selectedLocation, setSelectedLocation] = useState<SelectedLocation>(null);
-  const [locationSource, setLocationSource] = useState<'profile' | 'manual' | null>(null);
+  const [selectedLocation, setSelectedLocation] =
+    useState<SelectedLocation>(null);
+  const [locationSource, setLocationSource] = useState<
+    "profile" | "manual" | null
+  >(null);
 
   // Load profile location as default on mount
   useEffect(() => {
     if (isAuthenticated && user) {
-      api.getProfile()
+      api
+        .getProfile()
         .then((profile) => {
           if (profile.location && !selectedLocation) {
             // Parse location string format "City, State"
-            const parts = profile.location.split(',').map(s => s.trim());
+            const parts = profile.location.split(",").map((s) => s.trim());
             if (parts.length === 2) {
               const [city, state] = parts;
               setSelectedLocation({ city, state });
-              setLocationSource('profile');
+              setLocationSource("profile");
             }
           }
         })
         .catch((error) => {
-          console.error('Error fetching profile location:', error);
+          console.error("Error fetching profile location:", error);
         });
     }
   }, [isAuthenticated, user]); // Don't include selectedLocation in deps to avoid infinite loop
 
   const { data, isLoading, error } = useQuery<GenreData>({
-    queryKey: ['events-by-genre', selectedLocation],
+    queryKey: ["events-by-genre", selectedLocation],
     queryFn: async () => {
       const params = new URLSearchParams();
 
       if (selectedLocation) {
-        params.set('city', selectedLocation.city);
-        params.set('state', selectedLocation.state);
+        params.set("city", selectedLocation.city);
+        params.set("state", selectedLocation.state);
       }
 
       const response = await fetch(`/api/events/by-genre?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch events');
+        throw new Error("Failed to fetch events");
       }
 
       return response.json();
@@ -71,73 +75,74 @@ export default function EventsPageClient({ cities }: EventsPageClientProps) {
   });
 
   const genreLabels: Record<string, string> = {
-    featured: '🔥 Featured Venues and Artist',
-    'all-events': '🎉 All Events',
-    rock: '🎸 Rock',
-    pop: '🎤 Pop',
-    'hip-hop': '🎤 Hip-Hop',
-    electronic: '🎧 Electronic',
-    country: '🤠 Country',
-    'rnb': '🎵 R&B',
-    'r&b': '🎵 R&B',
-    jazz: '🎺 Jazz',
-    'jazz-fusion': '🎺 Jazz Fusion',
-    'indie-rock': '🎸 Indie Rock',
-    metal: '🤘 Metal',
-    alternative: '🎵 Alternative',
-    punk: '💥 Punk',
-    reggae: '🌴 Reggae',
-    folk: '🎻 Folk',
-    soul: '✨ Soul',
-    funk: '🎷 Funk',
-    blues: '🎸 Blues',
-    classical: '🎻 Classical',
-    disco: '🕺 Disco',
-    'synthwave': '🎹 Synthwave',
-    'dream-pop': '💭 Dream Pop',
-    'psychedelic-rock': '🎸 Psychedelic Rock',
-    'indie-pop': '🎧 Indie Pop',
+    featured: "🔥 Featured Venues and Artist",
+    "all-events": "🎉 All Events",
+    rock: "🎸 Rock",
+    pop: "🎤 Pop",
+    "hip-hop": "🎤 Hip-Hop",
+    electronic: "🎧 Electronic",
+    country: "🤠 Country",
+    rnb: "🎵 R&B",
+    "r&b": "🎵 R&B",
+    jazz: "🎺 Jazz",
+    "jazz-fusion": "🎺 Jazz Fusion",
+    "indie-rock": "🎸 Indie Rock",
+    metal: "🤘 Metal",
+    alternative: "🎵 Alternative",
+    punk: "💥 Punk",
+    reggae: "🌴 Reggae",
+    folk: "🎻 Folk",
+    soul: "✨ Soul",
+    funk: "🎷 Funk",
+    blues: "🎸 Blues",
+    classical: "🎻 Classical",
+    disco: "🕺 Disco",
+    synthwave: "🎹 Synthwave",
+    "dream-pop": "💭 Dream Pop",
+    "psychedelic-rock": "🎸 Psychedelic Rock",
+    "indie-pop": "🎧 Indie Pop",
   };
 
   // Genre popularity order (music industry standard)
   const genrePopularityOrder = [
-    'rock',
-    'pop',
-    'hip-hop',
-    'electronic',
-    'country',
-    'rnb',
-    'r&b',
-    'jazz',
-    'jazz-fusion',
-    'indie-rock',
-    'metal',
-    'alternative',
-    'punk',
-    'reggae',
-    'folk',
-    'soul',
-    'funk',
-    'blues',
-    'classical',
-    'disco',
-    'synthwave',
-    'dream-pop',
-    'psychedelic-rock',
-    'indie-pop',
-    'all-events',
+    "rock",
+    "pop",
+    "hip-hop",
+    "electronic",
+    "country",
+    "rnb",
+    "r&b",
+    "jazz",
+    "jazz-fusion",
+    "indie-rock",
+    "metal",
+    "alternative",
+    "punk",
+    "reggae",
+    "folk",
+    "soul",
+    "funk",
+    "blues",
+    "classical",
+    "disco",
+    "synthwave",
+    "dream-pop",
+    "psychedelic-rock",
+    "indie-pop",
+    "all-events",
   ];
 
   // Sort genres by popularity
-  const sortedGenres = data?.availableGenres
-    .filter((g) => g.slug !== 'featured')
-    .sort((a, b) => {
-      const aIndex = genrePopularityOrder.indexOf(a.slug);
-      const bIndex = genrePopularityOrder.indexOf(b.slug);
-      const aOrder = aIndex === -1 ? 999 : aIndex;
-      const bOrder = bIndex === -1 ? 999 : bIndex;
-      return aOrder - bOrder;
-    }) || [];
+  const sortedGenres =
+    data?.availableGenres
+      .filter((g) => g.slug !== "featured")
+      .sort((a, b) => {
+        const aIndex = genrePopularityOrder.indexOf(a.slug);
+        const bIndex = genrePopularityOrder.indexOf(b.slug);
+        const aOrder = aIndex === -1 ? 999 : aIndex;
+        const bOrder = bIndex === -1 ? 999 : bIndex;
+        return aOrder - bOrder;
+      }) || [];
 
   return (
     <>
@@ -156,7 +161,9 @@ export default function EventsPageClient({ cities }: EventsPageClientProps) {
       {error && (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <p className="text-xl text-signal-500 mb-2">Failed to load events</p>
+            <p className="text-xl text-signal-500 mb-2">
+              Failed to load events
+            </p>
             <p className="text-sm text-grit-400">Please try again later</p>
           </div>
         </div>
@@ -190,16 +197,26 @@ export default function EventsPageClient({ cities }: EventsPageClientProps) {
                     Featured Venues & Artists
                   </h2>
                   <p className="text-grit-300 max-w-2xl mx-auto text-sm md:text-base">
-                    These venues and artists have onboarded to <span className="text-acid-400 font-semibold">Unchained</span> -
-                    fighting the monopoly with <span className="text-resistance-500 font-semibold">decentralized ticketing</span>.
-                    Support the revolution! 🎸
+                    These venues and artists have onboarded to{" "}
+                    <span className="text-acid-400 font-semibold">
+                      Unchained
+                    </span>{" "}
+                    - fighting the monopoly with{" "}
+                    <span className="text-resistance-500 font-semibold">
+                      decentralized ticketing
+                    </span>
+                    . Support the revolution! 🎸
                   </p>
                 </div>
 
                 <GenreCarousel
                   title=""
                   events={data.genres.featured}
-                  seeAllHref={`/events/all?featured=true${selectedLocation ? `&city=${selectedLocation.city}&state=${selectedLocation.state}` : ''}`}
+                  seeAllHref={`/events/all?featured=true${
+                    selectedLocation
+                      ? `&city=${selectedLocation.city}&state=${selectedLocation.state}`
+                      : ""
+                  }`}
                   className="featured-carousel"
                 />
               </div>
@@ -209,21 +226,26 @@ export default function EventsPageClient({ cities }: EventsPageClientProps) {
           {/* Filter Controls */}
           <div className="mb-8 space-y-6">
             <p className="text-grit-300 max-w-2xl">
-              Browse events by location and genre. Select your city to see what&apos;s happening near you.
+              Browse events by location and genre. Select your city to see
+              what&apos;s happening near you.
             </p>
 
             {/* Profile Location Indicator */}
-            {locationSource === 'profile' && selectedLocation && (
+            {locationSource === "profile" && selectedLocation && (
               <div className="flex items-center justify-between bg-resistance-500/10 border border-resistance-500/30 rounded-lg p-3">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-grit-300">
-                    📍 Showing events near <span className="text-bone-100 font-medium">{selectedLocation.city}, {selectedLocation.state}</span> (from your profile)
+                    📍 Showing events near{" "}
+                    <span className="text-bone-100 font-medium">
+                      {selectedLocation.city}, {selectedLocation.state}
+                    </span>{" "}
+                    (from your profile)
                   </span>
                 </div>
                 <button
                   onClick={() => {
                     setSelectedLocation(null);
-                    setLocationSource('manual');
+                    setLocationSource("manual");
                   }}
                   className="text-sm text-acid-400 hover:brightness-110 transition-all px-3 py-1 rounded border border-acid-400/30"
                 >
@@ -237,7 +259,7 @@ export default function EventsPageClient({ cities }: EventsPageClientProps) {
               selectedLocation={selectedLocation}
               onLocationChange={(location) => {
                 setSelectedLocation(location);
-                setLocationSource(location ? 'manual' : null);
+                setLocationSource(location ? "manual" : null);
               }}
             />
           </div>
@@ -265,7 +287,11 @@ export default function EventsPageClient({ cities }: EventsPageClientProps) {
                 <GenreCarousel
                   title={`${label} (${genre.count})`}
                   events={events}
-                  seeAllHref={`/events/all?genre=${genre.slug}${selectedLocation ? `&city=${selectedLocation.city}&state=${selectedLocation.state}` : ''}`}
+                  seeAllHref={`/events/all?genre=${genre.slug}${
+                    selectedLocation
+                      ? `&city=${selectedLocation.city}&state=${selectedLocation.state}`
+                      : ""
+                  }`}
                 />
               </div>
             );

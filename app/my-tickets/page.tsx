@@ -1,15 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { QRCode } from '@/components/ui/QRCode';
-import { Badge } from '@/components/ui/Badge';
-import Link from 'next/link';
-import Image from 'next/image';
+import { useState, useEffect } from "react";
+import { useAccount } from "wagmi";
+
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { QRCode } from "@/components/ui/QRCode";
+import { Badge } from "@/components/ui/Badge";
+import Link from "next/link";
+import Image from "next/image";
 
 interface Perk {
   name: string;
@@ -28,8 +27,8 @@ interface Ticket {
   tier: string;
   tokenId?: string;
   qrCode: string;
-  status: 'active' | 'used' | 'expired';
-  onChainState?: 'ACTIVE' | 'USED' | 'SOUVENIR'; // 0=ACTIVE, 1=USED, 2=SOUVENIR
+  status: "active" | "used" | "expired";
+  onChainState?: "ACTIVE" | "USED" | "SOUVENIR"; // 0=ACTIVE, 1=USED, 2=SOUVENIR
   posterImageUrl?: string;
   perks?: Perk[]; // Available perks for this ticket tier
 }
@@ -50,7 +49,7 @@ export default function MyTicketsPage() {
   const [openQRCodes, setOpenQRCodes] = useState<Record<string, boolean>>({});
   const [tickets, setTickets] = useState<Ticket[]>([]);
 
-  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
+  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true";
 
   // Enrich tickets with on-chain state and metadata
   const enrichTicketsWithOnChainData = async (ticketsToEnrich: Ticket[]) => {
@@ -60,16 +59,22 @@ export default function MyTicketsPage() {
 
         try {
           // Fetch metadata which includes on-chain state
-          const metadataResponse = await fetch(`/api/metadata/${ticket.tokenId}`);
+          const metadataResponse = await fetch(
+            `/api/metadata/${ticket.tokenId}`
+          );
           if (!metadataResponse.ok) return ticket;
 
           const metadata = await metadataResponse.json();
 
           // Extract on-chain state from attributes
           const onChainStateAttr = metadata.attributes?.find(
-            (attr: any) => attr.trait_type === 'On-Chain State'
+            (attr: any) => attr.trait_type === "On-Chain State"
           );
-          const onChainState = onChainStateAttr?.value as 'ACTIVE' | 'USED' | 'SOUVENIR' | undefined;
+          const onChainState = onChainStateAttr?.value as
+            | "ACTIVE"
+            | "USED"
+            | "SOUVENIR"
+            | undefined;
 
           return {
             ...ticket,
@@ -90,7 +95,9 @@ export default function MyTicketsPage() {
   useEffect(() => {
     const loadAndValidateTickets = async () => {
       if (isDevMode) {
-        const purchases = JSON.parse(localStorage.getItem('unchained_purchases') || '[]') as Purchase[];
+        const purchases = JSON.parse(
+          localStorage.getItem("unchained_purchases") || "[]"
+        ) as Purchase[];
 
         if (purchases.length === 0) {
           setTickets([]);
@@ -99,14 +106,14 @@ export default function MyTicketsPage() {
 
         try {
           // Validate purchases against database
-          const response = await fetch('/api/tickets/validate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const response = await fetch("/api/tickets/validate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ purchases }),
           });
 
           if (!response.ok) {
-            console.error('Failed to validate tickets');
+            console.error("Failed to validate tickets");
             setTickets([]);
             return;
           }
@@ -114,35 +121,42 @@ export default function MyTicketsPage() {
           const { validTickets, invalidTickets } = await response.json();
 
           // Convert valid purchases to tickets format
-          const loadedTickets: Ticket[] = validTickets.flatMap((purchase: any) => {
-            const ticketType = purchase.eventData?.ticketTypes?.find(
-              (type: any) =>
-                typeof type.name === 'string' &&
-                type.name.toLowerCase() === String(purchase.tier).toLowerCase()
-            );
+          const loadedTickets: Ticket[] = validTickets.flatMap(
+            (purchase: any) => {
+              const ticketType = purchase.eventData?.ticketTypes?.find(
+                (type: any) =>
+                  typeof type.name === "string" &&
+                  type.name.toLowerCase() ===
+                    String(purchase.tier).toLowerCase()
+              );
 
-            const tierPerks: Perk[] = (ticketType?.perks ?? []).map((perk: any) => ({
-              name: perk.name,
-              maxQuantity: perk.quantity ?? 1,
-              consumed: 0,
-              description: perk.description,
-              instructions: perk.instructions,
-            }));
+              const tierPerks: Perk[] = (ticketType?.perks ?? []).map(
+                (perk: any) => ({
+                  name: perk.name,
+                  maxQuantity: perk.quantity ?? 1,
+                  consumed: 0,
+                  description: perk.description,
+                  instructions: perk.instructions,
+                })
+              );
 
-            // Create one ticket per quantity
-            return Array.from({ length: purchase.quantity }, (_, index) => ({
-              id: `${purchase.id}-${index}`,
-              eventId: purchase.eventId,
-              eventTitle: purchase.eventTitle,
-              eventDate: purchase.eventData?.startsAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-              venue: purchase.eventData?.venue?.name || 'Unknown Venue',
-              tier: purchase.tier,
-              tokenId: `${purchase.transactionId.slice(0, 10)}...${index}`,
-              qrCode: `UNCHAINED-TICKET:${purchase.eventId}:${purchase.id}:${index}:${purchase.transactionId}`,
-              status: 'active' as const,
-              perks: tierPerks,
-            }));
-          });
+              // Create one ticket per quantity
+              return Array.from({ length: purchase.quantity }, (_, index) => ({
+                id: `${purchase.id}-${index}`,
+                eventId: purchase.eventId,
+                eventTitle: purchase.eventTitle,
+                eventDate:
+                  purchase.eventData?.startsAt ||
+                  new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                venue: purchase.eventData?.venue?.name || "Unknown Venue",
+                tier: purchase.tier,
+                tokenId: `${purchase.transactionId.slice(0, 10)}...${index}`,
+                qrCode: `UNCHAINED-TICKET:${purchase.eventId}:${purchase.id}:${index}:${purchase.transactionId}`,
+                status: "active" as const,
+                perks: tierPerks,
+              }));
+            }
+          );
 
           setTickets(loadedTickets);
           setOpenQRCodes((prev) => {
@@ -154,7 +168,10 @@ export default function MyTicketsPage() {
             });
 
             loadedTickets.forEach((ticket) => {
-              if (ticket.status === 'active' && ticket.onChainState !== 'SOUVENIR') {
+              if (
+                ticket.status === "active" &&
+                ticket.onChainState !== "SOUVENIR"
+              ) {
                 if (next[ticket.id] === undefined) {
                   next[ticket.id] = true;
                 }
@@ -172,13 +189,21 @@ export default function MyTicketsPage() {
           // Clean up invalid purchases from localStorage
           if (invalidTickets.length > 0) {
             const validPurchaseIds = validTickets.map((p: any) => p.id);
-            const cleanedPurchases = purchases.filter((p) => validPurchaseIds.includes(p.id));
-            localStorage.setItem('unchained_purchases', JSON.stringify(cleanedPurchases));
+            const cleanedPurchases = purchases.filter((p) =>
+              validPurchaseIds.includes(p.id)
+            );
+            localStorage.setItem(
+              "unchained_purchases",
+              JSON.stringify(cleanedPurchases)
+            );
 
-            console.log(`Removed ${invalidTickets.length} invalid tickets:`, invalidTickets);
+            console.log(
+              `Removed ${invalidTickets.length} invalid tickets:`,
+              invalidTickets
+            );
           }
         } catch (error) {
-          console.error('Error validating tickets:', error);
+          console.error("Error validating tickets:", error);
           setTickets([]);
         }
       } else {
@@ -196,19 +221,19 @@ export default function MyTicketsPage() {
 
   const getStatusBadge = (status: string, onChainState?: string) => {
     // Prioritize on-chain state if available
-    if (onChainState === 'SOUVENIR') {
+    if (onChainState === "SOUVENIR") {
       return <Badge tone="success">🎨 Souvenir</Badge>;
     }
-    if (onChainState === 'USED') {
+    if (onChainState === "USED") {
       return <Badge tone="info">Used</Badge>;
     }
 
     switch (status) {
-      case 'active':
+      case "active":
         return <Badge tone="success">Active</Badge>;
-      case 'used':
+      case "used":
         return <Badge tone="info">Used</Badge>;
-      case 'expired':
+      case "expired":
         return <Badge tone="error">Expired</Badge>;
       default:
         return null;
@@ -218,32 +243,31 @@ export default function MyTicketsPage() {
   if (shouldShowWalletPrompt) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Navbar />
         <main className="flex-1 flex items-center justify-center px-4 py-16">
           <Card className="max-w-md w-full text-center">
             <div className="space-y-6">
               <div className="text-6xl">🔒</div>
               <div>
-                <h2 className="brand-heading text-2xl mb-3">Connect Your Wallet</h2>
+                <h2 className="brand-heading text-2xl mb-3">
+                  Connect Your Wallet
+                </h2>
                 <p className="text-grit-300">
                   Please connect your wallet to view your NFT tickets.
                 </p>
               </div>
               <div className="text-sm text-grit-400">
-                Your tickets are stored as NFTs on the Base blockchain. Connect with the same wallet you used to purchase tickets.
+                Your tickets are stored as NFTs on the Base blockchain. Connect
+                with the same wallet you used to purchase tickets.
               </div>
             </div>
           </Card>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
-
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {/* Header */}
         <div className="mb-8">
@@ -255,7 +279,10 @@ export default function MyTicketsPage() {
           </p>
           {!isDevMode && address && (
             <div className="mt-2 text-sm text-grit-400">
-              Connected: <span className="text-acid-400 font-mono">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+              Connected:{" "}
+              <span className="text-acid-400 font-mono">
+                {address?.slice(0, 6)}...{address?.slice(-4)}
+              </span>
             </div>
           )}
           {isDevMode && (
@@ -273,7 +300,8 @@ export default function MyTicketsPage() {
               <div>
                 <h3 className="brand-heading text-2xl mb-2">No Tickets Yet</h3>
                 <p className="text-grit-300 mb-6">
-                  You haven&apos;t purchased any tickets yet. Browse upcoming events to get started!
+                  You haven&apos;t purchased any tickets yet. Browse upcoming
+                  events to get started!
                 </p>
                 <Link href="/events">
                   <Button variant="primary">Browse Events</Button>
@@ -302,14 +330,17 @@ export default function MyTicketsPage() {
                     <div className="flex items-center gap-2">
                       <span className="text-grit-400">📅</span>
                       <span className="text-bone-100">
-                        {new Date(ticket.eventDate).toLocaleDateString('en-US', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}
+                        {new Date(ticket.eventDate).toLocaleDateString(
+                          "en-US",
+                          {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          }
+                        )}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -327,117 +358,133 @@ export default function MyTicketsPage() {
                   </div>
 
                   {/* Perks Section - Only for active tickets */}
-                  {ticket.perks && ticket.perks.length > 0 && ticket.status === 'active' && (
-                    <div className="pt-4 border-t border-grit-500/30">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-lg">🎁</span>
-                          <h4 className="font-semibold text-hack-green">Included Perks</h4>
-                        </div>
-                        <div className="space-y-2">
-                          {ticket.perks.map((perk, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between bg-grit-500/20 p-3 rounded-lg"
-                            >
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-bone-100">{perk.name}</p>
-                                <p className="text-xs text-grit-400">
-                                  {perk.consumed} of {perk.maxQuantity} used
-                                </p>
-                                {perk.description && (
-                                  <p className="mt-1 text-xs text-grit-400">{perk.description}</p>
-                                )}
-                                {perk.instructions && (
-                                  <p className="mt-1 text-xs text-grit-500">Redeem: {perk.instructions}</p>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {perk.consumed < perk.maxQuantity ? (
-                                  <Badge tone="success">
-                                    {perk.maxQuantity - perk.consumed} left
-                                  </Badge>
-                                ) : (
-                                  <Badge tone="error">Used</Badge>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <p className="text-xs text-grit-400 mt-2">
-                          Present your ticket QR code to venue staff to redeem perks
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Souvenir Section */}
-                  {ticket.onChainState === 'SOUVENIR' && ticket.posterImageUrl && (
-                    <div className="pt-4 border-t border-grit-500/30">
-                      <div className="space-y-3">
-                        <div className="bg-gradient-to-br from-resistance-500/10 via-hack-green/10 to-acid-400/10 p-4 rounded-lg border border-acid-400/30">
-                          <div className="flex items-center gap-2 mb-3">
-                            <span className="text-2xl">🎨</span>
-                            <h4 className="font-semibold text-acid-400">Event Memento</h4>
+                  {ticket.perks &&
+                    ticket.perks.length > 0 &&
+                    ticket.status === "active" && (
+                      <div className="pt-4 border-t border-grit-500/30">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-lg">🎁</span>
+                            <h4 className="font-semibold text-hack-green">
+                              Included Perks
+                            </h4>
                           </div>
-                          <div className="relative w-full aspect-video mb-3">
-                            <Image
-                              src={ticket.posterImageUrl}
-                              alt={`${ticket.eventTitle} Souvenir`}
-                              fill
-                              className="rounded-lg object-cover"
-                            />
+                          <div className="space-y-2">
+                            {ticket.perks.map((perk, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between bg-grit-500/20 p-3 rounded-lg"
+                              >
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-bone-100">
+                                    {perk.name}
+                                  </p>
+                                  <p className="text-xs text-grit-400">
+                                    {perk.consumed} of {perk.maxQuantity} used
+                                  </p>
+                                  {perk.description && (
+                                    <p className="mt-1 text-xs text-grit-400">
+                                      {perk.description}
+                                    </p>
+                                  )}
+                                  {perk.instructions && (
+                                    <p className="mt-1 text-xs text-grit-500">
+                                      Redeem: {perk.instructions}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {perk.consumed < perk.maxQuantity ? (
+                                    <Badge tone="success">
+                                      {perk.maxQuantity - perk.consumed} left
+                                    </Badge>
+                                  ) : (
+                                    <Badge tone="error">Used</Badge>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                          <p className="text-sm text-grit-300">
-                            Your ticket has been transformed into a collectible souvenir NFT.
-                            This commemorates your attendance at {ticket.eventTitle}.
+                          <p className="text-xs text-grit-400 mt-2">
+                            Present your ticket QR code to venue staff to redeem
+                            perks
                           </p>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+
+                  {/* Souvenir Section */}
+                  {ticket.onChainState === "SOUVENIR" &&
+                    ticket.posterImageUrl && (
+                      <div className="pt-4 border-t border-grit-500/30">
+                        <div className="space-y-3">
+                          <div className="bg-gradient-to-br from-resistance-500/10 via-hack-green/10 to-acid-400/10 p-4 rounded-lg border border-acid-400/30">
+                            <div className="flex items-center gap-2 mb-3">
+                              <span className="text-2xl">🎨</span>
+                              <h4 className="font-semibold text-acid-400">
+                                Event Memento
+                              </h4>
+                            </div>
+                            <div className="relative w-full aspect-video mb-3">
+                              <Image
+                                src={ticket.posterImageUrl}
+                                alt={`${ticket.eventTitle} Souvenir`}
+                                fill
+                                className="rounded-lg object-cover"
+                              />
+                            </div>
+                            <p className="text-sm text-grit-300">
+                              Your ticket has been transformed into a
+                              collectible souvenir NFT. This commemorates your
+                              attendance at {ticket.eventTitle}.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                   {/* QR Code Section - Only for active tickets */}
-                  {ticket.status === 'active' && ticket.onChainState !== 'SOUVENIR' && (
-                    <div className="pt-4 border-t border-grit-500/30">
-                      {openQRCodes[ticket.id] ? (
-                        <div className="space-y-3">
-                          <div className="bg-bone-100 p-4 rounded-lg">
-                            <QRCode
-                              value={ticket.qrCode}
-                              size={200}
-                              caption="Present at entry"
-                            />
+                  {ticket.status === "active" &&
+                    ticket.onChainState !== "SOUVENIR" && (
+                      <div className="pt-4 border-t border-grit-500/30">
+                        {openQRCodes[ticket.id] ? (
+                          <div className="space-y-3">
+                            <div className="bg-bone-100 p-4 rounded-lg">
+                              <QRCode
+                                value={ticket.qrCode}
+                                size={200}
+                                caption="Present at entry"
+                              />
+                            </div>
+                            <Button
+                              variant="secondary"
+                              className="w-full"
+                              onClick={() =>
+                                setOpenQRCodes((prev) => ({
+                                  ...prev,
+                                  [ticket.id]: false,
+                                }))
+                              }
+                            >
+                              Hide QR Code
+                            </Button>
                           </div>
+                        ) : (
                           <Button
-                            variant="secondary"
+                            variant="primary"
                             className="w-full"
                             onClick={() =>
                               setOpenQRCodes((prev) => ({
                                 ...prev,
-                                [ticket.id]: false,
+                                [ticket.id]: true,
                               }))
                             }
                           >
-                            Hide QR Code
+                            Show QR Code
                           </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          variant="primary"
-                          className="w-full"
-                          onClick={() =>
-                            setOpenQRCodes((prev) => ({
-                              ...prev,
-                              [ticket.id]: true,
-                            }))
-                          }
-                        >
-                          Show QR Code
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )}
 
                   {/* Event Link */}
                   <Link
@@ -462,26 +509,35 @@ export default function MyTicketsPage() {
             <ul className="space-y-2 text-sm text-grit-300">
               <li className="flex items-start gap-2">
                 <span className="text-acid-400 mt-0.5">•</span>
-                <span>Your tickets are NFTs stored on the Base blockchain and secured by your wallet.</span>
+                <span>
+                  Your tickets are NFTs stored on the Base blockchain and
+                  secured by your wallet.
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-acid-400 mt-0.5">•</span>
-                <span>Show the QR code at the venue entrance for verification.</span>
+                <span>
+                  Show the QR code at the venue entrance for verification.
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-acid-400 mt-0.5">•</span>
-                <span>Tickets can be transferred to other wallets if you need to give them to someone else.</span>
+                <span>
+                  Tickets can be transferred to other wallets if you need to
+                  give them to someone else.
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-acid-400 mt-0.5">•</span>
-                <span>Once scanned at the venue, tickets will be marked as &quot;Used&quot; and cannot be reused.</span>
+                <span>
+                  Once scanned at the venue, tickets will be marked as
+                  &quot;Used&quot; and cannot be reused.
+                </span>
               </li>
             </ul>
           </div>
         </Card>
       </main>
-
-      <Footer />
     </div>
   );
 }
