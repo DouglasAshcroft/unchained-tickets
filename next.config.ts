@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
-  // Silence workspace root warning from multiple lockfiles
-  outputFileTracingRoot: "/home/dougjackson/Projects/unchained-tickets",
+  // Silence workspace root warning from multiple lockfiles while staying machine-agnostic
+  outputFileTracingRoot: path.resolve(process.cwd()),
 
   // Production optimizations - use Next.js defaults for code splitting
   compiler: {

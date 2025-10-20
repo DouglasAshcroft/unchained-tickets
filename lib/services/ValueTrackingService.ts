@@ -108,33 +108,40 @@ export class ValueTrackingService {
 
   /**
    * Update venue marketing value aggregate
+   * Optimized to use SQL aggregation instead of fetching all events
    */
   private async updateVenueMarketingValue(eventId: number): Promise<void> {
     const event = await prisma.event.findUnique({
       where: { id: eventId },
-      include: {
-        venue: true,
+      select: {
+        venueId: true,
+        venueContactEmail: true,
+        venue: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 
     if (!event) return;
 
-    // Get all events for this venue
-    const venueEvents = await prisma.event.findMany({
+    // Optimize: Use SQL aggregation instead of loading all events
+    const aggregations = await prisma.event.aggregate({
       where: {
         venueId: event.venueId,
         eventSource: { in: ['serper', 'manual'] },
       },
-      select: {
+      _sum: {
         impressions: true,
         clickThroughs: true,
         advocacyCount: true,
       },
     });
 
-    const totalImpressions = venueEvents.reduce((sum, e) => sum + e.impressions, 0);
-    const totalClicks = venueEvents.reduce((sum, e) => sum + e.clickThroughs, 0);
-    const totalAdvocates = venueEvents.reduce((sum, e) => sum + e.advocacyCount, 0);
+    const totalImpressions = aggregations._sum.impressions || 0;
+    const totalClicks = aggregations._sum.clickThroughs || 0;
+    const totalAdvocates = aggregations._sum.advocacyCount || 0;
     const estimatedAdValue = (totalImpressions / 1000) * CPM + totalClicks * CPC;
 
     // Upsert venue marketing value

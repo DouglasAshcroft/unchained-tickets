@@ -23,14 +23,24 @@ type CreateChargeResponse = {
 };
 
 export class CoinbaseCommerceService {
-  private apiKey: string;
+  private _apiKey: string | null = null;
+  private _providedApiKey: string | undefined;
 
   constructor(apiKey?: string) {
-    const key = apiKey ?? process.env.COINBASE_COMMERCE_API_KEY;
+    this._providedApiKey = apiKey;
+  }
+
+  private get apiKey(): string {
+    if (this._apiKey) {
+      return this._apiKey;
+    }
+
+    const key = this._providedApiKey ?? process.env.COINBASE_COMMERCE_API_KEY;
     if (!key) {
       throw new Error('COINBASE_COMMERCE_API_KEY is not configured');
     }
-    this.apiKey = key;
+    this._apiKey = key;
+    return this._apiKey;
   }
 
   async createCharge(params: CreateChargeParams): Promise<CreateChargeResponse> {

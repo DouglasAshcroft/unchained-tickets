@@ -14,14 +14,18 @@ const SOLD_STATUSES = new Set<TicketStatus>(['minted', 'transferred', 'used', 'r
 
 class VenueDashboardService {
   async getDashboardData(venueId: number): Promise<VenueDashboardData> {
+    const now = new Date();
+    const thirtyDaysAgo = subDays(now, 30);
+
+    // Optimize: Load venue info separately without full event graph
     const venue = await prisma.venue.findUnique({
       where: { id: venueId },
-      include: {
-        events: {
-          include: {
-            tickets: true,
-          },
-        },
+      select: {
+        id: true,
+        name: true,
+        city: true,
+        state: true,
+        capacity: true,
       },
     });
 
@@ -29,16 +33,52 @@ class VenueDashboardService {
       throw new Error('Venue not found');
     }
 
-    const [seatMapsRaw, checklistStatuses] = await Promise.all([
+    // Optimize: Run queries in parallel
+    const [events, seatMapStats, checklistStatuses, recentTicketStats] = await Promise.all([
+      // Load events with only necessary ticket data
+      prisma.event.findMany({
+        where: { venueId },
+        select: {
+          id: true,
+          title: true,
+          startsAt: true,
+          endsAt: true,
+          status: true,
+          posterImageUrl: true,
+          tickets: {
+            select: {
+              id: true,
+              status: true,
+              priceCents: true,
+              seatSection: true,
+              updatedAt: true,
+            },
+          },
+        },
+      }),
+      // Optimize: Aggregate seat map counts in SQL instead of loading all seats
       prisma.venueSeatMap.findMany({
         where: { venueId },
         orderBy: { createdAt: 'desc' },
-        include: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          status: true,
+          version: true,
+          createdAt: true,
+          structure: true,
           sections: {
-            include: {
+            select: {
+              id: true,
               rows: {
-                include: {
-                  seats: true,
+                select: {
+                  id: true,
+                  seats: {
+                    select: {
+                      id: true,
+                    },
+                  },
                 },
               },
             },
@@ -48,32 +88,25 @@ class VenueDashboardService {
       prisma.venueChecklistStatus.findMany({
         where: { venueId },
       }),
+      // Optimize: Pre-aggregate 30-day ticket stats
+      prisma.ticket.groupBy({
+        by: ['status'],
+        where: {
+          event: { venueId },
+          status: { in: Array.from(SOLD_STATUSES) },
+          updatedAt: { gte: thirtyDaysAgo },
+        },
+        _count: { id: true },
+        _sum: { priceCents: true },
+      }),
     ]);
 
-    const now = new Date();
-    const thirtyDaysAgo = subDays(now, 30);
-
-    const events = venue.events;
-
-    const ticketsSold30d = events.reduce((total, event) => {
-      return (
-        total +
-        event.tickets.filter(
-          (ticket) => SOLD_STATUSES.has(ticket.status) && ticket.updatedAt >= thirtyDaysAgo
-        ).length
-      );
-    }, 0);
-
-    const grossRevenue30dCents = events.reduce((total, event) => {
-      return (
-        total +
-        event.tickets
-          .filter(
-            (ticket) => SOLD_STATUSES.has(ticket.status) && ticket.updatedAt >= thirtyDaysAgo
-          )
-          .reduce((sum, ticket) => sum + (ticket.priceCents ?? 0), 0)
-      );
-    }, 0);
+    // Calculate 30-day stats from aggregated data
+    const ticketsSold30d = recentTicketStats.reduce((sum, stat) => sum + stat._count.id, 0);
+    const grossRevenue30dCents = recentTicketStats.reduce(
+      (sum, stat) => sum + (stat._sum.priceCents || 0),
+      0
+    );
 
     const toDashboardEvent = (event: (typeof events)[number]): VenueDashboardEvent => {
       const tiers = Array.from(
@@ -127,7 +160,7 @@ class VenueDashboardService {
         status: 'awaiting_upload',
       }));
 
-    const seatMaps: VenueDashboardSeatMap[] = seatMapsRaw.map((seatMap) => {
+    const seatMaps: VenueDashboardSeatMap[] = seatMapStats.map((seatMap) => {
       const sections = seatMap.sections.length;
       let rows = 0;
       let seats = 0;

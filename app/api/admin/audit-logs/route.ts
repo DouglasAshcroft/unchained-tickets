@@ -1,31 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { venueSupportService } from '@/lib/services/VenueSupportService';
-import { prisma } from '@/lib/db/prisma';
+import { verifyAdmin } from '@/lib/utils/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    // TODO: Get authenticated user ID from session/JWT and verify admin role
-    const searchParams = request.nextUrl.searchParams;
-    const requesterId = searchParams.get('requesterId');
-
-    if (!requesterId) {
-      return NextResponse.json({ error: 'Missing requesterId' }, { status: 400 });
-    }
-
-    // Verify requester is admin
-    const requester = await prisma.user.findUnique({
-      where: { id: parseInt(requesterId, 10) },
-      select: { role: true },
-    });
-
-    if (!requester || requester.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized: Admin access required' },
-        { status: 403 }
-      );
-    }
+    // Verify the user is an authenticated admin
+    await verifyAdmin(request);
 
     // Parse filter parameters
+    const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get('userId')
       ? parseInt(searchParams.get('userId')!, 10)
       : undefined;
@@ -55,6 +38,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('Error fetching audit logs:', error);
+
+    if (error.message.includes('Admin access required') || error.message.includes('token')) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
 
     return NextResponse.json(
       { error: error.message || 'Failed to fetch audit logs' },

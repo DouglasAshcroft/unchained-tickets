@@ -93,6 +93,8 @@ function EventCard({ event, priority = false }: EventCardProps) {
       className="h-full min-h-[420px] flex flex-col"
       accentLeft
       data-testid={`event-card-${event.id}`}
+      role="region"
+      aria-label={`Event card for ${event.title}`}
     >
       <div className="flex flex-1 flex-col">
         <div className="relative mb-3 aspect-[4/3] overflow-hidden rounded-lg bg-zinc-800">
@@ -127,18 +129,18 @@ function EventCard({ event, priority = false }: EventCardProps) {
           </div>
         </div>
 
-        <h2 className="brand-heading mb-2 text-center text-xl text-acid-400">
+        <h2 className="brand-heading mb-2 text-center text-xl text-acid-400" tabIndex={0} aria-label={event.title ?? "Untitled Event"}>
           {event.title ?? "Untitled Event"}
         </h2>
 
-        <p className="mb-1 text-center text-sm text-grit-300">{when}</p>
+  <p className="mb-1 text-center text-sm text-grit-300" tabIndex={0} aria-label={`Event date and time: ${when}`}>{when}</p>
 
-        <p className="mb-1 text-center text-sm font-semibold text-bone-100">
+        <p className="mb-1 text-center text-sm font-semibold text-bone-100" tabIndex={0} aria-label={`Venue: ${venueName}`}>
           {venueName}
         </p>
 
         {venueLocation && (
-          <p className="mb-3 text-center text-xs text-grit-400">
+          <p className="mb-3 text-center text-xs text-grit-400" tabIndex={0} aria-label={`Location: ${venueLocation}`}>
             {venueLocation}
           </p>
         )}
@@ -152,10 +154,11 @@ function EventCard({ event, priority = false }: EventCardProps) {
             href={event.mapsLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1 px-3 py-2 text-sm rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/5 transition-colors"
+            className="flex items-center justify-center gap-1 px-3 py-2 text-sm rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-acid-400"
             aria-label={`Directions to ${venueName}`}
+            tabIndex={0}
           >
-            📍 Directions
+             Directions
           </a>
         )}
       </div>
@@ -163,16 +166,18 @@ function EventCard({ event, priority = false }: EventCardProps) {
       {isSoldOut ? (
         <button
           disabled
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-heading text-sm border transition-all uppercase tracking-wider bg-grit-500 text-grit-300 border-grit-500 w-full cursor-not-allowed opacity-60"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-heading text-sm border transition-all uppercase tracking-wider bg-grit-500 text-grit-300 border-grit-500 w-full cursor-not-allowed opacity-60 focus:outline-none focus:ring-2 focus:ring-acid-400"
           data-testid={`purchase-${event.id}`}
+          aria-label="Sold Out"
         >
           Sold Out
         </button>
       ) : (
         <Link
           href={`/events/${event.id}`}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-heading text-sm border transition-all uppercase tracking-wider bg-resistance-500 hover:brightness-110 text-ink-900 border-resistance-500 w-full"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-heading text-sm border transition-all uppercase tracking-wider bg-resistance-500 hover:brightness-110 text-ink-900 border-resistance-500 w-full focus:outline-none focus:ring-2 focus:ring-acid-400"
           data-testid={`purchase-${event.id}`}
+          aria-label="Purchase NFT Tickets"
         >
           Purchase NFT Tickets
         </Link>

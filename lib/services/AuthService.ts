@@ -20,9 +20,13 @@ interface TokenPayload {
 }
 
 export class AuthService {
-  private jwtSecret: string;
+  private _jwtSecret: string | null = null;
 
-  constructor() {
+  private get jwtSecret(): string {
+    if (this._jwtSecret) {
+      return this._jwtSecret;
+    }
+
     const secret = process.env.JWT_SECRET;
     if (!secret || secret.length < 32) {
       throw new Error(
@@ -30,7 +34,8 @@ export class AuthService {
         '   Generate a secure secret with: openssl rand -base64 32'
       );
     }
-    this.jwtSecret = secret;
+    this._jwtSecret = secret;
+    return this._jwtSecret;
   }
 
   async register(userData: RegisterData) {

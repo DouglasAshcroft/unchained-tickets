@@ -16,6 +16,24 @@ const EnvSchema = z.object({
   NEXT_PUBLIC_CHAIN_ID: z.string().default('8453'),
   NEXT_PUBLIC_PROJECT_NAME: z.string().default('Unchained Tickets'),
 
+  // Coinbase Developer Platform (CDP)
+  NEXT_PUBLIC_CDP_PROJECT_ID: z.string().optional(),
+  CDP_API_KEY_NAME: z.string().optional(),
+  CDP_API_KEY_PRIVATE_KEY: z.string().optional(),
+
+  // Coinbase Onramp Configuration
+  NEXT_PUBLIC_COINBASE_ONRAMP_ENABLED: z.string().default('true'),
+  COINBASE_ONRAMP_MINIMUM_USD: z.string().default('10.00'),
+  COINBASE_ONRAMP_API_URL: z.string().url().default('https://api.developer.coinbase.com'),
+
+  // Coinbase Commerce
+  COINBASE_COMMERCE_API_KEY: z.string().optional(),
+  COINBASE_WEBHOOK_SECRET: z.string().optional(),
+
+  // NFT Contract
+  NFT_CONTRACT_ADDRESS: z.string().optional(),
+  NEXT_PUBLIC_NFT_CONTRACT_ADDRESS: z.string().optional(),
+
   // Application URLs
   NEXT_PUBLIC_API_BASE_URL: z.string().url().default('http://localhost:3000'),
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
@@ -25,6 +43,15 @@ const EnvSchema = z.object({
 
   // Optional External Services
   SERPAPI_KEY: z.string().optional(),
+
+  // Upstash Redis (for persistent rate limiting)
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+
+  // Base Paymaster (for gas sponsorship)
+  BASE_PAYMASTER_URL: z.string().url().optional(),
+  BASE_PAYMASTER_API_KEY: z.string().optional(),
+  BASE_PAYMASTER_PRIVATE_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

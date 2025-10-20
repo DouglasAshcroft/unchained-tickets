@@ -31,3 +31,13 @@ export async function verifyAuth(request: NextRequest): Promise<AuthUser> {
     throw new Error('Invalid token');
   }
 }
+
+export async function verifyAdmin(request: NextRequest): Promise<AuthUser> {
+  const user = await verifyAuth(request);
+
+  if (user.role !== 'admin') {
+    throw new Error('Admin access required');
+  }
+
+  return user;
+}

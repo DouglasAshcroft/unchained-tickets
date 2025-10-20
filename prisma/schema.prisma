@@ -114,6 +114,13 @@ model User {
   latitude           Decimal? @db.Decimal(9, 6)
   longitude          Decimal? @db.Decimal(9, 6)
 
+  // Wallet & Onboarding fields
+  emailVerified      Boolean  @default(false)
+  walletAddress      String?  @unique
+  walletProvider     String? // 'coinbase_smart_wallet', 'metamask', 'rainbow', etc.
+  createdViaOnramp   Boolean  @default(false)
+  onboardingComplete Boolean  @default(false)
+
   // Relations
   credentials             AuthCredential[]
   sessions                Session[]
@@ -135,6 +142,8 @@ model User {
 
   @@index([email])
   @@index([stripeCustomerId])
+  @@index([walletAddress])
+  @@index([createdViaOnramp])
 }
 
 model AuthCredential {

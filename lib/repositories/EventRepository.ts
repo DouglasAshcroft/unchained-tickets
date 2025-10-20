@@ -82,6 +82,42 @@ export class EventRepository {
     return events;
   }
 
+  async findByIds(ids: number[]) {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    return await prisma.event.findMany({
+      where: { id: { in: ids } },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        startsAt: true,
+        endsAt: true,
+        posterImageUrl: true,
+        externalLink: true,
+        venue: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            city: true,
+            state: true,
+          },
+        },
+        primaryArtist: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            genre: true,
+          },
+        },
+      },
+    });
+  }
+
   async findById(id: number) {
     return await prisma.event.findUnique({
       where: { id },

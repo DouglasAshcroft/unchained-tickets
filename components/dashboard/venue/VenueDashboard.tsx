@@ -37,7 +37,7 @@ export function VenueDashboard({ data }: VenueDashboardProps) {
 
   const checklistMutation = useMutation({
     mutationFn: ({ task, complete }: { task: ChecklistTaskId; complete: boolean }) =>
-      api.setVenueChecklistItem(venue.id, task, complete),
+      api.setVenueChecklistItem(venue.slug, task, complete),
   });
 
   const handleChecklistToggle = (task: ChecklistTaskId, nextComplete: boolean) => {
@@ -98,6 +98,11 @@ export function VenueDashboard({ data }: VenueDashboardProps) {
       ? 'You’re ready to launch new events. Keep the poster queue clear to unlock collectibles.'
       : 'Finish the checklist below to unlock automated poster approvals and payouts.';
 
+  // Expose slug globally for nested upload component without prop drilling
+  if (typeof window !== 'undefined') {
+    (window as any).__UNCHAINED_VENUE_SLUG__ = venue.slug;
+  }
+
   return (
     <div className="space-y-10">
       <header className="space-y-4">
@@ -133,6 +138,7 @@ export function VenueDashboard({ data }: VenueDashboardProps) {
 
       <VenueOnboardingPanel
         venueId={venue.id}
+        venueSlug={venue.slug}
         seatMaps={seatMaps}
         checklist={checklist}
         onboardingProgress={onboardingProgress}

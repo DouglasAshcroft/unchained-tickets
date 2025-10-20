@@ -72,9 +72,12 @@ export function getWagmiConfig() {
     ssr: true,
 
     // Use cookie storage for server/client state synchronization
-    storage: createStorage({
-      storage: cookieStorage,
-    }),
+    // Conditionally use cookieStorage only on the client to avoid SSR issues
+    storage: typeof window !== 'undefined'
+      ? createStorage({
+          storage: cookieStorage,
+        })
+      : undefined,
 
     // Enable multi-injected provider discovery (for browser wallets)
     multiInjectedProviderDiscovery: true,
@@ -83,5 +86,12 @@ export function getWagmiConfig() {
   return config;
 }
 
-// Export config instance for use in components
-export const wagmiConfig = getWagmiConfig();
+// Lazy config instance - only instantiated when accessed
+let _wagmiConfig: ReturnType<typeof getWagmiConfig> | null = null;
+
+export const wagmiConfig = (() => {
+  if (!_wagmiConfig) {
+    _wagmiConfig = getWagmiConfig();
+  }
+  return _wagmiConfig;
+})();

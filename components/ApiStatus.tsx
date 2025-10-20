@@ -8,7 +8,7 @@ type ConnectionStatus = 'connected' | 'disconnected' | 'checking';
  * API Status Indicator - Only visible in development mode
  * Shows real-time connection status to the backend API
  */
-export function ApiStatus() {
+function ApiStatus() {
   const [status, setStatus] = useState<ConnectionStatus>('checking');
   const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
 
@@ -72,3 +72,5 @@ export function ApiStatus() {
     </div>
   );
 }
+
+export default ApiStatus;

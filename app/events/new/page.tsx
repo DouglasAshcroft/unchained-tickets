@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { format, addHours } from "date-fns";
-import Fuse from "fuse.js";
 import Image from "next/image";
 
 import { Card } from "@/components/ui/Card";
@@ -241,36 +240,27 @@ export default function NewEventPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const venueFuse = useMemo(() => {
-    if (!venues.length) return null;
-    return new Fuse<VenueOption>(venues as VenueOption[], {
-      keys: ["name", "city", "state", "addressLine1"],
-      threshold: 0.35,
-      includeScore: true,
-    });
-  }, [venues]);
-
   const venueSuggestions = useMemo(() => {
     if (!venues.length) return [] as VenueOption[];
     const trimmedQuery = venueQuery.trim();
     if (!trimmedQuery) {
       return (venues as VenueOption[]).slice(0, 7);
     }
-    if (!venueFuse) return [] as VenueOption[];
-    return venueFuse
-      .search(trimmedQuery)
-      .slice(0, 7)
-      .map((result) => result.item);
-  }, [venues, venueQuery, venueFuse]);
-
-  const artistFuse = useMemo(() => {
-    if (!artists.length) return null;
-    return new Fuse<ArtistOption>(artists as ArtistOption[], {
-      keys: ["name", "genre", "slug"],
-      threshold: 0.35,
-      includeScore: true,
-    });
-  }, [artists]);
+    const lowered = trimmedQuery.toLowerCase();
+    return (venues as VenueOption[])
+      .filter((venue) => {
+        const fields = [
+          venue.name,
+          venue.city ?? "",
+          venue.state ?? "",
+          venue.addressLine1 ?? "",
+        ];
+        return fields.some((field) =>
+          field.toLowerCase().includes(lowered)
+        );
+      })
+      .slice(0, 7);
+  }, [venues, venueQuery]);
 
   const artistSuggestions = useMemo(() => {
     if (!artists.length) return [] as ArtistOption[];
@@ -278,12 +268,20 @@ export default function NewEventPage() {
     if (!trimmedQuery) {
       return (artists as ArtistOption[]).slice(0, 7);
     }
-    if (!artistFuse) return [] as ArtistOption[];
-    return artistFuse
-      .search(trimmedQuery)
-      .slice(0, 7)
-      .map((result) => result.item);
-  }, [artists, artistQuery, artistFuse]);
+    const lowered = trimmedQuery.toLowerCase();
+    return (artists as ArtistOption[])
+      .filter((artist) => {
+        const fields = [
+          artist.name,
+          artist.genre ?? "",
+          artist.slug,
+        ];
+        return fields.some((field) =>
+          field.toLowerCase().includes(lowered)
+        );
+      })
+      .slice(0, 7);
+  }, [artists, artistQuery]);
 
   useEffect(() => {
     if (!venues.length || !formData.venueId) return;

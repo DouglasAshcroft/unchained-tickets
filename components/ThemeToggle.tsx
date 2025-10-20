@@ -3,7 +3,7 @@
 import { useTheme } from './providers/ThemeProvider';
 import { useEffect, useState } from 'react';
 
-export function ThemeToggle() {
+function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -39,3 +39,5 @@ export function ThemeToggle() {
     </button>
   );
 }
+
+export default ThemeToggle;

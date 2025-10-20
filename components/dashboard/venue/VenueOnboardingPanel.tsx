@@ -12,6 +12,7 @@ import type { ChecklistTaskId } from "@/lib/config/venueChecklist";
 
 interface VenueOnboardingPanelProps {
   venueId: number;
+  venueSlug: string;
   seatMaps: VenueDashboardSeatMap[];
   checklist: VenueDashboardData["checklist"];
   onboardingProgress: number;
@@ -28,6 +29,7 @@ const percentFormatter = new Intl.NumberFormat("en-US", {
 
 export function VenueOnboardingPanel({
   venueId,
+  venueSlug,
   seatMaps,
   checklist,
   onboardingProgress,
@@ -92,6 +94,7 @@ export function VenueOnboardingPanel({
         <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <VenueSeatMapManager
             venueId={venueId}
+            venueSlug={venueSlug}
             seatMaps={seatMaps}
             onSeatMapCreated={onSeatMapCreated}
           />

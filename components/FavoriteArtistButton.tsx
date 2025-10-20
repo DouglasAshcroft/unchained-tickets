@@ -10,7 +10,7 @@ interface FavoriteArtistButtonProps {
   initialIsFavorite?: boolean;
 }
 
-export function FavoriteArtistButton({
+function FavoriteArtistButton({
   artistId,
   artistName,
   initialIsFavorite = false,
@@ -65,3 +65,5 @@ export function FavoriteArtistButton({
     </button>
   );
 }
+
+export default FavoriteArtistButton;

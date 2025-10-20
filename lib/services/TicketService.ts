@@ -72,19 +72,52 @@ export class TicketService {
   /**
    * Validate multiple purchases and return only valid tickets
    * This simulates the production flow of validating NFT tickets
+   * Optimized to avoid N+1 queries by batching event lookups
    */
   async getValidTickets(purchases: Purchase[]): Promise<ValidatedTicket[]> {
     try {
-      const validated = await Promise.all(
-        purchases.map(async (purchase) => {
-          const validation = await this.validatePurchase(purchase.id, purchase.eventId);
-          return {
-            ...purchase,
-            validation,
-            eventData: validation.event,
+      if (purchases.length === 0) {
+        return [];
+      }
+
+      // Optimize: Batch-load all events in one query instead of N queries
+      const eventIds = [...new Set(purchases.map(p => p.eventId))];
+      const events = await eventRepository.findByIds(eventIds);
+      const eventMap = new Map(events.map(e => [e.id, e]));
+
+      // Validate each purchase using the cached event data
+      const validated = purchases.map((purchase) => {
+        const event = eventMap.get(purchase.eventId);
+
+        let validation: ValidationResult;
+        if (!event) {
+          validation = {
+            valid: false,
+            reason: 'Event not found - may have been deleted',
           };
-        })
-      );
+        } else if (event.status === 'canceled') {
+          validation = {
+            valid: false,
+            reason: 'Event has been canceled',
+          };
+        } else if (event.status === 'draft') {
+          validation = {
+            valid: false,
+            reason: 'Event is not yet published',
+          };
+        } else {
+          validation = {
+            valid: true,
+            event,
+          };
+        }
+
+        return {
+          ...purchase,
+          validation,
+          eventData: validation.event,
+        };
+      });
 
       return validated;
     } catch (error) {

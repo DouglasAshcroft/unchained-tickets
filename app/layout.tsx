@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { cookieToInitialState } from "wagmi";
 import { RootProvider } from "./rootProvider";
 import { Providers } from "./providers";
-import { ApiStatus } from "@/components/ApiStatus";
+import ApiStatus from "@/components/ApiStatus";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { getWagmiConfig } from "./wagmi.config";

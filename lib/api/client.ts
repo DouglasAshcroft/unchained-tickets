@@ -198,24 +198,24 @@ class ApiClient {
     return this.request<{ venue: any; events: any[] }>(`/api/venues/${slug}`);
   }
 
-  async getVenueSeatMaps(venueId: number) {
-    return this.request<{ seatMaps: any[] }>(`/api/venues/${venueId}/seat-maps`);
+  async getVenueSeatMaps(slug: string) {
+    return this.request<{ seatMaps: any[] }>(`/api/venues/${slug}/seat-maps`);
   }
 
-  async createVenueSeatMap(venueId: number, data: any) {
-    return this.request<{ seatMap: any }>(`/api/venues/${venueId}/seat-maps`, {
+  async createVenueSeatMap(slug: string, data: any) {
+    return this.request<{ seatMap: any }>(`/api/venues/${slug}/seat-maps`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async setVenueChecklistItem(
-    venueId: number,
+    slug: string,
     task: ChecklistTaskId,
     complete: boolean
   ) {
     return this.request<{ task: string; complete: boolean }>(
-      `/api/venues/${venueId}/checklist/${task}`,
+      `/api/venues/${slug}/checklist/${task}`,
       {
         method: 'PATCH',
         body: JSON.stringify({ complete }),

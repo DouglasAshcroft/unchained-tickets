@@ -2,11 +2,19 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 
 const mockPrisma = {
   event: { findUnique: vi.fn() },
-  ticket: { create: vi.fn(), update: vi.fn() },
+  ticket: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
   charge: { create: vi.fn(), update: vi.fn() },
   wallet: { findUnique: vi.fn(), create: vi.fn() },
   nFTContract: { findFirst: vi.fn() },
   nFTMint: { create: vi.fn() },
+  $transaction: vi.fn((callback) => {
+    // For transactions, call the callback with the mock prisma client
+    if (typeof callback === 'function') {
+      return callback(mockPrisma);
+    }
+    // For array-based transactions, return the results
+    return Promise.all(callback);
+  }),
 };
 
 vi.mock('@/lib/db/prisma', () => ({ prisma: mockPrisma }));
@@ -54,7 +62,7 @@ beforeEach(() => {
 });
 
 describe('checkout create-charge handler (dev mode)', () => {
-  it('returns mint-failed when minting service throws', async () => {
+  it('returns pending-mint when minting service throws (minting disabled)', async () => {
     mintTicketMock.mockRejectedValue(new Error('mint error'));
 
     const { POST } = await import('@/app/api/checkout/create-charge/route');
@@ -64,20 +72,12 @@ describe('checkout create-charge handler (dev mode)', () => {
 
     expect(response.status).toBe(200);
     const json = await response.json();
-    expect(json.status).toBe('mint-failed');
+    expect(json.status).toBe('pending-mint');
     expect(json.chargeId).toBeDefined();
-    expect(mockPrisma.charge.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          status: 'retrying',
-          mintRetryCount: 1,
-          mintLastError: 'mint error',
-        }),
-      })
-    );
+    expect(mockPrisma.charge.update).not.toHaveBeenCalled();
   });
 
-  it('mints ticket and returns completed status in dev mode', async () => {
+  it('returns pending-mint when minting succeeds (disabled path)', async () => {
     mintTicketMock.mockResolvedValue({ txHash: '0xhash', tokenId: '123' });
 
     const { POST } = await import('@/app/api/checkout/create-charge/route');
@@ -87,20 +87,10 @@ describe('checkout create-charge handler (dev mode)', () => {
 
     expect(response.status).toBe(200);
     const json = await response.json();
-    expect(json.status).toBe('completed');
-    expect(json.tokenId).toBe('123');
-    expect(mockPrisma.ticket.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ status: 'minted' }) })
-    );
-    expect(mockPrisma.charge.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          status: 'confirmed',
-          mintRetryCount: 0,
-          mintLastError: null,
-        }),
-      })
-    );
+    expect(json.status).toBe('pending-mint');
+    expect(json.tokenId).toBeUndefined();
+    expect(mockPrisma.ticket.update).not.toHaveBeenCalled();
+    expect(mockPrisma.charge.update).not.toHaveBeenCalled();
   });
 });
 

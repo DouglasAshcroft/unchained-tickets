@@ -36,7 +36,7 @@ export class SerperService {
   private baseUrl = 'https://serpapi.com/search.json';
 
   constructor() {
-    this.apiKey = process.env.SERPER_API_KEY || '';
+    this.apiKey = process.env.SERPAPI_KEY || '';
   }
 
   /**
@@ -49,7 +49,7 @@ export class SerperService {
     }
 
     if (!this.apiKey) {
-      console.warn('⚠️  SERPER_API_KEY not configured');
+      console.warn('⚠️  SERPAPI_KEY not configured');
       return [];
     }
 

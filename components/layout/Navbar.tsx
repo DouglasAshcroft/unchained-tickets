@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import ThemeToggle from '@/components/ThemeToggle';
 import { RBAC } from '@/lib/constants/roles';
 import { WalletControls } from './WalletControls';
 
-export function Navbar() {
+const NavbarComponent = function Navbar() {
   const { isAuthenticated, hasAnyRole } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const canAccessVenueDashboard = hasAnyRole(RBAC.venueAccess);
@@ -184,4 +184,6 @@ export function Navbar() {
       </div>
     </nav>
   );
-}
+};
+
+export const Navbar = memo(NavbarComponent);

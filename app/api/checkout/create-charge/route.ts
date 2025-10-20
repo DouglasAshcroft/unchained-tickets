@@ -12,10 +12,24 @@ function toDecimal(value: number): Prisma.Decimal {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { eventId, ticketTier, quantity, totalPrice, walletAddress } = body;
+    const {
+      eventId,
+      ticketTier,
+      quantity,
+      totalPrice,
+      walletAddress,
+      email,
+      paymentMethod = 'wallet',
+      onrampSessionId
+    } = body;
 
     if (!eventId || !ticketTier || !quantity || quantity <= 0 || !totalPrice) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Email is required for all purchases now
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return NextResponse.json({ error: 'Valid email address is required' }, { status: 400 });
     }
 
     const event = await prisma.event.findUnique({
@@ -29,18 +43,6 @@ export async function POST(request: NextRequest) {
 
     const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
     const perTicketPriceCents = Math.round((Number(totalPrice) / Number(quantity)) * 100);
-
-    const ticket = await prisma.ticket.create({
-      data: {
-        eventId,
-        userId: null,
-        qrHash: `charge-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        priceCents: Number.isFinite(perTicketPriceCents) ? perTicketPriceCents : null,
-        currency: 'USD',
-        status: 'reserved',
-      },
-    });
-
     const totalPriceDecimal = toDecimal(Number(totalPrice));
     const rpcUrl = process.env.BASE_RPC_URL || process.env.NEXT_PUBLIC_BASE_RPC_URL;
     const mintingPrivateKey = process.env.MINTING_PRIVATE_KEY || process.env.MINTING_WALLET_PRIVATE_KEY;
@@ -50,21 +52,41 @@ export async function POST(request: NextRequest) {
     // const _maxMintRetries = Number(process.env.MINT_MAX_RETRIES ?? '3');
 
     if (isDevMode) {
-      const chargeId = `mock-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      // Determine initial status based on payment method
+      const initialStatus = paymentMethod === 'onramp' ? 'pending' : 'pending';
+      const ticketStatus = paymentMethod === 'onramp' ? 'reserved' : 'reserved';
 
-      await prisma.charge.create({
-        data: {
-          chargeId,
-          eventId,
-          ticketId: ticket.id,
-          ticketTier,
-          quantity,
-          totalPrice: totalPriceDecimal,
-          status: 'pending',
-          walletAddress,
-          mintRetryCount: 0,
-          mintLastError: null,
-        },
+      // Use transaction to ensure atomicity
+      const { ticket, charge } = await prisma.$transaction(async (tx) => {
+        const ticket = await tx.ticket.create({
+          data: {
+            eventId,
+            userId: null,
+            qrHash: `charge-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            priceCents: Number.isFinite(perTicketPriceCents) ? perTicketPriceCents : null,
+            currency: 'USD',
+            status: ticketStatus,
+          },
+        });
+
+        const chargeId = onrampSessionId || `mock-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+        const charge = await tx.charge.create({
+          data: {
+            chargeId,
+            eventId,
+            ticketId: ticket.id,
+            ticketTier,
+            quantity,
+            totalPrice: totalPriceDecimal,
+            status: initialStatus,
+            walletAddress: walletAddress?.toLowerCase(),
+            mintRetryCount: 0,
+            mintLastError: null,
+          },
+        });
+
+        return { ticket, charge };
       });
 
       // TODO Phase 3.1: Reimplement NFT minting with viem/wagmi
@@ -77,56 +99,83 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json({
-        chargeId,
+        chargeId: charge.chargeId,
         ticketId: ticket.id,
         status: walletAddress ? 'pending-mint' : 'pending-wallet',
-        message: 'Mock charge created. Configure minting credentials to enable on-chain minting in dev mode.',
+        paymentMethod,
+        message: paymentMethod === 'onramp'
+          ? 'Charge created. Waiting for onramp webhook confirmation.'
+          : 'Mock charge created. Configure minting credentials to enable on-chain minting in dev mode.',
       });
     }
 
     try {
       const commerce = getCoinbaseCommerceService();
       const amountString = totalPriceDecimal.toString();
-      const charge = await commerce.createCharge({
-        name: `${event.title} Ticket`,
-        description: `Event on ${new Date(event.startsAt).toLocaleDateString()}`,
-        localPrice: {
-          amount: amountString,
-          currency: 'USD',
-        },
-        metadata: {
-          ticketId: ticket.id,
-          eventId,
-          ticketTier,
-          quantity,
-          walletAddress,
-        },
-      });
 
-      await prisma.charge.create({
+      // Create ticket first (outside transaction as we need to rollback if Coinbase fails)
+      const ticket = await prisma.ticket.create({
         data: {
-          chargeId: charge.id,
           eventId,
-          ticketId: ticket.id,
-          ticketTier,
-          quantity,
-          totalPrice: totalPriceDecimal,
-          status: 'pending',
-          walletAddress,
-          mintRetryCount: 0,
-          mintLastError: null,
+          userId: null,
+          qrHash: `charge-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          priceCents: Number.isFinite(perTicketPriceCents) ? perTicketPriceCents : null,
+          currency: 'USD',
+          status: 'reserved',
         },
       });
 
-      return NextResponse.json(
-        {
-          chargeId: charge.id,
-          ticketId: ticket.id,
-          hostedUrl: charge.hosted_url,
-          status: 'pending',
-        },
-        { status: 201 }
-      );
+      try {
+        const charge = await commerce.createCharge({
+          name: `${event.title} Ticket`,
+          description: `Event on ${new Date(event.startsAt).toLocaleDateString()}`,
+          localPrice: {
+            amount: amountString,
+            currency: 'USD',
+          },
+          metadata: {
+            ticketId: ticket.id,
+            eventId,
+            ticketTier,
+            quantity,
+            walletAddress,
+            email,
+            paymentMethod,
+          },
+        });
+
+        // Use transaction to link ticket and charge atomically
+        await prisma.$transaction(async (tx) => {
+          await tx.charge.create({
+            data: {
+              chargeId: charge.id,
+              eventId,
+              ticketId: ticket.id,
+              ticketTier,
+              quantity,
+              totalPrice: totalPriceDecimal,
+              status: 'pending',
+              walletAddress,
+              mintRetryCount: 0,
+              mintLastError: null,
+            },
+          });
+        });
+
+        return NextResponse.json(
+          {
+            chargeId: charge.id,
+            ticketId: ticket.id,
+            hostedUrl: charge.hosted_url,
+            status: 'pending',
+          },
+          { status: 201 }
+        );
+      } catch (chargeError) {
+        // If Coinbase charge creation fails, clean up the ticket
+        await prisma.ticket.delete({ where: { id: ticket.id } }).catch(console.error);
+        throw chargeError;
+      }
     } catch (error) {
       console.error('Charge creation error:', error);
       return NextResponse.json(

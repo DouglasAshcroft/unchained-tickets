@@ -71,6 +71,7 @@ export function PurchasePanel({
 }: PurchasePanelProps) {
   const router = useRouter();
   const [showCheckout, setShowCheckout] = useState(false);
+  const [isLoadingCheckout, setIsLoadingCheckout] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
   const activeTicketTypes = useMemo(
@@ -259,11 +260,29 @@ export function PurchasePanel({
         <Button
           variant="primary"
           className="w-full text-lg py-4"
-          onClick={() => canCheckout && setShowCheckout(true)}
-          disabled={!canCheckout}
+          onClick={() => {
+            if (canCheckout) {
+              setIsLoadingCheckout(true);
+              // Small delay to show loading state before modal opens
+              setTimeout(() => {
+                setShowCheckout(true);
+                setIsLoadingCheckout(false);
+              }, 150);
+            }
+          }}
+          disabled={!canCheckout || isLoadingCheckout}
         >
-          Purchase {quantity} Ticket{quantity > 1 ? 's' : ''}
-          {selectedTicketType ? ` · ${selectedTicketType.name}` : ''}
+          {isLoadingCheckout ? (
+            <span className="flex items-center justify-center gap-2">
+              <div className="w-5 h-5 border-2 border-ink-900 border-t-transparent rounded-full animate-spin" />
+              Opening checkout...
+            </span>
+          ) : (
+            <>
+              Purchase {quantity} Ticket{quantity > 1 ? 's' : ''}
+              {selectedTicketType ? ` · ${selectedTicketType.name}` : ''}
+            </>
+          )}
         </Button>
 
         <div className="flex items-center gap-2 text-xs text-grit-400">
@@ -281,12 +300,26 @@ export function PurchasePanel({
           ticketTier={selectedTicketType.name}
           quantity={quantity}
           totalPrice={totalPrice}
-          onSuccess={(transactionId) => {
+          onSuccess={(transactionId, metadata) => {
             toast.success('NFT Ticket Minted! Check your wallet.', { duration: 3000 });
             console.log('Transaction completed:', transactionId);
-            setTimeout(() => {
-              router.push('/my-tickets');
-            }, 2000);
+
+            // Redirect new users from onramp to profile setup
+            if (metadata?.isNewUser && metadata?.email && metadata?.walletAddress) {
+              setTimeout(() => {
+                const params = new URLSearchParams({
+                  from: 'purchase',
+                  wallet: metadata.walletAddress,
+                  email: metadata.email,
+                });
+                router.push(`/profile/setup?${params.toString()}`);
+              }, 2000);
+            } else {
+              // Existing users go to their tickets
+              setTimeout(() => {
+                router.push('/my-tickets');
+              }, 2000);
+            }
           }}
         />
       )}

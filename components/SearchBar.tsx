@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, memo } from 'react';
 import { useRouter } from 'next/navigation';
 
 type SearchResult = {
@@ -20,7 +20,7 @@ type SearchBarProps = {
   placeholder?: string;
 };
 
-export function SearchBar({
+const SearchBarComponent = function SearchBar({
   className = '',
   placeholder = 'Search events, venues, artists...',
 }: SearchBarProps) {
@@ -145,33 +145,41 @@ export function SearchBar({
         <label htmlFor="global-search" className="sr-only">
           Search events, artists, and venues
         </label>
-        <input
-          ref={inputRef}
-          id="global-search"
-          name="search"
-          type="search"
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setIsOpen(true);
-          }}
-          onFocus={() => {
-            if (query.length >= 2) {
+          <input
+            ref={inputRef}
+            id="global-search"
+            name="search"
+            type="search"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
               setIsOpen(true);
-            }
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') {
-              setIsOpen(false);
-              inputRef.current?.blur();
-            }
-          }}
-          placeholder={placeholder}
-          aria-label="Search events, artists, and venues"
-          aria-autocomplete="list"
-          aria-controls={isOpen && hasResults ? 'search-results' : undefined}
-          className="w-72 max-w-[56vw] rounded-md bg-ink-800 border border-grit-500/30 px-3 py-2 pr-8 text-bone-100 placeholder-grit-400 focus:outline-none focus:ring-2 focus:ring-acid-400/50 focus:border-acid-400/50 transition-colors"
-        />
+            }}
+            onFocus={() => {
+              if (query.length >= 2) {
+                setIsOpen(true);
+              }
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                setIsOpen(false);
+                inputRef.current?.blur();
+              }
+              // Keyboard navigation for results
+              if (event.key === 'ArrowDown' && results.length > 0) {
+                event.preventDefault();
+                const first = document.querySelector('[role="option"]');
+                if (first instanceof HTMLElement) first.focus();
+              }
+            }}
+            placeholder={placeholder}
+            aria-label="Search events, artists, and venues"
+            aria-autocomplete="list"
+            aria-controls={isOpen && hasResults ? 'search-results' : undefined}
+            aria-expanded={isOpen}
+            aria-activedescendant={undefined}
+            className="w-72 max-w-[56vw] rounded-md bg-ink-800 border border-grit-500/30 px-3 py-2 pr-8 text-bone-100 placeholder-grit-400 focus:outline-none focus:ring-2 focus:ring-acid-400/50 focus:border-acid-400/50 transition-colors"
+          />
 
         {isSearching ? (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -203,14 +211,32 @@ export function SearchBar({
               || [item.city, item.state].filter(Boolean).join(', ')
               || item.genre
               || '';
-
             return (
               <button
                 key={`${item.type}-${item.id}-${index}`}
                 onClick={() => handleSelect(item)}
                 className="w-full px-4 py-3 text-left text-bone-100 hover:bg-acid-400/10 transition-colors border-b border-grit-500/20 last:border-b-0 focus:outline-none focus:bg-acid-400/10"
                 role="option"
-                aria-selected="false"
+                aria-selected={false}
+                tabIndex={0}
+                aria-label={label + (subtitle ? `, ${subtitle}` : '')}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSelect(item);
+                  }
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const next = (e.currentTarget.nextElementSibling as HTMLElement | null);
+                    if (next) next.focus();
+                  }
+                  if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prev = (e.currentTarget.previousElementSibling as HTMLElement | null);
+                    if (prev) prev.focus();
+                    else inputRef.current?.focus();
+                  }
+                }}
               >
                 <div className="text-sm font-medium">
                   {highlightMatch(label)}
@@ -225,6 +251,7 @@ export function SearchBar({
       )}
     </div>
   );
-}
+};
 
-export default SearchBar;
+export const SearchBar = memo(SearchBarComponent);
+

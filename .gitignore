@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+internal/
 
 # debug
 npm-debug.log*
@@ -58,3 +59,5 @@ sentry.properties
 lighthouse-report.html
 coverage/
 *.log
+tests/reports/*
+!tests/reports/.gitkeep

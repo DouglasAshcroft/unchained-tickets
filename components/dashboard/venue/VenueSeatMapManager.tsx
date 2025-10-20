@@ -11,6 +11,7 @@ import type { VenueDashboardSeatMap } from "@/lib/mocks/venueDashboard";
 
 export interface VenueSeatMapManagerProps {
   venueId: number;
+  venueSlug: string;
   seatMaps: VenueDashboardSeatMap[];
   onSeatMapCreated: (seatMap: VenueDashboardSeatMap) => void;
 }
@@ -52,14 +53,15 @@ function buildSeatMapSummary(seatMap: any): VenueDashboardSeatMap {
 
 export function VenueSeatMapManager({
   venueId,
+  venueSlug,
   seatMaps,
   onSeatMapCreated,
 }: VenueSeatMapManagerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadMutation = useMutation({
-    mutationFn: async (payload: { venueId: number; data: unknown }) => {
-      return api.createVenueSeatMap(payload.venueId, payload.data);
+    mutationFn: async (payload: { data: unknown }) => {
+      return api.createVenueSeatMap(venueSlug, payload.data);
     },
     onSuccess: (response) => {
       const summary = buildSeatMapSummary(response.seatMap);
@@ -85,10 +87,7 @@ export function VenueSeatMapManager({
     try {
       const contents = await file.text();
       const parsed = JSON.parse(contents);
-      await uploadMutation.mutateAsync({
-        venueId,
-        data: parsed,
-      });
+      await uploadMutation.mutateAsync({ data: parsed });
     } catch (error) {
       if (error instanceof SyntaxError) {
         toast.error("Seat map file must be valid JSON");

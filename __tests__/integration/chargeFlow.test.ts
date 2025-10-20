@@ -2,11 +2,19 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const mockPrisma = {
   event: { findUnique: vi.fn() },
-  ticket: { create: vi.fn(), update: vi.fn(), findUnique: vi.fn() },
+  ticket: { create: vi.fn(), update: vi.fn(), findUnique: vi.fn(), delete: vi.fn() },
   charge: { create: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findUnique: vi.fn() },
   wallet: { findUnique: vi.fn(), create: vi.fn() },
   nFTContract: { findFirst: vi.fn() },
   nFTMint: { create: vi.fn() },
+  $transaction: vi.fn((callback) => {
+    // For transactions, call the callback with the mock prisma client
+    if (typeof callback === 'function') {
+      return callback(mockPrisma);
+    }
+    // For array-based transactions, return the results
+    return Promise.all(callback);
+  }),
 };
 
 vi.mock('@/lib/db/prisma', () => ({ prisma: mockPrisma }));

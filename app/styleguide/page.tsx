@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import toast from "react-hot-toast";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 function Section({
   title,
@@ -38,12 +40,25 @@ function Swatch({ name, className }: { name: string; className: string }) {
 
 export default function StyleGuidePage() {
   const [showModal, setShowModal] = useState(false);
+  const router = useRouter();
+  const { isAuthenticated, hasRole } = useAuth();
+
+  // Gate this page - only allow in development or for admin/dev users
+  useEffect(() => {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const isAllowedUser = hasRole('admin') || hasRole('dev');
+
+    if (!isDevelopment && !isAllowedUser) {
+      toast.error('Access denied: Dev-only page');
+      router.push('/');
+    }
+  }, [isAuthenticated, hasRole, router]);
 
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 mx-auto max-w-6xl px-4 py-10 text-left w-full">
         <h1 className="brand-heading mb-10 text-4xl bg-gradient-to-r from-resistance-500 via-hack-green to-acid-400 bg-clip-text text-transparent">
-          Unchained Style Guide (Dev)
+          Unchained Style Guide (Dev Only)
         </h1>
 
         <Section title="Brand Colors">
