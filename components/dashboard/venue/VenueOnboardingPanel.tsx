@@ -8,6 +8,7 @@ import type {
   VenueDashboardSeatMap,
 } from "@/lib/mocks/venueDashboard";
 import { VenueSeatMapManager } from "@/components/dashboard/venue/VenueSeatMapManager";
+import PosterWorkflowManager from "@/components/dashboard/venue/PosterWorkflowManager";
 import type { ChecklistTaskId } from "@/lib/config/venueChecklist";
 
 interface VenueOnboardingPanelProps {
@@ -38,6 +39,7 @@ export function VenueOnboardingPanel({
   onSeatMapCreated,
 }: VenueOnboardingPanelProps) {
   const [collapsed, setCollapsed] = useState(onboardingProgress >= 1);
+  const [expandedWorkflow, setExpandedWorkflow] = useState<'seat_map' | 'poster_workflow' | null>(null);
 
   useEffect(() => {
     if (onboardingProgress < 1) {
@@ -91,18 +93,32 @@ export function VenueOnboardingPanel({
       </div>
 
       {!collapsed && (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-          <VenueSeatMapManager
-            venueId={venueId}
-            venueSlug={venueSlug}
-            seatMaps={seatMaps}
-            onSeatMapCreated={onSeatMapCreated}
-          />
-          <Checklist
-            items={checklist}
-            onToggle={onToggleChecklist}
-            pendingTaskId={pendingTaskId}
-          />
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+            <VenueSeatMapManager
+              venueId={venueId}
+              venueSlug={venueSlug}
+              seatMaps={seatMaps}
+              onSeatMapCreated={onSeatMapCreated}
+            />
+            <Checklist
+              items={checklist}
+              onToggle={onToggleChecklist}
+              pendingTaskId={pendingTaskId}
+              expandedWorkflow={expandedWorkflow}
+              onToggleWorkflow={setExpandedWorkflow}
+            />
+          </div>
+
+          {/* Poster Workflow Manager - shown when poster_workflow is expanded */}
+          {expandedWorkflow === 'poster_workflow' && (
+            <div className="rounded-xl border border-indigo-500/30 bg-ink-900/70 p-6 shadow-ink">
+              <PosterWorkflowManager
+                eventId={0} // TODO: Get from selected event
+                venueId={venueId}
+              />
+            </div>
+          )}
         </div>
       )}
     </Card>
@@ -113,9 +129,11 @@ interface ChecklistProps {
   items: VenueDashboardData["checklist"];
   onToggle: (task: ChecklistTaskId, nextComplete: boolean) => void;
   pendingTaskId: ChecklistTaskId | null;
+  expandedWorkflow: 'seat_map' | 'poster_workflow' | null;
+  onToggleWorkflow: (workflow: 'seat_map' | 'poster_workflow' | null) => void;
 }
 
-function Checklist({ items, onToggle, pendingTaskId }: ChecklistProps) {
+function Checklist({ items, onToggle, pendingTaskId, expandedWorkflow, onToggleWorkflow }: ChecklistProps) {
   return (
     <div className="rounded-xl border border-grit-500/30 bg-ink-900/70 p-5 shadow-ink">
       <h3 className="brand-heading text-lg text-bone-100">
@@ -125,25 +143,39 @@ function Checklist({ items, onToggle, pendingTaskId }: ChecklistProps) {
         Complete these to unlock automated collectibles, payouts, and analytics.
       </p>
       <div className="mt-4 space-y-3">
-        {items.map((item) => (
+        {items.map((item) => {
+          const isWorkflowTask = item.id === 'poster_workflow' || item.id === 'seat_map';
+          const isExpanded = expandedWorkflow === item.id;
+
+          return (
           <div
             key={item.id}
-            className={`rounded-lg border border-grit-500/30 bg-ink-800/40 p-4 transition ${
-              item.type === "manual"
-                ? "hover:border-acid-400/40 cursor-pointer"
-                : "opacity-80"
+            className={`rounded-lg border p-4 transition ${
+              isExpanded
+                ? "border-indigo-400 bg-ink-800/60"
+                : item.type === "manual"
+                ? "border-grit-500/30 bg-ink-800/40 hover:border-acid-400/40 cursor-pointer"
+                : "border-grit-500/30 bg-ink-800/40 opacity-80"
             }`}
             onClick={() => {
-              if (item.type !== "manual" || pendingTaskId) return;
-              onToggle(item.id, !item.complete);
+              if (pendingTaskId) return;
+              if (isWorkflowTask) {
+                onToggleWorkflow(isExpanded ? null : item.id as 'seat_map' | 'poster_workflow');
+              } else if (item.type === "manual") {
+                onToggle(item.id, !item.complete);
+              }
             }}
-            role={item.type === "manual" ? "button" : undefined}
-            tabIndex={item.type === "manual" ? 0 : -1}
+            role={item.type === "manual" || isWorkflowTask ? "button" : undefined}
+            tabIndex={item.type === "manual" || isWorkflowTask ? 0 : -1}
             onKeyDown={(event) => {
-              if (item.type !== "manual" || pendingTaskId) return;
+              if (pendingTaskId) return;
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
-                onToggle(item.id, !item.complete);
+                if (isWorkflowTask) {
+                  onToggleWorkflow(isExpanded ? null : item.id as 'seat_map' | 'poster_workflow');
+                } else if (item.type === "manual") {
+                  onToggle(item.id, !item.complete);
+                }
               }
             }}
           >
@@ -168,12 +200,18 @@ function Checklist({ items, onToggle, pendingTaskId }: ChecklistProps) {
                   <span className="rounded-full border border-grit-500/40 px-2 py-0.5 text-[10px] uppercase tracking-widest text-grit-400">
                     {item.type === "manual" ? "Manual" : "Auto"}
                   </span>
+                  {isWorkflowTask && (
+                    <span className="text-xs text-indigo-400">
+                      {isExpanded ? "▼ Expanded" : "▶ Click to expand"}
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-grit-400">{item.description}</p>
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -1,0 +1,68 @@
+<svg width="1024" height="1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mystery-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgb(99,102,241);stop-opacity:1" />
+      <stop offset="50%" style="stop-color:rgb(139,92,246);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgb(168,85,247);stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="url(#mystery-grad)"/>
+
+  <!-- Grid pattern for mystery effect -->
+  <g opacity="0.1">
+    <line x1="0" y1="256" x2="1024" y2="256" stroke="white" stroke-width="2"/>
+    <line x1="0" y1="512" x2="1024" y2="512" stroke="white" stroke-width="2"/>
+    <line x1="0" y1="768" x2="1024" y2="768" stroke="white" stroke-width="2"/>
+    <line x1="256" y1="0" x2="256" y2="1024" stroke="white" stroke-width="2"/>
+    <line x1="512" y1="0" x2="512" y2="1024" stroke="white" stroke-width="2"/>
+    <line x1="768" y1="0" x2="768" y2="1024" stroke="white" stroke-width="2"/>
+  </g>
+
+  <!-- Lock icon (mystery/unrevealed indicator) -->
+  <g transform="translate(512, 350)">
+    <!-- Lock body -->
+    <rect x="-60" y="0" width="120" height="100" rx="10" fill="white" opacity="0.9"/>
+    <!-- Lock shackle -->
+    <path d="M -40,-60 C -40,-100 40,-100 40,-60 L 40,0 L 20,0 L 20,-60 C 20,-80 -20,-80 -20,-60 L -20,0 L -40,0 Z"
+          fill="white" opacity="0.9"/>
+    <!-- Keyhole -->
+    <circle cx="0" cy="35" r="12" fill="rgb(99,102,241)"/>
+    <rect x="-5" y="35" width="10" height="30" fill="rgb(99,102,241)"/>
+  </g>
+
+  <!-- Text -->
+  <text x="512" y="520" font-family="Arial, sans-serif" font-size="48" fill="white" text-anchor="middle" font-weight="bold" filter="url(#glow)">
+    Unrevealed Poster
+  </text>
+  <text x="512" y="580" font-family="Arial, sans-serif" font-size="32" fill="white" text-anchor="middle" opacity="0.9">
+    Attend Event to Unlock
+  </text>
+
+  <!-- Decorative elements -->
+  <g opacity="0.2">
+    <!-- Stars -->
+    <circle cx="200" cy="150" r="3" fill="white"/>
+    <circle cx="824" cy="200" r="3" fill="white"/>
+    <circle cx="150" cy="800" r="3" fill="white"/>
+    <circle cx="874" cy="850" r="3" fill="white"/>
+    <circle cx="300" cy="900" r="2" fill="white"/>
+    <circle cx="700" cy="100" r="2" fill="white"/>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="512" y="680" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle" opacity="0.7">
+    Exclusive Collectible Concert Poster
+  </text>
+  <text x="512" y="720" font-family="Arial, sans-serif" font-size="20" fill="white" text-anchor="middle" opacity="0.6">
+    Proof of Attendance Required
+  </text>
+</svg>

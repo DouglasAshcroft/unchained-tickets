@@ -31,6 +31,8 @@ interface Ticket {
   onChainState?: "ACTIVE" | "USED" | "SOUVENIR"; // 0=ACTIVE, 1=USED, 2=SOUVENIR
   posterImageUrl?: string;
   perks?: Perk[]; // Available perks for this ticket tier
+  rarityMultiplier?: number; // Collectible rarity (1.0, 1.5, 2.0, etc.)
+  isRevealed?: boolean; // Whether the collectible poster is revealed
 }
 
 interface Purchase {
@@ -76,10 +78,26 @@ export default function MyTicketsPage() {
             | "SOUVENIR"
             | undefined;
 
+          // Extract rarity multiplier
+          const rarityAttr = metadata.attributes?.find(
+            (attr: any) => attr.trait_type === "Rarity Multiplier"
+          );
+          const rarityMultiplier = rarityAttr?.value
+            ? parseFloat(rarityAttr.value)
+            : undefined;
+
+          // Extract revealed status
+          const revealedAttr = metadata.attributes?.find(
+            (attr: any) => attr.trait_type === "Revealed"
+          );
+          const isRevealed = revealedAttr?.value === "Yes";
+
           return {
             ...ticket,
             onChainState,
             posterImageUrl: metadata.image,
+            rarityMultiplier,
+            isRevealed,
           };
         } catch (error) {
           console.error(`Failed to enrich ticket ${ticket.id}:`, error);
@@ -222,7 +240,7 @@ export default function MyTicketsPage() {
   const getStatusBadge = (status: string, onChainState?: string) => {
     // Prioritize on-chain state if available
     if (onChainState === "SOUVENIR") {
-      return <Badge tone="success">🎨 Souvenir</Badge>;
+      return <Badge tone="success">Collectible</Badge>;
     }
     if (onChainState === "USED") {
       return <Badge tone="info">Used</Badge>;
@@ -238,6 +256,20 @@ export default function MyTicketsPage() {
       default:
         return null;
     }
+  };
+
+  const getRarityLabel = (multiplier?: number) => {
+    if (!multiplier) return null;
+    if (multiplier >= 2.0) return "VIP";
+    if (multiplier >= 1.5) return "Premium";
+    return "Standard";
+  };
+
+  const getRarityColor = (multiplier?: number) => {
+    if (!multiplier) return "text-grit-400";
+    if (multiplier >= 2.0) return "text-yellow-400";
+    if (multiplier >= 1.5) return "text-purple-400";
+    return "text-blue-400";
   };
 
   if (shouldShowWalletPrompt) {
@@ -413,32 +445,94 @@ export default function MyTicketsPage() {
                       </div>
                     )}
 
-                  {/* Souvenir Section */}
-                  {ticket.onChainState === "SOUVENIR" &&
+                  {/* Collectible Poster Section - Revealed */}
+                  {ticket.isRevealed &&
                     ticket.posterImageUrl && (
                       <div className="pt-4 border-t border-grit-500/30">
                         <div className="space-y-3">
                           <div className="bg-gradient-to-br from-resistance-500/10 via-hack-green/10 to-acid-400/10 p-4 rounded-lg border border-acid-400/30">
-                            <div className="flex items-center gap-2 mb-3">
-                              <span className="text-2xl">🎨</span>
-                              <h4 className="font-semibold text-acid-400">
-                                Event Memento
-                              </h4>
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-2xl">🎨</span>
+                                <h4 className="font-semibold text-acid-400">
+                                  Collectible Poster
+                                </h4>
+                              </div>
+                              {ticket.rarityMultiplier && (
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-sm font-bold ${getRarityColor(ticket.rarityMultiplier)}`}>
+                                    {getRarityLabel(ticket.rarityMultiplier)}
+                                  </span>
+                                  <span className="text-xs text-grit-400">
+                                    {ticket.rarityMultiplier}x
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                            <div className="relative w-full aspect-video mb-3">
+                            <div className="relative w-full aspect-square mb-3 rounded-lg overflow-hidden bg-ink-800">
                               <Image
                                 src={ticket.posterImageUrl}
-                                alt={`${ticket.eventTitle} Souvenir`}
+                                alt={`${ticket.eventTitle} Collectible Poster`}
                                 fill
-                                className="rounded-lg object-cover"
+                                className="object-cover"
                               />
                             </div>
-                            <p className="text-sm text-grit-300">
-                              Your ticket has been transformed into a
-                              collectible souvenir NFT. This commemorates your
-                              attendance at {ticket.eventTitle}.
-                            </p>
+                            <div className="space-y-2">
+                              <p className="text-sm text-bone-100 font-medium">
+                                Proof of Attendance Verified
+                              </p>
+                              <p className="text-xs text-grit-300">
+                                This exclusive {ticket.tier} collectible commemorates
+                                your attendance at {ticket.eventTitle}.
+                              </p>
+                              {ticket.rarityMultiplier && ticket.rarityMultiplier > 1.0 && (
+                                <p className="text-xs text-acid-400">
+                                  This is a {getRarityLabel(ticket.rarityMultiplier)} tier
+                                  collectible with a {ticket.rarityMultiplier}x rarity multiplier,
+                                  making it more valuable than standard editions.
+                                </p>
+                              )}
+                            </div>
                           </div>
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Unrevealed Collectible Teaser - Active tickets */}
+                  {!ticket.isRevealed &&
+                    ticket.onChainState === "ACTIVE" &&
+                    ticket.status === "active" && (
+                      <div className="pt-4 border-t border-grit-500/30">
+                        <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 p-4 rounded-lg border border-indigo-500/30">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                              <span className="text-xl">🔒</span>
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-indigo-400 text-sm">
+                                Collectible Poster Locked
+                              </h4>
+                              <p className="text-xs text-grit-400">
+                                Attend event to unlock
+                              </p>
+                            </div>
+                          </div>
+                          <div className="relative w-full aspect-square mb-3 rounded-lg overflow-hidden bg-gradient-to-br from-indigo-600/20 to-purple-600/20 flex items-center justify-center">
+                            <div className="text-center space-y-2">
+                              <div className="text-4xl opacity-30">🎨</div>
+                              <p className="text-sm text-indigo-300 font-medium">
+                                Exclusive {ticket.tier} Poster
+                              </p>
+                              <p className="text-xs text-grit-400">
+                                Reveals after check-in
+                              </p>
+                            </div>
+                          </div>
+                          <p className="text-xs text-grit-300">
+                            Your ticket includes an exclusive collectible concert poster
+                            that will be revealed when you attend this event. Tier-specific
+                            artwork with proof-of-attendance verification.
+                          </p>
                         </div>
                       </div>
                     )}
@@ -504,7 +598,7 @@ export default function MyTicketsPage() {
           <div className="space-y-3">
             <h3 className="font-semibold text-bone-100 flex items-center gap-2">
               <span>ℹ️</span>
-              About Your NFT Tickets
+              About Your NFT Tickets & Collectibles
             </h3>
             <ul className="space-y-2 text-sm text-grit-300">
               <li className="flex items-start gap-2">
@@ -517,7 +611,23 @@ export default function MyTicketsPage() {
               <li className="flex items-start gap-2">
                 <span className="text-acid-400 mt-0.5">•</span>
                 <span>
-                  Show the QR code at the venue entrance for verification.
+                  Show the QR code at the venue entrance for verification and
+                  check-in.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-acid-400 mt-0.5">•</span>
+                <span>
+                  When you attend an event, your ticket transforms into a
+                  collectible concert poster NFT with proof-of-attendance
+                  verification.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-acid-400 mt-0.5">•</span>
+                <span>
+                  Higher tier tickets (Premium, VIP) unlock more valuable
+                  collectibles with increased rarity multipliers.
                 </span>
               </li>
               <li className="flex items-start gap-2">
@@ -525,13 +635,6 @@ export default function MyTicketsPage() {
                 <span>
                   Tickets can be transferred to other wallets if you need to
                   give them to someone else.
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-acid-400 mt-0.5">•</span>
-                <span>
-                  Once scanned at the venue, tickets will be marked as
-                  &quot;Used&quot; and cannot be reused.
                 </span>
               </li>
             </ul>

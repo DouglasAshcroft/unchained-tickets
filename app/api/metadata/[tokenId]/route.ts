@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { sanitizePosterImageUrl } from '@/lib/utils/posterImage';
 import { getTicketState } from '@/lib/services/NFTMintingService';
+import { getApprovedPosterForTicketType } from '@/lib/services/PosterGenerationService';
 
 /**
  * Metadata API for NFT tickets
@@ -29,6 +30,7 @@ export async function GET(
             artist: true,
           },
         },
+        ticketTypes: true,
       },
     });
 
@@ -59,15 +61,77 @@ export async function GET(
       isSouvenir = new Date() > new Date(event.endsAt || event.startsAt);
     }
 
-    // Build metadata
+    // Determine which ticket type this token belongs to
+    // We need to look up the Charge or Ticket record that has this tokenId
+    let ticketTypeId: number | null = null;
+    let tierName = 'General Admission';
+    let rarityMultiplier = 1.0;
+
+    try {
+      // Try to find ticket type from Charge record (most reliable)
+      const charge = await prisma.charge.findFirst({
+        where: {
+          mintedTokenId: tokenId,
+        },
+        include: {
+          ticket: {
+            include: {
+              ticketType: true,
+            },
+          },
+        },
+      });
+
+      if (charge?.ticket?.ticketType) {
+        ticketTypeId = charge.ticket.ticketType.id;
+        tierName = charge.ticket.ticketType.name;
+      }
+    } catch (error) {
+      console.warn('[Metadata API] Could not determine ticket type, using default:', error);
+    }
+
+    // Get collectible poster for this tier (if ticket is USED or SOUVENIR)
+    let posterImageUrl = sanitizePosterImageUrl(event.posterImageUrl);
+    let isRevealed = false;
+
+    if (ticketState >= 1) { // USED or SOUVENIR state
+      const collectiblePoster = await getApprovedPosterForTicketType(eventId, ticketTypeId);
+
+      if (collectiblePoster) {
+        posterImageUrl = collectiblePoster;
+        isRevealed = true;
+
+        // Get rarity multiplier from the variant
+        const variant = await prisma.eventPosterVariant.findFirst({
+          where: {
+            eventId,
+            ticketTypeId,
+            isApproved: true,
+          },
+        });
+
+        if (variant) {
+          rarityMultiplier = variant.rarityMultiplier;
+        }
+      }
+    } else {
+      // ACTIVE state - show mystery/unrevealed poster
+      posterImageUrl = '/assets/posters/unrevealed-ticket.svg';
+    }
+
+    // Build metadata with proof-of-attendance gating
     const metadata = {
-      name: isSouvenir
-        ? `${event.title} - Collectible Ticket`
-        : `${event.title} - Ticket`,
-      description: isSouvenir
-        ? `Commemorative NFT ticket for ${event.title} on ${new Date(event.startsAt).toLocaleDateString()}. This event has concluded and this ticket is now a collectible souvenir.`
-        : `NFT ticket for ${event.title} at ${event.venue?.name || 'TBA'}. Admit one to the event on ${new Date(event.startsAt).toLocaleDateString()}.`,
-      image: sanitizePosterImageUrl(event.posterImageUrl),
+      name: isRevealed
+        ? `${event.title} - Collectible ${tierName} Poster`
+        : isSouvenir
+          ? `${event.title} - Collectible Ticket`
+          : `${event.title} - Ticket`,
+      description: ticketState === 0
+        ? `NFT ticket for ${event.title} at ${event.venue?.name || 'TBA'}. Admit one to the event on ${new Date(event.startsAt).toLocaleDateString()}. Attend the event to reveal your exclusive collectible poster!`
+        : isRevealed
+          ? `Collectible ${tierName} poster for ${event.title} on ${new Date(event.startsAt).toLocaleDateString()}. This exclusive artwork commemorates your attendance at this event. Rarity multiplier: ${rarityMultiplier}x`
+          : `Commemorative NFT ticket for ${event.title}. This event has concluded and this ticket is now a collectible souvenir.`,
+      image: posterImageUrl,
       external_url: event.externalLink || `${process.env.NEXT_PUBLIC_APP_URL}/events/${event.id}`,
       attributes: [
         {
@@ -98,6 +162,10 @@ export async function GET(
           value: event.status,
         },
         {
+          trait_type: 'Ticket Tier',
+          value: tierName,
+        },
+        {
           trait_type: 'Ticket Type',
           value: isSouvenir ? 'Souvenir' : ticketState === 1 ? 'Used' : 'Active',
         },
@@ -105,13 +173,29 @@ export async function GET(
           trait_type: 'On-Chain State',
           value: ticketState === 0 ? 'Active' : ticketState === 1 ? 'Used' : 'Souvenir',
         },
+        {
+          trait_type: 'Revealed',
+          value: isRevealed ? 'Yes' : 'No',
+        },
+        {
+          trait_type: 'Rarity Multiplier',
+          value: rarityMultiplier,
+          display_type: 'number',
+        },
+        {
+          trait_type: 'Proof of Attendance',
+          value: ticketState >= 1 ? 'Verified' : 'Pending',
+        },
       ],
       properties: {
         event_id: eventId,
         token_id: tokenId,
         venue: event.venue?.name,
         date: event.startsAt,
-        category: 'Event Ticket',
+        category: isRevealed ? 'Collectible Poster' : 'Event Ticket',
+        tier: tierName,
+        rarity_multiplier: rarityMultiplier,
+        revealed: isRevealed,
       },
     };
 

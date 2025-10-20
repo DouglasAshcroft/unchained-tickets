@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { api } from "@/lib/api/client";
+import { POSTER_STYLES } from "@/lib/services/PosterGenerationService";
 
 type PricingType = "general_admission" | "reserved" | "mixed";
 
@@ -38,7 +39,7 @@ type TicketTypeForm = {
   perks: TicketPerkForm[];
 };
 
-type WizardStep = "basics" | "schedule" | "tickets" | "review";
+type WizardStep = "basics" | "schedule" | "tickets" | "posters" | "review";
 
 interface StepDefinition {
   id: WizardStep;
@@ -96,12 +97,26 @@ const steps: StepDefinition[] = [
       "Define ticket tiers, pricing, and reserve a seat map if needed.",
   },
   {
+    id: "posters",
+    title: "Collectible Posters",
+    description:
+      "Generate or upload exclusive poster art for each ticket tier.",
+  },
+  {
     id: "review",
     title: "Review & Publish",
     description:
       "Double-check details and decide whether to publish now or later.",
   },
 ];
+
+type PosterVariant = {
+  ticketTypeId: string;
+  ticketTypeName: string;
+  imageUrl: string | null;
+  isApproved: boolean;
+  rarityMultiplier: number;
+};
 
 type FormState = {
   title: string;
@@ -114,6 +129,7 @@ type FormState = {
   primaryArtistId: string;
   status: "draft" | "published";
   ticketTypes: TicketTypeForm[];
+  posterVariants: PosterVariant[];
 };
 
 type FormErrors = Record<string, string | undefined>;
@@ -129,6 +145,7 @@ const initialState: FormState = {
   primaryArtistId: "",
   status: "draft",
   ticketTypes: [createEmptyTicketType()],
+  posterVariants: [],
 };
 
 type VenueOption = {
@@ -209,6 +226,10 @@ export default function NewEventPage() {
   const [showArtistSuggestions, setShowArtistSuggestions] = useState(false);
   const artistInputRef = useRef<HTMLInputElement>(null);
   const artistSuggestionBoxRef = useRef<HTMLDivElement>(null);
+
+  // Poster workflow state
+  const [selectedPosterStyle, setSelectedPosterStyle] = useState<string>("");
+  const [isGeneratingPosters, setIsGeneratingPosters] = useState(false);
 
   const currentStep = steps[currentStepIndex];
 
@@ -903,6 +924,20 @@ export default function NewEventPage() {
           }
         });
       });
+    }
+
+    if (stepId === "posters") {
+      // Check if all ticket types have approved posters
+      const missingPosters = formData.ticketTypes.filter((ticket) => {
+        const variant = formData.posterVariants.find(
+          (v) => v.ticketTypeId === ticket.id
+        );
+        return !variant || !variant.isApproved;
+      });
+
+      if (missingPosters.length > 0) {
+        stepErrors.posters = `Please approve posters for all ticket tiers. Missing: ${missingPosters.map((t) => t.name).join(", ")}`;
+      }
     }
 
     if (stepId === "review") {
@@ -1703,6 +1738,323 @@ export default function NewEventPage() {
     </div>
   );
 
+  const renderPostersStep = () => {
+    const getRarityMultiplier = (tierName: string) => {
+      const lowerName = tierName.toLowerCase();
+      if (lowerName.includes("vip")) return 2.0;
+      if (lowerName.includes("premium")) return 1.5;
+      return 1.0;
+    };
+
+    const getRarityLabel = (multiplier: number) => {
+      if (multiplier >= 2.0) return "VIP";
+      if (multiplier >= 1.5) return "Premium";
+      return "Standard";
+    };
+
+    const getRarityColor = (multiplier: number) => {
+      if (multiplier >= 2.0) return "text-yellow-400 border-yellow-400/30 bg-yellow-400/10";
+      if (multiplier >= 1.5) return "text-purple-400 border-purple-400/30 bg-purple-400/10";
+      return "text-blue-400 border-blue-400/30 bg-blue-400/10";
+    };
+
+    const handleGeneratePosters = async () => {
+      if (!selectedPosterStyle) {
+        toast.error("Please select a poster style");
+        return;
+      }
+
+      setIsGeneratingPosters(true);
+      try {
+        // Generate posters for all ticket types
+        const newVariants: PosterVariant[] = formData.ticketTypes.map((ticket) => {
+          const rarityMultiplier = getRarityMultiplier(ticket.name);
+          return {
+            ticketTypeId: ticket.id,
+            ticketTypeName: ticket.name,
+            imageUrl: `/assets/posters/placeholder-${selectedPosterStyle}.svg`, // Placeholder for now
+            isApproved: false,
+            rarityMultiplier,
+          };
+        });
+
+        setFormData((prev) => ({
+          ...prev,
+          posterVariants: newVariants,
+        }));
+
+        toast.success(`Generated ${newVariants.length} poster variants`);
+      } catch (error) {
+        console.error("Failed to generate posters:", error);
+        toast.error("Failed to generate posters");
+      } finally {
+        setIsGeneratingPosters(false);
+      }
+    };
+
+    const handleApproveVariant = (ticketTypeId: string) => {
+      setFormData((prev) => ({
+        ...prev,
+        posterVariants: prev.posterVariants.map((variant) =>
+          variant.ticketTypeId === ticketTypeId
+            ? { ...variant, isApproved: true }
+            : variant
+        ),
+      }));
+    };
+
+    const handleUploadPoster = (ticketTypeId: string, file: File) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          setFormData((prev) => {
+            const existingVariant = prev.posterVariants.find(
+              (v) => v.ticketTypeId === ticketTypeId
+            );
+            const ticket = prev.ticketTypes.find((t) => t.id === ticketTypeId);
+
+            if (existingVariant) {
+              return {
+                ...prev,
+                posterVariants: prev.posterVariants.map((variant) =>
+                  variant.ticketTypeId === ticketTypeId
+                    ? { ...variant, imageUrl: reader.result as string, isApproved: false }
+                    : variant
+                ),
+              };
+            } else {
+              const rarityMultiplier = ticket ? getRarityMultiplier(ticket.name) : 1.0;
+              return {
+                ...prev,
+                posterVariants: [
+                  ...prev.posterVariants,
+                  {
+                    ticketTypeId,
+                    ticketTypeName: ticket?.name || "Unknown",
+                    imageUrl: reader.result as string,
+                    isApproved: false,
+                    rarityMultiplier,
+                  },
+                ],
+              };
+            }
+          });
+          toast.success("Poster uploaded");
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+
+    const allTiersApproved = formData.ticketTypes.every((ticket) => {
+      const variant = formData.posterVariants.find(
+        (v) => v.ticketTypeId === ticket.id
+      );
+      return variant && variant.isApproved;
+    });
+
+    return (
+      <div className="space-y-6">
+        <Card className="bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-acid-400/10 border-indigo-500/30">
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-indigo-300">
+              Collectible Concert Posters
+            </h3>
+            <p className="text-sm text-bone-100">
+              Each ticket tier unlocks an exclusive collectible poster after event attendance.
+              Generate AI-powered posters or upload your own artwork for each tier.
+            </p>
+            <div className="flex items-center gap-2 text-xs text-grit-300">
+              <svg className="w-4 h-4 text-acid-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Posters reveal only after ticket holders attend your event (proof-of-attendance)</span>
+            </div>
+          </div>
+        </Card>
+
+        {/* AI Generation Section */}
+        <Card className="bg-ink-800/60 border-grit-500/40">
+          <div className="space-y-4">
+            <div>
+              <h4 className="text-md font-semibold text-bone-100 mb-2">
+                Generate with AI
+              </h4>
+              <p className="text-sm text-grit-300 mb-4">
+                Choose a poster style and we'll generate unique artwork for each ticket tier.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {Object.entries(POSTER_STYLES).map(([key, style]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setSelectedPosterStyle(key)}
+                  className={`p-4 rounded-lg border-2 text-left transition-all ${
+                    selectedPosterStyle === key
+                      ? "border-acid-400 bg-acid-400/10"
+                      : "border-grit-500/30 hover:border-acid-400/50"
+                  }`}
+                >
+                  <div className="font-semibold text-sm text-bone-100">
+                    {style.name}
+                  </div>
+                  <div className="text-xs text-grit-400 mt-1">
+                    {style.description}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <Button
+              type="button"
+              onClick={handleGeneratePosters}
+              disabled={!selectedPosterStyle || isGeneratingPosters || formData.posterVariants.length > 0}
+              className="w-full"
+            >
+              {isGeneratingPosters ? (
+                <LoadingSpinner size="sm" text="Generating posters..." />
+              ) : formData.posterVariants.length > 0 ? (
+                "Posters Generated"
+              ) : (
+                `Generate ${formData.ticketTypes.length} Poster${formData.ticketTypes.length > 1 ? "s" : ""}`
+              )}
+            </Button>
+          </div>
+        </Card>
+
+        {/* Generated/Uploaded Posters */}
+        {formData.posterVariants.length > 0 && (
+          <Card className="bg-ink-800/60 border-grit-500/40">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-md font-semibold text-bone-100">
+                  Review & Approve Posters
+                </h4>
+                {allTiersApproved && (
+                  <div className="flex items-center gap-2 text-sm text-green-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    All tiers approved
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {formData.ticketTypes.map((ticket) => {
+                  const variant = formData.posterVariants.find(
+                    (v) => v.ticketTypeId === ticket.id
+                  );
+                  const rarityMultiplier = getRarityMultiplier(ticket.name);
+
+                  return (
+                    <div
+                      key={ticket.id}
+                      className={`rounded-lg border p-4 ${
+                        variant?.isApproved
+                          ? "border-green-500/50 bg-green-500/10"
+                          : "border-grit-500/30 bg-ink-900/40"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="font-semibold text-sm text-bone-100">
+                            {ticket.name}
+                          </div>
+                          <div className={`text-xs mt-1 inline-block px-2 py-1 rounded ${getRarityColor(rarityMultiplier)}`}>
+                            {getRarityLabel(rarityMultiplier)} • {rarityMultiplier}x
+                          </div>
+                        </div>
+                        {variant?.isApproved && (
+                          <div className="text-green-400">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+
+                      {variant?.imageUrl ? (
+                        <div className="space-y-3">
+                          <div className="aspect-[3/4] bg-gradient-to-br from-indigo-600/20 to-purple-600/20 rounded-lg flex items-center justify-center">
+                            <div className="text-xs text-grit-400 text-center p-4">
+                              Poster preview
+                              <br />
+                              {variant.ticketTypeName}
+                            </div>
+                          </div>
+
+                          {!variant.isApproved && (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              onClick={() => handleApproveVariant(ticket.id)}
+                              className="w-full"
+                            >
+                              Approve Poster
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            id={`poster-upload-${ticket.id}`}
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleUploadPoster(ticket.id, file);
+                            }}
+                          />
+                          <label
+                            htmlFor={`poster-upload-${ticket.id}`}
+                            className="block w-full"
+                          >
+                            <div className="aspect-[3/4] border-2 border-dashed border-grit-500/40 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-acid-400/50 transition-colors">
+                              <svg className="w-8 h-8 text-grit-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                              </svg>
+                              <span className="text-xs text-grit-400">
+                                Click to upload
+                              </span>
+                            </div>
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {!allTiersApproved && formData.posterVariants.length > 0 && (
+          <Card className="border-yellow-500/30 bg-yellow-500/10">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div className="text-sm text-yellow-200">
+                <strong>Action required:</strong> Please approve posters for all ticket tiers before continuing. This ensures every ticket holder will have a collectible poster to reveal after attending your event.
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {formData.posterVariants.length === 0 && (
+          <Card className="border-dashed border-grit-500/40 bg-ink-800/40">
+            <p className="text-sm text-grit-300 text-center">
+              Select a style above to generate posters, or upload custom artwork for each tier individually after generation.
+            </p>
+          </Card>
+        )}
+      </div>
+    );
+  };
+
   const renderReviewStep = () => {
     const startPreview = formData.startsAt
       ? format(new Date(formData.startsAt), "PPpp")
@@ -1949,6 +2301,8 @@ export default function NewEventPage() {
         return renderScheduleStep();
       case "tickets":
         return renderTicketsStep();
+      case "posters":
+        return renderPostersStep();
       case "review":
         return renderReviewStep();
       default:
@@ -1971,7 +2325,7 @@ export default function NewEventPage() {
             </p>
           </div>
 
-          <div className="mb-8 grid gap-4 sm:grid-cols-3">
+          <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {steps.map((step, index) => {
               const isActive = index === currentStepIndex;
               const isComplete = index < currentStepIndex;

@@ -266,13 +266,14 @@ model Venue {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  owner             User?                   @relation("VenueOwner", fields: [ownerUserId], references: [id])
-  events            Event[]
-  clicks            VenueClick[]
-  seatMaps          VenueSeatMap[]
-  checklistStatuses VenueChecklistStatus[]
-  supportSessions   VenueSupportSession[]   @relation("VenueSupportSessions")
-  staff             VenueStaff[]
+  owner                     User?                     @relation("VenueOwner", fields: [ownerUserId], references: [id])
+  events                    Event[]
+  clicks                    VenueClick[]
+  seatMaps                  VenueSeatMap[]
+  checklistStatuses         VenueChecklistStatus[]
+  supportSessions           VenueSupportSession[]     @relation("VenueSupportSessions")
+  staff                     VenueStaff[]
+  posterGenerationRequests  PosterGenerationRequest[]
 
   // Performance indexes
   @@index([name]) // For text search
@@ -308,15 +309,17 @@ model Event {
   estimatedAdValue  Decimal  @default(0) @db.Decimal(10, 2)
   lastImpressionAt  DateTime?
 
-  venue              Venue                    @relation(fields: [venueId], references: [id], onDelete: Restrict)
-  primaryArtist      Artist?                  @relation("PrimaryArtist", fields: [artistId], references: [id])
-  artists            EventArtist[]
-  tickets            Ticket[]
-  charges            Charge[]
-  ticketTypes        EventTicketType[]
-  seatMapAssignments EventSeatMapAssignment[]
-  advocacyRequests   AdvocacyRequest[]
-  impressionLogs     EventImpression[]
+  venue                     Venue                      @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  primaryArtist             Artist?                    @relation("PrimaryArtist", fields: [artistId], references: [id])
+  artists                   EventArtist[]
+  tickets                   Ticket[]
+  charges                   Charge[]
+  ticketTypes               EventTicketType[]
+  seatMapAssignments        EventSeatMapAssignment[]
+  advocacyRequests          AdvocacyRequest[]
+  impressionLogs            EventImpression[]
+  posterVariants            EventPosterVariant[]
+  posterGenerationRequests  PosterGenerationRequest[]
 
   // Performance indexes
   @@index([title]) // For text search
@@ -394,10 +397,11 @@ model EventTicketType {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  event         Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  tickets       Ticket[]
-  reservedSeats EventReservedSeat[]
-  perks         TicketPerk[]
+  event          Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets        Ticket[]
+  reservedSeats  EventReservedSeat[]
+  perks          TicketPerk[]
+  posterVariants EventPosterVariant[]
 
   @@index([eventId])
   @@index([pricingType])
@@ -829,4 +833,50 @@ model AdminAuditLog {
   @@index([userId, createdAt])
   @@index([action, createdAt])
   @@index([targetType, targetId])
+}
+
+// Collectable Poster System
+// Poster variants per event and tier for proof-of-attendance reveals
+model EventPosterVariant {
+  id               Int      @id @default(autoincrement())
+  eventId          Int
+  ticketTypeId     Int?     // null = default for all tiers
+  variantName      String   // "VIP Gold", "GA Standard", etc.
+  imageUrl         String   // CDN/IPFS URL of generated/uploaded poster
+  rarityMultiplier Float    @default(1.0) // 1.0 = GA, 1.5 = Premium, 2.0 = VIP
+  generationPrompt String?  @db.Text // AI prompt used (if generated)
+  isApproved       Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  event      Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  ticketType EventTicketType? @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([eventId, ticketTypeId])
+  @@index([isApproved])
+}
+
+// Track AI image generation requests for audit and retry
+model PosterGenerationRequest {
+  id                 Int       @id @default(autoincrement())
+  eventId            Int
+  venueId            Int
+  ticketTypeId       Int?
+  prompt             String    @db.Text // User's input + system enhancements
+  provider           String    // "replicate", "openai-dalle", etc.
+  status             String    // pending, generating, completed, failed
+  resultImageUrl     String?
+  errorMessage       String?   @db.Text
+  estimatedCostCents Int?
+  createdAt          DateTime  @default(now())
+  completedAt        DateTime?
+
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  venue  Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, status])
+  @@index([venueId])
+  @@index([status])
+  @@index([createdAt])
 }
