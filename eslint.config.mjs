@@ -10,7 +10,9 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...compat.config({
+    extends: ["next/core-web-vitals", "next/typescript"],
+  }),
   {
     rules: {
       "@typescript-eslint/no-unused-vars": [
@@ -21,8 +23,13 @@ const eslintConfig = [
         },
       ],
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-require-imports": "off", // Allow require() for dynamic imports
+      "react/no-unescaped-entities": "off", // Disable to allow apostrophes in JSX
     },
   },
+  {
+    ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"]
+  }
 ];
 
 export default eslintConfig;

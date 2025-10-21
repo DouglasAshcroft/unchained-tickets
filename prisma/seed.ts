@@ -145,11 +145,11 @@ async function main() {
   }
 
   // Helper function to get random item from array
-  const random = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+  const _random = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
   // 50 Events spread over 6 months (Oct 2025 - Mar 2026) with varied statuses
   const baseDate = new Date('2025-10-05');
-  const statuses = ['draft', 'published', 'canceled', 'completed'];
+  const _statuses = ['draft', 'published', 'canceled', 'completed'];
   const eventTitles = [
     'Midnight Dreams Tour', 'Psychedelic Sunset', 'Electric Paradise', 'Soul Sessions', 'Indie Nights',
     'Bass & Beyond', 'Cosmic Journey', 'Desert Vibes', 'Urban Legends', 'Retro Rewind',

@@ -46,7 +46,6 @@ function initializePaymaster() {
   try {
     // The CDP SDK has paymaster capabilities built in
     // We can use it to sponsor transactions
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Coinbase } = require('@coinbase/cdp-sdk');
 
     paymasterClient = Coinbase.configureFromJson({

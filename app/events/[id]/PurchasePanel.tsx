@@ -309,8 +309,8 @@ export function PurchasePanel({
               setTimeout(() => {
                 const params = new URLSearchParams({
                   from: 'purchase',
-                  wallet: metadata.walletAddress,
-                  email: metadata.email,
+                  wallet: metadata.walletAddress!,  // Non-null assertion: checked by if condition
+                  email: metadata.email!,           // Non-null assertion: checked by if condition
                 });
                 router.push(`/profile/setup?${params.toString()}`);
               }, 2000);

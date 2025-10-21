@@ -271,8 +271,8 @@ async function main() {
     const endsAt = new Date(startsAt);
     endsAt.setHours(endsAt.getHours() + Math.floor(Math.random() * 3) + 2); // 2-5 hours
 
-    const basePrice = Math.floor(Math.random() * 100) + 20; // $20-$120
-    const ticketSupply = Math.floor(Math.random() * 200) + 50; // 50-250 tickets
+    const _basePrice = Math.floor(Math.random() * 100) + 20; // $20-$120
+    const _ticketSupply = Math.floor(Math.random() * 200) + 50; // 50-250 tickets
 
     // 70% published, 20% draft, 10% completed
     let status: EventStatus;

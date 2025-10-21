@@ -11,7 +11,7 @@
  *   npx tsx scripts/onchain/initialize-production-contract.ts --eventId=5
  */
 
-import { createPublicClient, createWalletClient, http, type Address, type Hash } from 'viem';
+import { createPublicClient, createWalletClient, http, type Address } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 import contractArtifact from '../../contracts/UnchainedTickets.json';
