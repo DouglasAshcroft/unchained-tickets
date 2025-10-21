@@ -61,3 +61,6 @@ coverage/
 *.log
 tests/reports/*
 !tests/reports/.gitkeep
+
+# Sentry Config File
+.env.sentry-build-plugin
