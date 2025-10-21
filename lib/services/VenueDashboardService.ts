@@ -23,6 +23,7 @@ class VenueDashboardService {
       select: {
         id: true,
         name: true,
+        slug: true,
         city: true,
         state: true,
         capacity: true,

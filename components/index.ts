@@ -1,6 +1,6 @@
 // Barrel file for top-level components
 export { default as EventCard } from './EventCard';
-export { default as SearchBar } from './SearchBar';
+export { SearchBar } from './SearchBar';
 export { default as VenueCard } from './VenueCard';
 export { default as CheckoutModal } from './CheckoutModal';
 export { default as GenrePicker } from './GenrePicker';

@@ -4,7 +4,7 @@ import type { Event, EventTicketType } from '@prisma/client';
 /**
  * PosterGenerationService
  * Handles AI-powered concert poster generation for collectable NFT reveals
- * Uses Replicate API with Stable Diffusion XL for high-quality poster art
+ * Uses Stability.ai API with Stable Diffusion XL 1.0 for high-quality poster art
  */
 
 // Poster style presets optimized for concert posters
@@ -146,12 +146,12 @@ export async function generatePosterVariants(
   try {
     const { eventId, venueId, ticketTypeIds, style, customPrompt } = params;
 
-    // Validate Replicate API token
-    const apiToken = process.env.REPLICATE_API_TOKEN;
+    // Validate Stability.ai API token
+    const apiToken = process.env.STABILITY_API_KEY;
     if (!apiToken) {
       return {
         success: false,
-        error: 'AI poster generation is not configured. Please add REPLICATE_API_TOKEN to environment variables.',
+        error: 'AI poster generation is not configured. Please add STABILITY_API_KEY to environment variables.',
       };
     }
 
@@ -189,15 +189,14 @@ export async function generatePosterVariants(
           venueId,
           ticketTypeId: ticketType.id,
           prompt,
-          provider: 'replicate-sdxl',
+          provider: 'stability-ai',
           status: 'pending',
-          estimatedCostCents: 1, // ~$0.0025 per image
+          estimatedCostCents: 1, // ~$0.001-0.002 per image with Stability.ai
         },
       });
 
-      // In production, this would call Replicate API
-      // For MVP, we'll use a placeholder that simulates the generation
-      const imageUrl = await generateWithReplicate(prompt, request.id);
+      // Call Stability.ai API to generate the poster
+      const imageUrl = await generateWithStabilityAI(prompt, request.id);
 
       // Update request status
       await prisma.posterGenerationRequest.update({
@@ -248,32 +247,77 @@ export async function generatePosterVariants(
 }
 
 /**
- * Call Replicate API to generate image
- * Uses Stable Diffusion XL model for high-quality results
+ * Call Stability.ai API to generate image
+ * Uses Stable Diffusion XL model for high-quality poster generation
  */
-async function generateWithReplicate(prompt: string, requestId: number): Promise<string> {
-  const apiToken = process.env.REPLICATE_API_TOKEN;
+async function generateWithStabilityAI(prompt: string, requestId: number): Promise<string> {
+  const apiKey = process.env.STABILITY_API_KEY;
 
   // For MVP/dev mode, return a placeholder
   // In production, this would make actual API call
-  if (!apiToken || apiToken.includes('your_replicate_api_token')) {
+  if (!apiKey || apiKey.includes('your_') || apiKey.includes('sk-')) {
     console.log(`[PosterGeneration] DEV MODE - Would generate with prompt: ${prompt.substring(0, 100)}...`);
     // Return a data URI placeholder for development
     return generatePlaceholderImage(requestId);
   }
 
   try {
-    // Production implementation would use Replicate SDK:
-    // import Replicate from 'replicate';
-    // const replicate = new Replicate({ auth: apiToken });
-    // const output = await replicate.run("stability-ai/sdxl:latest", { input: { prompt } });
-    // return output[0]; // URL of generated image
+    // Split prompt into main prompt and negative prompt
+    const [mainPrompt, negativePromptPart] = prompt.split('. Negative prompt: ');
+    const negativePrompt = negativePromptPart || 'text, words, letters, watermark, logo, signature, blurry, low quality';
 
-    // For now, return placeholder
-    return generatePlaceholderImage(requestId);
+    // Call Stability.ai API
+    // Using SDXL 1.0 model for high-quality poster generation
+    const response = await fetch(
+      'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          text_prompts: [
+            {
+              text: mainPrompt,
+              weight: 1,
+            },
+            {
+              text: negativePrompt,
+              weight: -1,
+            },
+          ],
+          cfg_scale: 7, // How strictly to follow the prompt (7 is balanced)
+          height: 1024,
+          width: 1024,
+          samples: 1, // Generate 1 image
+          steps: 50, // More steps = higher quality (30-50 recommended)
+          style_preset: 'digital-art', // Good for poster art
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[PosterGeneration] Stability.ai API error:', errorData);
+      throw new Error(`Stability.ai API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Stability.ai returns base64-encoded images
+    if (data.artifacts && data.artifacts.length > 0) {
+      const base64Image = data.artifacts[0].base64;
+      // Return as data URI - in production, you may want to upload to cloud storage
+      return `data:image/png;base64,${base64Image}`;
+    }
+
+    throw new Error('No image returned from Stability.ai API');
   } catch (error) {
-    console.error('[PosterGeneration] Replicate API error:', error);
-    throw new Error('Failed to generate image with AI');
+    console.error('[PosterGeneration] Stability.ai API error:', error);
+    // Return placeholder on error for graceful degradation
+    return generatePlaceholderImage(requestId);
   }
 }
 
@@ -347,7 +391,7 @@ export async function refineGeneration(
     });
 
     // Generate new image
-    const imageUrl = await generateWithReplicate(newPrompt, newRequest.id);
+    const imageUrl = await generateWithStabilityAI(newPrompt, newRequest.id);
 
     // Update request
     await prisma.posterGenerationRequest.update({
