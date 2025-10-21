@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { headers } from "next/headers";
 import { cookieToInitialState } from "wagmi";
 import { RootProvider } from "./rootProvider";
@@ -53,6 +54,7 @@ export default async function RootLayout({
             </div>
             <ApiStatus />
             <Toaster position="top-right" theme="dark" richColors />
+            <SpeedInsights/>
           </Providers>
         </RootProvider>
       </body>
