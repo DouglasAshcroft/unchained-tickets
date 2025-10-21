@@ -66,4 +66,5 @@ function FavoriteArtistButton({
   );
 }
 
+export { FavoriteArtistButton };
 export default FavoriteArtistButton;

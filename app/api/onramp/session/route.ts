@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Invalid request parameters',
-          details: validation.error.errors,
+          details: validation.error.issues,
         },
         { status: 400 }
       );
