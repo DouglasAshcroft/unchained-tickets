@@ -34,6 +34,7 @@
     "@coinbase/cdp-sdk": "^1.38.4",
     "@coinbase/onchainkit": "^1.1.1",
     "@farcaster/miniapp-sdk": "^0.2.1",
+    "@next/eslint-plugin-next": "^15.3.4",
     "@prisma/client": "^6.16.3",
     "@sentry/nextjs": "^10.20.0",
     "@tailwindcss/postcss": "^4.1.14",
@@ -42,6 +43,8 @@
     "bcrypt": "^6.0.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.4",
     "graphql": "^16.11.0",
     "graphql-request": "^6.1.0",
     "html5-qrcode": "^2.3.8",
@@ -58,10 +61,7 @@
     "use-debounce": "^10.0.6",
     "viem": "^2.38.0",
     "wagmi": "^2.16.3",
-    "zod": "^4.1.11",
-    "eslint": "^9",
-    "eslint-config-next": "15.3.4",
-    "@next/eslint-plugin-next": "^15.3.4"
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
