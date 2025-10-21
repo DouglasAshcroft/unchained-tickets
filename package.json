@@ -29,6 +29,8 @@
     "docker:fresh": "docker stop unchained-db 2>/dev/null || true && docker rm unchained-db 2>/dev/null || true && npm run docker:reset"
   },
   "dependencies": {
+    "@base-org/account": "^2.4.0",
+    "@base-org/account-ui": "^1.0.1",
     "@coinbase/cdp-sdk": "^1.38.4",
     "@coinbase/onchainkit": "^1.1.1",
     "@farcaster/miniapp-sdk": "^0.2.1",

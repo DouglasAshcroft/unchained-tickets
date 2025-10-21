@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { FooterBaseBadge } from '@/components/branding/BuiltOnBaseBadge';
+import { FOOTER_MESSAGES } from '@/lib/content/baseMessaging';
 
 export function Footer() {
   return (
@@ -7,20 +9,17 @@ export function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <nav className="flex items-center gap-6 text-sm">
             <Link href="/events" className="hover:text-blue-400 transition-colors">
-              Events
-            </Link>
-            <Link href="/artists" className="hover:text-blue-400 transition-colors">
-              Artists
-            </Link>
-            <Link href="/venues" className="hover:text-blue-400 transition-colors">
-              Venues
+              {FOOTER_MESSAGES.links.events}
             </Link>
             <Link href="/about" className="hover:text-blue-400 transition-colors">
-              About
+              {FOOTER_MESSAGES.links.about}
             </Link>
           </nav>
-          <div className="text-sm text-gray-500">
-            © {new Date().getFullYear()} Unchained. Powered by Base.
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-500">
+              {FOOTER_MESSAGES.copyright(new Date().getFullYear())}
+            </div>
+            <FooterBaseBadge />
           </div>
         </div>
       </div>

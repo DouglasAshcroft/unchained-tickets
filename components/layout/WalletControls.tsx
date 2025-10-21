@@ -1,7 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
-import { useAccount } from 'wagmi';
+import { useEffect, useRef, useState, type ComponentType } from 'react';
 import clsx from 'clsx';
 
 type WalletPanelComponent = ComponentType<{ className?: string }>;
@@ -11,52 +10,40 @@ type WalletControlsProps = {
 };
 
 export function WalletControls({ className }: WalletControlsProps) {
-  const { isConnected } = useAccount();
   const [WalletPanel, setWalletPanel] = useState<WalletPanelComponent | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const hasRequestedRef = useRef(false);
 
-  const loadPanel = useCallback(async () => {
-    if (WalletPanel || hasRequestedRef.current) {
-      setIsLoading(false);
-      return;
-    }
+  useEffect(() => {
+    // Load WalletPanel immediately on mount
+    if (!WalletPanel && !hasRequestedRef.current) {
+      hasRequestedRef.current = true;
 
-    hasRequestedRef.current = true;
-    setIsLoading(true);
-
-    try {
-      const mod = await import('./WalletPanel');
-      const Panel = mod.WalletPanel ?? mod.default;
-      setWalletPanel(() => Panel);
-    } finally {
-      setIsLoading(false);
+      import('./WalletPanel')
+        .then((mod) => {
+          const Panel = mod.WalletPanel ?? mod.default;
+          setWalletPanel(() => Panel);
+        })
+        .catch((error) => {
+          console.error('Failed to load WalletPanel:', error);
+        });
     }
   }, [WalletPanel]);
-
-  useEffect(() => {
-    if (isConnected && !WalletPanel && !hasRequestedRef.current) {
-      loadPanel();
-    }
-  }, [isConnected, WalletPanel, loadPanel]);
 
   if (WalletPanel) {
     return <WalletPanel className={className} />;
   }
 
+  // Show minimal loading state while WalletPanel loads
   return (
-    <button
-      type="button"
-      onClick={loadPanel}
+    <div
       className={clsx(
-        'flex items-center gap-2 px-4 py-2 rounded-lg border border-grit-500/30 bg-ink-800/50 hover:bg-ink-700/50 transition-all text-sm font-medium text-bone-100',
-        isLoading && 'opacity-70 cursor-wait',
+        'flex items-center gap-2 px-4 py-2 rounded-lg border border-grit-500/30 bg-ink-800/50 text-sm font-medium text-grit-400',
         className
       )}
-      disabled={isLoading}
     >
-      {isLoading ? 'Loading wallet…' : isConnected ? 'Open Wallet' : 'Connect Wallet'}
-    </button>
+      <div className="w-5 h-5 border-2 border-grit-500 border-t-acid-400 rounded-full animate-spin" />
+      <span>Loading...</span>
+    </div>
   );
 }
 

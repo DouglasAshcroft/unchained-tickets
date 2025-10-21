@@ -84,7 +84,7 @@ export function PaymentMethodsSection({
           <div className="mb-4 p-4 bg-hack-green/10 border border-hack-green/20 rounded-lg">
             <p className="text-hack-green text-sm flex items-center">
               <span className="mr-2">✓</span>
-              Web3 wallet connected - preferred payment method
+              Onchain wallet connected - preferred payment method
             </p>
           </div>
         )}

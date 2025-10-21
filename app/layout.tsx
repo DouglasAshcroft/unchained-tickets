@@ -18,9 +18,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Unchained Tickets - Decentralized Event Ticketing",
+  title: "Unchained Tickets - Onchain Event Ticketing",
   description:
-    "Buy and sell event tickets as NFTs on the blockchain. Secure, transparent, and censorship-resistant ticketing powered by Base.",
+    "Own your tickets as NFTs. Secure, transparent ticketing built on Base. Support artists directly with near-zero fees.",
 };
 
 export default async function RootLayout({

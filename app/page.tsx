@@ -1,79 +1,66 @@
 import Link from "next/link";
-//TODO: Change layout, change adovcating CTA to fit branding, Maybe propoganda themed.
+import { BaseCompliantHero } from "@/components/sections/BaseCompliantHero";
+import { ValuePropsGrid, UserJourneyGrid } from "@/components/sections/ValuePropsGrid";
+import { PoweredByBaseBanner } from "@/components/branding/BuiltOnBaseBadge";
+import { HERO_MESSAGES } from "@/lib/content/baseMessaging";
+import { CORE_VALUE_PROPS, USER_JOURNEY } from "@/lib/content/valueProps";
+
 export default function HomePage() {
+  // Convert USER_JOURNEY object to array for UserJourneyGrid
+  const journeySteps = Object.values(USER_JOURNEY);
+
   return (
     <>
-      {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-ink-900 to-ink-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="text-center">
-            <h1 className="brand-heading text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-resistance-500 via-hack-green to-acid-400 bg-clip-text text-transparent">
-              Join the Resistance
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-grit-300 max-w-3xl mx-auto">
-              Experience live music like never before. Buy tickets as NFTs, own
-              your memories, and support artists directly.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/events"
-                className="px-8 py-4 bg-resistance-500 hover:brightness-110 text-ink-900 rounded-lg font-semibold text-lg transition-all"
-              >
-                Explore Events
-              </Link>
-              <Link
-                href="/about"
-                className="px-8 py-4 border-2 border-acid-400/60 text-acid-400 hover:bg-acid-400/10 rounded-lg font-semibold text-lg transition-all"
-              >
-                Learn More About Unchained
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Hero Section - Base Compliant */}
+      <BaseCompliantHero
+        message={HERO_MESSAGES.home}
+        variant="centered"
+        background="gradient"
+      />
 
-      {/* Features Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="noise-overlay relative p-8 rounded-lg border border-grit-500/30 bg-ink-800/50 text-center hover:border-resistance-500/50 transition-all">
-            <div className="text-4xl mb-4">🎫</div>
-            <h3 className="brand-heading text-xl mb-2 text-bone-100">
-              NFT Tickets
-            </h3>
-            <p className="text-grit-300">
-              Your tickets are NFTs - collectible, transferable, and truly yours
-            </p>
-          </div>
-          <div className="noise-overlay relative p-8 rounded-lg border border-grit-500/30 bg-ink-800/50 text-center hover:border-hack-green/50 transition-all">
-            <div className="text-4xl mb-4">⛓️</div>
-            <h3 className="brand-heading text-xl mb-2 text-bone-100">
-              Blockchain Powered
-            </h3>
-            <p className="text-grit-300">
-              Built on Base for fast, secure, and low-cost transactions
-            </p>
-          </div>
-          <div className="noise-overlay relative p-8 rounded-lg border border-grit-500/30 bg-ink-800/50 text-center hover:border-acid-400/50 transition-all">
-            <div className="text-4xl mb-4">🎨</div>
-            <h3 className="brand-heading text-xl mb-2 text-bone-100">
-              Support Artists
-            </h3>
-            <p className="text-grit-300">
-              Direct payments to artists, no middlemen taking cuts
-            </p>
-          </div>
+      {/* Core Value Propositions */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-bone-100 mb-4">
+            A Better Way to Experience Live Events
+          </h2>
+          <p className="text-xl text-grit-300 max-w-2xl mx-auto">
+            The internet is broken. We&apos;re building something better.
+          </p>
         </div>
-      </div>
 
-      {/* Join the Resistance CTA */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-ink-800 to-ink-900">
+        <ValuePropsGrid
+          items={CORE_VALUE_PROPS}
+          columns={3}
+          variant="detailed"
+        />
+      </section>
+
+      {/* How It Works - User Journey */}
+      <section className="bg-ink-900/50 border-y border-grit-500/30 py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-bone-100 mb-4">
+              How It Works
+            </h2>
+            <p className="text-xl text-grit-300 max-w-2xl mx-auto">
+              From discovery to collectible, your onchain journey in four steps
+            </p>
+          </div>
+
+          <UserJourneyGrid steps={journeySteps} />
+        </div>
+      </section>
+
+      {/* Join the Resistance CTA - Updated with Base messaging */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-ink-800 to-ink-900">
         <div className="noise-overlay absolute inset-0 opacity-30"></div>
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
           <h2 className="brand-heading text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-resistance-500 via-hack-green to-acid-400 bg-clip-text text-transparent">
-            How Can You Help?
+            Help Bring the World Onchain
           </h2>
           <p className="text-xl text-grit-300 mb-8 max-w-2xl mx-auto">
-            Join the resistance against unfair ticketing. Help us bring
+            Tired of being a guest on someone else&apos;s platform? Help us bring
             transparent, fan-first ticketing to venues everywhere.
           </p>
 
@@ -82,15 +69,15 @@ export default function HomePage() {
               Join the Resistance
             </h3>
             <p className="text-grit-300 mb-6">
-              Sign up to advocate for fair ticketing. We'll help you reach out
-              to your favorite venues and track your impact.
+              Advocate for fair ticketing at your favorite venues. We&apos;ll help you reach out
+              and track your impact as we bring more events onchain.
             </p>
 
             <Link
               href="/advocate"
               className="inline-block px-8 py-4 bg-resistance-500 hover:brightness-110 text-bone-100 rounded-lg font-semibold text-lg transition-all"
             >
-              Start Advocating →
+              Start Advocating
             </Link>
 
             <p className="text-sm text-grit-400 mt-6">
@@ -104,7 +91,12 @@ export default function HomePage() {
             </p>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Built on Base Attribution */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <PoweredByBaseBanner />
+      </section>
     </>
   );
 }

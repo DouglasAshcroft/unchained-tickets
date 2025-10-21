@@ -24,7 +24,7 @@ Before starting, ensure you have:
 ### 1.1 Coinbase Developer Platform
 
 **Get OnchainKit API Key:**
-1. Go to [developer.coinbase.com](https://developer.coinbase.com)
+1. Go to [developer.coinbase.com](https:/developer.coinbase.com)
 2. Sign in or create account
 3. Navigate to OnchainKit section
 4. Create new API key
@@ -315,7 +315,7 @@ npx prisma studio
 **Initialize Contract (Dry Run First):**
 ```bash
 # Test without making transactions
-npx tsx scripts/onchain/initialize-production-contract.ts --dry-run
+ px tsx scripts/onchain/initialize-production-contract.ts --dry-run
 ```
 
 **Initialize Production:**

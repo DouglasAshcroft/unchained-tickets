@@ -70,7 +70,7 @@ export function ConnectedWalletsSection({ wallets }: ConnectedWalletsSectionProp
       ) : (
         <div className="text-center py-8 bg-ink-700 border border-grit-500/30 rounded-lg">
           <p className="text-grit-400 mb-4">No wallets connected</p>
-          <p className="text-sm text-grit-500">Connect a wallet to enable Web3 payments</p>
+          <p className="text-sm text-grit-500">Connect a wallet to enable onchain payments</p>
         </div>
       )}
     </div>

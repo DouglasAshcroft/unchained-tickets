@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Wallet, ConnectWallet, WalletDropdown } from '@coinbase/onchainkit/wallet';
 import { Avatar, Name, Address, Identity } from '@coinbase/onchainkit/identity';
 import { useAccount } from 'wagmi';
+import { BASE_EDUCATION, WALLET_MESSAGES } from '@/lib/content/baseMessaging';
 
 interface WalletsAndPaymentSectionProps {
   wallets: Array<{
@@ -40,44 +41,29 @@ export function WalletsAndPaymentSection({
 
   return (
     <div className="space-y-6">
-      {/* Base Wallet Education Section */}
+      {/* Base Wallet Education Section - Using centralized messaging */}
       <div className="bg-ink-800/50 border border-grit-500/30 rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4 text-bone-100">Why Use a Base Wallet?</h2>
+        <h2 className="text-xl font-semibold mb-4 text-bone-100">{BASE_EDUCATION.whyBase.headline}</h2>
+        <p className="text-sm text-grit-400 mb-6">{BASE_EDUCATION.whyBase.description}</p>
         <div className="space-y-4">
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-resistance-500 flex items-center justify-center text-bone-100 font-bold text-sm">
-              ⚡
+          {BASE_EDUCATION.benefits.map((benefit, index) => (
+            <div key={index} className="flex items-start space-x-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-resistance-500 flex items-center justify-center text-bone-100 font-bold text-sm">
+                {benefit.icon}
+              </div>
+              <div>
+                <h4 className="font-semibold text-bone-100 mb-1">{benefit.title}</h4>
+                <p className="text-sm text-grit-300">{benefit.description}</p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-semibold text-bone-100 mb-1">Near-Zero Fees</h4>
-              <p className="text-sm text-grit-300">Base is an Ethereum Layer 2 network with transaction fees typically under $0.01</p>
-            </div>
-          </div>
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-hack-green flex items-center justify-center text-ink-900 font-bold text-sm">
-              🔒
-            </div>
-            <div>
-              <h4 className="font-semibold text-bone-100 mb-1">Secure Checkout</h4>
-              <p className="text-sm text-grit-300">Your tickets are NFTs secured by Ethereum's battle-tested security</p>
-            </div>
-          </div>
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-acid-400 flex items-center justify-center text-ink-900 font-bold text-sm">
-              🎫
-            </div>
-            <div>
-              <h4 className="font-semibold text-bone-100 mb-1">True Ownership</h4>
-              <p className="text-sm text-grit-300">You own your tickets as NFTs - collectible, transferable, and fraud-proof</p>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
       {/* Wallet Connection with OnchainKit */}
       <div className="bg-ink-800/50 border border-grit-500/30 rounded-lg p-6">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-1 text-bone-100">Web3 Wallet</h2>
+          <h2 className="text-xl font-semibold mb-1 text-bone-100">Onchain Wallet</h2>
           <p className="text-sm text-grit-300">
             Connect your Base wallet to enable crypto payments and NFT tickets
           </p>
@@ -85,8 +71,8 @@ export function WalletsAndPaymentSection({
 
         {!isConnected ? (
           <div className="text-center py-8 bg-ink-700 border border-grit-500/30 rounded-lg">
-            <p className="text-grit-400 mb-6">No wallet connected</p>
-            <p className="text-sm text-grit-500 mb-6">Connect your wallet to get started with Web3 payments</p>
+            <p className="text-grit-400 mb-6">{WALLET_MESSAGES.notConnected.headline}</p>
+            <p className="text-sm text-grit-500 mb-6">{WALLET_MESSAGES.notConnected.description}</p>
 
             <div className="flex justify-center">
               <Wallet>
@@ -106,10 +92,10 @@ export function WalletsAndPaymentSection({
 
             <div className="mt-6 p-4 bg-resistance-500/10 border border-resistance-500/30 rounded-lg">
               <p className="text-sm text-grit-300 mb-2">
-                <strong className="text-bone-100">New to crypto?</strong>
+                <strong className="text-bone-100">{BASE_EDUCATION.gettingStarted.newToCrypto}</strong>
               </p>
               <p className="text-sm text-grit-300">
-                We'll help you create a secure Base wallet and optional sub-account for seamless transactions
+                {BASE_EDUCATION.gettingStarted.helpText}
               </p>
             </div>
           </div>
@@ -177,7 +163,7 @@ export function WalletsAndPaymentSection({
             <div className="mt-4 p-4 bg-hack-green/10 border border-hack-green/30 rounded-lg">
               <p className="text-hack-green text-sm flex items-center">
                 <span className="mr-2">✓</span>
-                Web3 wallet connected - this is your preferred payment method for crypto-enabled events
+                {WALLET_MESSAGES.connected.preferredMethod}
               </p>
             </div>
           </div>
@@ -188,9 +174,9 @@ export function WalletsAndPaymentSection({
       <div className="bg-ink-800/50 border border-grit-500/30 rounded-lg p-6">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h2 className="text-xl font-semibold mb-1 text-bone-100">Traditional Payment Methods</h2>
+            <h2 className="text-xl font-semibold mb-1 text-bone-100">{WALLET_MESSAGES.traditional.headline}</h2>
             <p className="text-sm text-grit-300">
-              Add a credit/debit card for venues that don't accept crypto payments yet
+              {WALLET_MESSAGES.traditional.description}
             </p>
           </div>
         </div>
@@ -246,7 +232,7 @@ export function WalletsAndPaymentSection({
 
         <div className="mt-6 p-4 bg-acid-400/10 border border-acid-400/20 rounded-lg">
           <p className="text-acid-400 text-sm">
-            <strong>Note:</strong> Traditional payment methods may include processing fees (2.9% + $0.30). Crypto payments have minimal network fees (typically &lt;$0.01).
+            <strong>Note:</strong> {WALLET_MESSAGES.traditional.note}
           </p>
         </div>
       </div>
