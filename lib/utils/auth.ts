@@ -41,3 +41,33 @@ export async function verifyAdmin(request: NextRequest): Promise<AuthUser> {
 
   return user;
 }
+
+export async function verifyArtist(request: NextRequest): Promise<AuthUser> {
+  const user = await verifyAuth(request);
+
+  if (user.role !== 'artist' && user.role !== 'admin') {
+    throw new Error('Artist access required');
+  }
+
+  return user;
+}
+
+export async function verifyVenue(request: NextRequest): Promise<AuthUser> {
+  const user = await verifyAuth(request);
+
+  if (user.role !== 'venue' && user.role !== 'admin') {
+    throw new Error('Venue access required');
+  }
+
+  return user;
+}
+
+export async function verifyArtistOrVenue(request: NextRequest): Promise<AuthUser> {
+  const user = await verifyAuth(request);
+
+  if (user.role !== 'artist' && user.role !== 'venue' && user.role !== 'admin') {
+    throw new Error('Artist or Venue access required');
+  }
+
+  return user;
+}

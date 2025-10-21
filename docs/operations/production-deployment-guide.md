@@ -13,7 +13,7 @@ This guide consolidates all the steps you need to deploy Unchained Tickets to pr
 Before starting, ensure you have:
 - [X] GitHub repository access
 - [X] Credit card for service signups (most have free tiers)
-- [ ] Domain name (or use Vercel's provided domain)
+- [X] Domain name (or use Vercel's provided domain)
 - [X] Base wallet with 0.1 ETH for gas fees
 - [ ] 4-8 hours of uninterrupted time
 
