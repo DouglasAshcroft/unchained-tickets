@@ -51,6 +51,7 @@ export type VenueDashboardData = {
   venue: {
     id: number;
     name: string;
+    slug: string;
     city?: string | null;
     state?: string | null;
     capacity?: number | null;
@@ -89,6 +90,7 @@ export const mockVenueDashboard: VenueDashboardData = {
   venue: {
     id: 42,
     name: 'Neon Forge Arena',
+    slug: 'neon-forge-arena',
     city: 'Austin',
     state: 'TX',
     capacity: 4200,

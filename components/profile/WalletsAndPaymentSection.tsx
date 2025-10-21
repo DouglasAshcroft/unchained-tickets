@@ -81,7 +81,7 @@ export function WalletsAndPaymentSection({
                   <Name />
                 </ConnectWallet>
                 <WalletDropdown>
-                  <Identity address={address} schemaId="">
+                  <Identity address={address}>
                     <Avatar />
                     <Name />
                     <Address />

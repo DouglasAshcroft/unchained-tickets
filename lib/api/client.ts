@@ -116,6 +116,14 @@ class ApiClient {
     this.setToken(null);
   }
 
+  // Generic POST method for endpoints not covered by specific methods
+  async post<T = any>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
   // Events endpoints
   async getEvents(search?: string) {
     const params = new URLSearchParams();

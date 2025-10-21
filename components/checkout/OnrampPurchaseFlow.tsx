@@ -232,9 +232,9 @@ export function OnrampPurchaseFlow({
             country="US"
             currency="USD"
             presetAmountInputs={[
-              fundingAmount,
-              fundingAmount * 1.5,
-              fundingAmount * 2,
+              String(fundingAmount),
+              String(fundingAmount * 1.5),
+              String(fundingAmount * 2),
             ]}
             onSuccess={handleFundingComplete}
             onError={(error) => {
@@ -287,9 +287,9 @@ export function OnrampPurchaseFlow({
           country="US"
           currency="USD"
           presetAmountInputs={[
-            isBelowMinimum ? fundingAmount : totalPrice,
-            (isBelowMinimum ? fundingAmount : totalPrice) * 1.5,
-            (isBelowMinimum ? fundingAmount : totalPrice) * 2,
+            String(isBelowMinimum ? fundingAmount : totalPrice),
+            String((isBelowMinimum ? fundingAmount : totalPrice) * 1.5),
+            String((isBelowMinimum ? fundingAmount : totalPrice) * 2),
           ]}
           onSuccess={async (transaction) => {
             toast.success('Payment successful! Creating your account...');
@@ -306,7 +306,7 @@ export function OnrampPurchaseFlow({
                   ticketTier,
                   quantity,
                   totalPrice,
-                  walletAddress: transaction?.destinationAddress || 'pending',
+                  walletAddress: (transaction as any)?.destinationAddress || 'pending',
                   email,
                   paymentMethod: 'onramp',
                 }),
@@ -317,7 +317,7 @@ export function OnrampPurchaseFlow({
               }
 
               const data = await response.json();
-              const newWalletAddress = transaction?.destinationAddress || 'pending';
+              const newWalletAddress = (transaction as any)?.destinationAddress || 'pending';
               toast.success('NFT ticket will be minted to your new wallet!', { duration: 4000 });
               onSuccess(data.chargeId, { email, walletAddress: newWalletAddress, isNewUser: true });
             } catch (error) {

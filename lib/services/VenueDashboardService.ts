@@ -236,6 +236,7 @@ class VenueDashboardService {
       venue: {
         id: venue.id,
         name: venue.name,
+        slug: venue.slug,
         city: venue.city,
         state: venue.state,
         capacity: venue.capacity,

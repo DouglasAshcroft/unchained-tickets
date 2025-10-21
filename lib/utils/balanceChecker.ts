@@ -40,7 +40,7 @@ export async function getUSDCBalance(address: string): Promise<number> {
     });
 
     // USDC has 6 decimals
-    return parseFloat(formatUnits(balance, 6));
+    return parseFloat(formatUnits(balance as bigint, 6));
   } catch (error) {
     console.error('Error fetching USDC balance:', error);
     return 0;
