@@ -1,7 +1,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { Suspense } from 'react';
 
 // Lazy load the heavy dashboard component
 const VenueDashboard = dynamic(

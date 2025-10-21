@@ -38,7 +38,9 @@ function initializeRateLimiter() {
 
   try {
     // Dynamically import Upstash packages
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Redis } = require('@upstash/redis');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Ratelimit } = require('@upstash/ratelimit');
 
     const redis = new Redis({
@@ -111,7 +113,9 @@ export async function checkRateLimit(
       limiter = rateLimiter.strict;
     } else {
       // For custom configs, create a new limiter
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { Redis } = require('@upstash/redis');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { Ratelimit } = require('@upstash/ratelimit');
 
       const redis = new Redis({

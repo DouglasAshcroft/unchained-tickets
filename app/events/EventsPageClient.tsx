@@ -51,6 +51,7 @@ export default function EventsPageClient({ cities }: EventsPageClientProps) {
           console.error("Error fetching profile location:", error);
         });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user]); // Don't include selectedLocation in deps to avoid infinite loop
 
   const { data, isLoading, error } = useQuery<GenreData>({

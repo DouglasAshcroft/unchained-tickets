@@ -86,9 +86,6 @@ export function generateFarcasterShareUrl(content: ShareContent): string {
  */
 export function generateLensShareUrl(content: ShareContent): string {
   const text = `${content.message}\n\n${content.url}`;
-  const params = new URLSearchParams({
-    text,
-  });
 
   return `https://hey.xyz/?text=${encodeURIComponent(text)}`;
 }

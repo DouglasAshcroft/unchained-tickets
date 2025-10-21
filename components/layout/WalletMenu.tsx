@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
-import { Avatar, Name, Address } from '@coinbase/onchainkit/identity';
+import { Avatar, Name } from '@coinbase/onchainkit/identity';
 import { useIdleTimer } from '@/lib/hooks/useIdleTimer';
 import Link from 'next/link';
 import {

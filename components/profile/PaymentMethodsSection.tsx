@@ -37,7 +37,7 @@ export function PaymentMethodsSection({
             </div>
             <div>
               <h4 className="font-semibold text-bone-100 mb-1">Secure Checkout</h4>
-              <p className="text-sm text-grit-300">Your tickets are NFTs secured by Ethereum's battle-tested security</p>
+              <p className="text-sm text-grit-300">Your tickets are NFTs secured by Ethereum&apos;s battle-tested security</p>
             </div>
           </div>
           <div className="flex items-start space-x-3">

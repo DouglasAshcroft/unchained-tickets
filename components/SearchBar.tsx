@@ -176,7 +176,6 @@ const SearchBarComponent = function SearchBar({
             aria-label="Search events, artists, and venues"
             aria-autocomplete="list"
             aria-controls={isOpen && hasResults ? 'search-results' : undefined}
-            aria-expanded={isOpen}
             aria-activedescendant={undefined}
             className="w-72 max-w-[56vw] rounded-md bg-ink-800 border border-grit-500/30 px-3 py-2 pr-8 text-bone-100 placeholder-grit-400 focus:outline-none focus:ring-2 focus:ring-acid-400/50 focus:border-acid-400/50 transition-colors"
           />

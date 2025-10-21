@@ -115,7 +115,7 @@ export default function AdvocatePage() {
                       Advocate for Venues
                     </h4>
                     <p className="text-sm text-grit-300">
-                      We'll help you reach out to venues to request fair,
+                      We&apos;ll help you reach out to venues to request fair,
                       transparent ticketing.
                     </p>
                   </div>
@@ -129,7 +129,7 @@ export default function AdvocatePage() {
                       Track Your Impact
                     </h4>
                     <p className="text-sm text-grit-300">
-                      Earn rewards, climb tiers, and see the venues you've
+                      Earn rewards, climb tiers, and see the venues you&apos;ve
                       helped bring on board.
                     </p>
                   </div>

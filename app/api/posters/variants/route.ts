@@ -162,7 +162,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     // Verify authentication
-    const authUser = await verifyAuth(request);
+    const _authUser = await verifyAuth(request);
 
     const searchParams = request.nextUrl.searchParams;
     const variantId = searchParams.get('variantId');

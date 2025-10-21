@@ -19,7 +19,7 @@ import { verifyAuth } from '@/lib/utils/auth';
 export async function POST(request: NextRequest) {
   try {
     // Verify authentication
-    const authUser = await verifyAuth(request);
+    const _authUser = await verifyAuth(request);
 
     const body = await request.json();
     const {

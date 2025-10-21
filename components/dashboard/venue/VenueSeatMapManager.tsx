@@ -52,7 +52,7 @@ function buildSeatMapSummary(seatMap: any): VenueDashboardSeatMap {
 }
 
 export function VenueSeatMapManager({
-  venueId,
+  venueId: _venueId,
   venueSlug,
   seatMaps,
   onSeatMapCreated,

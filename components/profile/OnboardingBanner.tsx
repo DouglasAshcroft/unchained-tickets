@@ -110,7 +110,7 @@ export function OnboardingBanner({ email, profileComplete, onDismiss }: Onboardi
             onClick={handleDismiss}
             className="px-6 py-2 bg-ink-700 border border-grit-500/30 text-bone-100 rounded-lg hover:bg-grit-500 transition-all font-medium"
           >
-            I'll do this later
+            I&apos;ll do this later
           </button>
         </div>
       )}
@@ -119,7 +119,7 @@ export function OnboardingBanner({ email, profileComplete, onDismiss }: Onboardi
         <div className="p-4 bg-hack-green/20 border border-hack-green/30 rounded-lg">
           <p className="text-hack-green font-semibold mb-2">🎊 Profile Complete!</p>
           <p className="text-sm text-grit-300 mb-3">
-            You're all set! Start advocating for venues and track your impact on the Advocacy tab.
+            You&apos;re all set! Start advocating for venues and track your impact on the Advocacy tab.
           </p>
           <Link
             href="/events"

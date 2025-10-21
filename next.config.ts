@@ -6,11 +6,6 @@ const nextConfig: NextConfig = {
   // Silence workspace root warning from multiple lockfiles while staying machine-agnostic
   outputFileTracingRoot: path.resolve(process.cwd()),
 
-  // Disable ESLint during builds (fix linting issues separately)
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // Production optimizations - use Next.js defaults for code splitting
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? {

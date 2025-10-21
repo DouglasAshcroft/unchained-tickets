@@ -1880,7 +1880,7 @@ export default function NewEventPage() {
                 Generate with AI
               </h4>
               <p className="text-sm text-grit-300 mb-4">
-                Choose a poster style and we'll generate unique artwork for each ticket tier.
+                Choose a poster style and we&apos;ll generate unique artwork for each ticket tier.
               </p>
             </div>
 

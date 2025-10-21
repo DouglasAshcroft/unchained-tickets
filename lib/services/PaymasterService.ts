@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { type Address, type Hash, encodeFunctionData, createPublicClient, http } from 'viem';
+import { type Address, encodeFunctionData } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import contractArtifact from '@/contracts/UnchainedTickets.json';
 import { eventService } from './EventService';
@@ -46,6 +46,7 @@ function initializePaymaster() {
   try {
     // The CDP SDK has paymaster capabilities built in
     // We can use it to sponsor transactions
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Coinbase } = require('@coinbase/cdp-sdk');
 
     paymasterClient = Coinbase.configureFromJson({
@@ -106,7 +107,7 @@ export async function mintTicketsWithPaymaster(
     // 2. Get contract configuration
     const NETWORK = process.env.NEXT_PUBLIC_NETWORK === 'mainnet' ? 'mainnet' : 'testnet';
     const CONTRACT_ADDRESS = (process.env.NFT_CONTRACT_ADDRESS || process.env.NEXT_PUBLIC_CONTRACT_ADDRESS) as Address;
-    const chain = NETWORK === 'mainnet' ? base : baseSepolia;
+    const _chain = NETWORK === 'mainnet' ? base : baseSepolia;
 
     if (!CONTRACT_ADDRESS) {
       throw new Error('Contract address not configured');
