@@ -5,9 +5,9 @@ import { ComponentType } from 'react';
 
 // Import components directly
 import EventCard from '../../components/EventCard';
-import SearchBar from '../../components/SearchBar';
+import { SearchBar } from '../../components/SearchBar';
 import VenueCard from '../../components/VenueCard';
-import CardCheckoutForm from '../../components/CardCheckoutForm';
+// CardCheckoutForm component doesn't exist - removed from tests
 import CheckoutModal from '../../components/CheckoutModal';
 import GenrePicker from '../../components/GenrePicker';
 import ApiStatus from '../../components/ApiStatus';
@@ -91,15 +91,6 @@ const testProps = {
     artistName: 'Test Artist',
     initialIsFavorite: false,
   },
-  CardCheckoutForm: {
-    eventId: 1,
-    eventTitle: 'Test Event',
-    ticketTier: 'General Admission',
-    quantity: 1,
-    totalPrice: 50,
-    onClose: () => {},
-    onSuccess: () => {},
-  },
   GenreCarousel: {
     title: 'Test Genre',
     events: [{
@@ -131,7 +122,6 @@ describe('Accessibility checks for all components', () => {
     EventCard,
     SearchBar,
     VenueCard,
-    CardCheckoutForm,
     CheckoutModal,
     GenrePicker,
     ApiStatus,

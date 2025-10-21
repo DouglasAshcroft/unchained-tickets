@@ -172,6 +172,7 @@ describe('EventService.createEvent', () => {
           currency: 'usd',
           capacity: 200,
           isActive: true,
+          perks: [],
         },
       ],
     });

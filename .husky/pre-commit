@@ -1,0 +1,9 @@
+# Run ESLint to catch linting errors
+echo "Running ESLint..."
+npm run lint || exit 1
+
+# Run TypeScript type checking
+echo "Running TypeScript type check..."
+npx tsc --noEmit --skipLibCheck || exit 1
+
+echo "✅ Pre-commit checks passed!"

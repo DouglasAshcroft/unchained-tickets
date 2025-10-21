@@ -66,7 +66,7 @@ describe('charge flow', () => {
         quantity: 2,
         totalPrice: 100,
       }),
-    }));
+    }) as any);
 
     expect(createChargeMock).toHaveBeenCalledWith(expect.objectContaining({
       name: expect.stringContaining('Resistance Fest'),
