@@ -39,7 +39,7 @@ export default function EventsPageClient({ cities }: EventsPageClientProps) {
         .then((profile) => {
           if (profile.location && !selectedLocation) {
             // Parse location string format "City, State"
-            const parts = profile.location.split(",").map((s) => s.trim());
+            const parts = profile.location.split(",").map((s: string) => s.trim());
             if (parts.length === 2) {
               const [city, state] = parts;
               setSelectedLocation({ city, state });
