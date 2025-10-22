@@ -307,7 +307,7 @@ export default function MyTicketsPage() {
             My Tickets
           </h1>
           <p className="text-grit-300">
-            Your NFT tickets are stored on Base blockchain
+            Your NFT tickets are stored in your wallet on Base blockchain
           </p>
           {!isDevMode && address && (
             <div className="mt-2 text-sm text-grit-400">
@@ -317,6 +317,7 @@ export default function MyTicketsPage() {
               </span>
             </div>
           )}
+          {/* TODO This is appearing in Production mode too */}
           {isDevMode && (
             <div className="mt-2 text-sm text-cobalt-400">
               🧪 Development Mode - No wallet required

@@ -50,7 +50,7 @@ export default function LeaderboardPage() {
               Global Leaderboard 🏆
             </h1>
             <p className="text-lg text-grit-300 max-w-2xl mx-auto">
-              Top advocates making waves in the fair ticketing movement
+              Top Resistance members fighting to overthrow the status quo
             </p>
           </div>
 
@@ -62,7 +62,7 @@ export default function LeaderboardPage() {
               </div>
             ) : leaderboard.length === 0 ? (
               <div className="p-8 text-center text-grit-500">
-                No advocates yet. Be the first!
+                Be the first to support the cause!
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -163,7 +163,7 @@ export default function LeaderboardPage() {
               Want to climb the ranks?
             </h2>
             <p className="mb-6 opacity-90 max-w-2xl mx-auto">
-              Start advocating for fair ticketing at your favorite venues. Every
+              Start messaging your favorite venues for better ticketing. Your
               voice matters in building a better music industry.
             </p>
             <Link

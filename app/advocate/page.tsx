@@ -42,7 +42,7 @@ export default function AdvocatePage() {
               Help us bring fair, transparent ticketing to venues everywhere
             </p>
             <p className="text-lg text-grit-400 max-w-2xl mx-auto">
-              Every voice matters in building a better music industry
+              Your voice matters in building a better music industry
             </p>
           </div>
 
@@ -50,11 +50,10 @@ export default function AdvocatePage() {
           <div className="max-w-2xl mx-auto">
             <div className="bg-ink-800/50 border border-resistance-500/30 rounded-xl p-8 mb-8">
               <h2 className="text-2xl font-bold mb-4 text-bone-100 text-center">
-                Sign Up to Advocate
+                Sign Up, Start Advocating
               </h2>
               <p className="text-grit-300 mb-6 text-center">
-                Enter your email to start advocating for fair ticketing at your
-                favorite venues
+                Enter your email and message your favorite venues for better ticketing
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -112,11 +111,11 @@ export default function AdvocatePage() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-bone-100 mb-1">
-                      Advocate for Venues
+                      Message Venues
                     </h4>
                     <p className="text-sm text-grit-300">
-                      We&apos;ll help you reach out to venues to request fair,
-                      transparent ticketing.
+                      We&apos;ll help you reach out to venues to let them know there is a better way.
+                      fair, transparent ticketing.
                     </p>
                   </div>
                 </div>
@@ -129,8 +128,8 @@ export default function AdvocatePage() {
                       Track Your Impact
                     </h4>
                     <p className="text-sm text-grit-300">
-                      Earn rewards, climb tiers, and see the venues you&apos;ve
-                      helped bring on board.
+                      Earn rewards, climb tiers, see the venues you&apos;ve
+                      brought on board.
                     </p>
                   </div>
                 </div>

@@ -41,7 +41,7 @@ export default function AboutPage() {
               The Future of Ticketing
             </h2>
             <p className="text-xl text-grit-300 max-w-2xl mx-auto">
-              Stop being a guest on someone else&apos;s platform. Take back ownership.
+              Fight back, Join the Resistance and Break free from the Ticket Masters. Own your tickets and your experiences with Unchained.
             </p>
           </div>
 
@@ -59,7 +59,7 @@ export default function AboutPage() {
                 Our Values
               </h2>
               <p className="text-xl text-grit-300 max-w-2xl mx-auto">
-                Built by and for real people who want something better
+                Built by rebels who want to overthrow the Monopoly! Returning the power to the people that matter, Fans, Venues and Artist, building better communities.
               </p>
             </div>
 
@@ -75,18 +75,18 @@ export default function AboutPage() {
         <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="bg-gradient-to-r from-resistance-500/20 to-acid-400/20 border border-resistance-500/50 rounded-xl p-8 text-center">
             <h2 className="brand-heading text-3xl font-bold mb-4 bg-gradient-to-r from-resistance-500 via-hack-green to-acid-400 bg-clip-text text-transparent">
-              Help Bring the World Onchain
+              Help the Resistance and Bring the World Onchain
             </h2>
             <p className="text-lg text-grit-300 mb-6 max-w-2xl mx-auto">
-              Advocate for fair ticketing at your favorite venues. Help us bring
-              more events onchain and track your impact.
+              Tell your favorite venues to join the movement for fair ticketing! Help us bring
+              more events onchain and get rewarded for supporting the cause.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/advocate"
                 className="px-8 py-4 bg-resistance-500 hover:brightness-110 text-bone-100 rounded-lg font-semibold text-lg transition-all"
               >
-                Start Advocating
+                Support the Cause
               </Link>
               <Link
                 href="/events"
