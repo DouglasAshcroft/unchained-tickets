@@ -106,12 +106,41 @@ Alternative database option with more free tier storage.
 ```
 postgresql://postgres:[YOUR-PASSWORD]@db.your-project.supabase.co:5432/postgres
 ```
+**⚠️ Important: Special Characters in Passwords**
+
+If your database password contains special bash characters (`!`, `&`, `$`, `[`, `]`, etc.), you need to handle them properly:
+
+**Solution 1: Use Single Quotes (Recommended for Shell)**
+```bash
+export DATABASE_URL='postgresql://postgres:[PASSWORD
+]@db.your-project.supabase.co:5432/postgres'
+```
+Single quotes prevent bash from interpreting special characters.
+
+**Solution 2: URL Encode Special Characters**
+Encode the password portion only:
+- `!` → `%21`
+- `&` → `%26`
+- `$` → `%24`
+- `[` → `%5B`
+- `]` → `%5D`
+
+Example: `[9R!Y&cj5a$jaScH]` becomes `%5B9R%21Y%26cj5a%24jaScH%5D`
+
+**Solution 3: Use .env File (Best Practice)**
+Create `.env.local` file instead of exporting in shell:
+```env
+
+```
+Then run Prisma commands normally (it reads .env automatically).
 
 #### 1.3 Run Migrations
 
 ```bash
-# Set database URL
-export DATABASE_URL="postgresql://postgres:..."
+# Set database URL (use single quotes if password has special characters!)
+export DATABASE_URL='postgresql://postgres.leecvsyxcolngkixdtbv:[DF3EK6peGsorAGOw]@aws-1-us-east-1.pooler.supabase.com:6543/postgres'
+
+export DATABASE_URL='postgresql://postgres.leecvsyxcolngkixdtbv:[K7ZG52imWRWxDEAu]@aws-1-us-east-1.pooler.supabase.com:6543/postgres'
 
 # Generate Prisma client
 npx prisma generate
