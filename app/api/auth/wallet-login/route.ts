@@ -36,16 +36,42 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!wallet || wallet.users.length === 0) {
-      return NextResponse.json(
-        { error: 'No user found for this wallet address' },
-        { status: 404 }
-      );
-    }
+    let user;
+    let isNewUser = false;
 
-    // Get the primary wallet or first wallet
-    const userWallet = wallet.users.find(uw => uw.isPrimary) || wallet.users[0];
-    const user = userWallet.user;
+    if (!wallet || wallet.users.length === 0) {
+      // Auto-create user for new wallet (Base-style one-wallet sign-in)
+      const newUser = await prisma.user.create({
+        data: {
+          email: `${walletAddress.toLowerCase()}@wallet.unchained`,
+          name: null,
+          role: 'fan',
+          walletAddress: walletAddress,
+          walletProvider: 'unknown',
+        },
+      });
+
+      // Create wallet record
+      await prisma.wallet.create({
+        data: {
+          address: walletAddress,
+          chain: 'base',
+          users: {
+            create: {
+              userId: newUser.id,
+              isPrimary: true,
+            },
+          },
+        },
+      });
+
+      user = newUser;
+      isNewUser = true;
+    } else {
+      // Existing wallet - get user
+      const userWallet = wallet.users.find(uw => uw.isPrimary) || wallet.users[0];
+      user = userWallet.user;
+    }
 
     // Generate JWT token
     const token = authService.generateToken({
@@ -62,6 +88,7 @@ export async function POST(request: NextRequest) {
         name: user.name,
         role: user.role,
       },
+      isNewUser,
     });
   } catch (error) {
     console.error('Wallet login error:', error);

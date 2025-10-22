@@ -16,7 +16,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  loginWithWallet: (walletAddress: string) => Promise<void>;
+  loginWithWallet: (walletAddress: string) => Promise<{ isNewUser?: boolean }>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => void;
   fetchUser: () => Promise<void>;
@@ -63,7 +63,7 @@ export const useAuth = create<AuthState>((set, get) => ({
         throw new Error(error.error || 'Wallet login failed');
       }
 
-      const { token, user } = await response.json();
+      const { token, user, isNewUser } = await response.json();
 
       // Store token in localStorage (same as email/password login)
       if (typeof window !== 'undefined') {
@@ -71,6 +71,8 @@ export const useAuth = create<AuthState>((set, get) => ({
       }
 
       set({ user, isAuthenticated: true, isLoading: false });
+
+      return { isNewUser };
     } catch (error) {
       set({ isLoading: false });
       throw error;
