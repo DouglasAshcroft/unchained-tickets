@@ -71,6 +71,20 @@ export class ProfileService {
    * Get complete user profile with all related data
    */
   async getUserProfile(userId: number): Promise<UserProfileData | null> {
+    // Ensure UserProfile exists (create if first access)
+    await prisma.userProfile.upsert({
+      where: { userId },
+      create: {
+        userId,
+        notificationsEnabled: true,
+        emailMarketing: false,
+        theme: 'dark',
+        language: 'en',
+        timezone: null,
+      },
+      update: {}, // No-op if exists
+    });
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
