@@ -68,6 +68,9 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@nomicfoundation/hardhat-verify": "^2.1.1",
+    "@openzeppelin/contracts": "^5.4.0",
     "@tailwindcss/typography": "^0.5.19",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -80,6 +83,7 @@
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
     "happy-dom": "^20.0.5",
+    "hardhat": "^3.0.8",
     "jest-axe": "^10.0.0",
     "jsdom": "^27.0.0",
     "postcss": "^8.5.6",
