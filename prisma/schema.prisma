@@ -8,25 +8,55 @@ datasource db {
 }
 
 model User {
-  id                      Int                    @id @default(autoincrement())
-  name                    String?
-  email                   String                 @unique @db.Citext
-  role                    UserRole               @default(fan)
-  createdAt               DateTime               @default(now())
-  updatedAt               DateTime               @updatedAt
-  auditLogs               AdminAuditLog[]        @relation("AdminAuditLogs")
-  artists                 Artist[]               @relation("ArtistOwner")
+  id        Int      @id @default(autoincrement())
+  name      String?
+  email     String   @unique @db.Citext
+  role      UserRole @default(fan)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Profile fields
+  phone              String?
+  avatarUrl          String?
+  bio                String?   @db.Text
+  location           String? // City, State or full address
+  favoriteGenres     String[] // Array of genre preferences
+  stripeCustomerId   String?  @unique
+  defaultPaymentMethodId String? // Stripe payment method ID
+  locationEnabled    Boolean  @default(false)
+  latitude           Decimal? @db.Decimal(9, 6)
+  longitude          Decimal? @db.Decimal(9, 6)
+
+  // Wallet & Onboarding fields
+  emailVerified      Boolean  @default(false)
+  walletAddress      String?  @unique
+  walletProvider     String? // 'coinbase_smart_wallet', 'metamask', 'rainbow', etc.
+  createdViaOnramp   Boolean  @default(false)
+  onboardingComplete Boolean  @default(false)
+
+  // Relations
   credentials             AuthCredential[]
-  charges                 Charge[]
-  payments                Payment[]
   sessions                Session[]
+  wallets                 UserWallet[]
+  userRoles               UserRoleLink[]
+  artists                 Artist[]               @relation("ArtistOwner")
+  venues                  Venue[]                @relation("VenueOwner")
   tickets                 Ticket[]
   scans                   TicketScan[]           @relation("Scanner")
-  userRoles               UserRoleLink[]
-  wallets                 UserWallet[]
-  venues                  Venue[]                @relation("VenueOwner")
+  payments                Payment[]
+  charges                 Charge[]
   completedChecklistItems VenueChecklistStatus[] @relation("VenueChecklistCompletedBy")
   supportSessions         VenueSupportSession[]  @relation("VenueSupportSessions")
+  auditLogs               AdminAuditLog[]        @relation("AdminAuditLogs")
+  profile                 UserProfile?
+  venueStaff              VenueStaff[]
+  favoriteArtists         FavoriteArtist[]
+  invitedStaff            VenueStaff[]           @relation("StaffInviter")
+
+  @@index([email])
+  @@index([stripeCustomerId])
+  @@index([walletAddress])
+  @@index([createdViaOnramp])
 }
 
 model AuthCredential {
@@ -104,49 +134,56 @@ model UserWallet {
 }
 
 model Artist {
-  id          Int           @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   ownerUserId Int?
   name        String
-  slug        String        @unique
+  slug        String   @unique
   genre       String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
   imageUrl    String?
-  owner       User?         @relation("ArtistOwner", fields: [ownerUserId], references: [id])
-  events      Event[]       @relation("PrimaryArtist")
-  eventLinks  EventArtist[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  @@index([name])
-  @@index([genre])
+  owner          User?            @relation("ArtistOwner", fields: [ownerUserId], references: [id])
+  events         Event[]          @relation("PrimaryArtist")
+  eventLinks     EventArtist[]
+  favoritedBy    FavoriteArtist[]
+
+  // Performance indexes
+  @@index([name]) // For text search
+  @@index([genre]) // For genre filtering
 }
 
 model Venue {
-  id                Int                    @id @default(autoincrement())
-  ownerUserId       Int?
-  name              String
-  slug              String                 @unique
-  city              String?
-  state             String?
-  capacity          Int?
-  addressLine1      String?
-  addressLine2      String?
-  postalCode        String?
-  latitude          Decimal?               @db.Decimal(9, 6)
-  longitude         Decimal?               @db.Decimal(9, 6)
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
-  imageUrl          String?
-  events            Event[]
-  owner             User?                  @relation("VenueOwner", fields: [ownerUserId], references: [id])
-  checklistStatuses VenueChecklistStatus[]
-  clicks            VenueClick[]
-  seatMaps          VenueSeatMap[]
-  supportSessions   VenueSupportSession[]  @relation("VenueSupportSessions")
+  id           Int      @id @default(autoincrement())
+  ownerUserId  Int?
+  name         String
+  slug         String   @unique
+  city         String?
+  state        String?
+  capacity     Int?
+  addressLine1 String?
+  addressLine2 String?
+  postalCode   String?
+  latitude     Decimal? @db.Decimal(9, 6)
+  longitude    Decimal? @db.Decimal(9, 6)
+  imageUrl     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  @@index([name])
-  @@index([city])
-  @@index([state])
-  @@index([city, state])
+  owner                     User?                     @relation("VenueOwner", fields: [ownerUserId], references: [id])
+  events                    Event[]
+  clicks                    VenueClick[]
+  seatMaps                  VenueSeatMap[]
+  checklistStatuses         VenueChecklistStatus[]
+  supportSessions           VenueSupportSession[]     @relation("VenueSupportSessions")
+  staff                     VenueStaff[]
+  posterGenerationRequests  PosterGenerationRequest[]
+
+  // Performance indexes
+  @@index([name]) // For text search
+  @@index([city]) // For location filtering
+  @@index([state]) // For state filtering
+  @@index([city, state]) // Composite for location searches
 }
 
 model Event {
@@ -173,16 +210,19 @@ model Event {
   lastImpressionAt   DateTime?
   originalTicketUrl  String?
   venueContactEmail  String?
-  advocacyRequests   AdvocacyRequest[]
-  charges            Charge[]
-  primaryArtist      Artist?                  @relation("PrimaryArtist", fields: [artistId], references: [id])
-  venue              Venue                    @relation(fields: [venueId], references: [id])
-  artists            EventArtist[]
-  impressionLogs     EventImpression[]
-  seatMapAssignments EventSeatMapAssignment[]
-  ticketTypes        EventTicketType[]
-  tickets            Ticket[]
+  venue                     Venue                      @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  primaryArtist             Artist?                    @relation("PrimaryArtist", fields: [artistId], references: [id])
+  artists                   EventArtist[]
+  tickets                   Ticket[]
+  charges                   Charge[]
+  ticketTypes               EventTicketType[]
+  seatMapAssignments        EventSeatMapAssignment[]
+  advocacyRequests          AdvocacyRequest[]
+  impressionLogs            EventImpression[]
+  posterVariants            EventPosterVariant[]
+  posterGenerationRequests  PosterGenerationRequest[]
 
+  // Performance indexes
   @@index([title])
   @@index([startsAt])
   @@index([status])
@@ -252,10 +292,11 @@ model EventTicketType {
   isActive      Boolean             @default(true)
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
-  reservedSeats EventReservedSeat[]
-  event         Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  tickets       Ticket[]
-  perks         TicketPerk[]
+  event          Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets        Ticket[]
+  reservedSeats  EventReservedSeat[]
+  perks          TicketPerk[]
+  posterVariants EventPosterVariant[]
 
   @@index([eventId])
   @@index([pricingType])
@@ -683,4 +724,108 @@ enum VenueChecklistTask {
   poster_workflow
   staff_accounts
   payout_details
+}
+
+// Core auth/users - Extended fields
+model UserProfile {
+  id                     Int      @id @default(autoincrement())
+  userId                 Int      @unique
+  notificationsEnabled   Boolean  @default(true)
+  emailMarketing         Boolean  @default(false)
+  theme                  String   @default("dark") // "dark" | "light"
+  language               String   @default("en")
+  timezone               String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FavoriteArtist {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  artistId  Int
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, artistId])
+  @@index([userId])
+  @@index([artistId])
+}
+
+// Venue Staff Management
+enum VenueStaffRole {
+  OWNER
+  MANAGER
+  STAFF
+  SCANNER
+}
+
+model VenueStaff {
+  id        Int             @id @default(autoincrement())
+  venueId   Int
+  userId    Int
+  role      VenueStaffRole  @default(STAFF)
+  isActive  Boolean         @default(true)
+  invitedBy Int?
+  invitedAt DateTime        @default(now())
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  venue    Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inviter  User?  @relation("StaffInviter", fields: [invitedBy], references: [id])
+
+  @@unique([venueId, userId])
+  @@index([venueId])
+  @@index([userId])
+  @@index([role])
+  @@index([invitedBy])
+}
+
+// Collectable Poster System
+model EventPosterVariant {
+  id               Int      @id @default(autoincrement())
+  eventId          Int
+  ticketTypeId     Int?     // null = default for all tiers
+  variantName      String   // "VIP Gold", "GA Standard", etc.
+  imageUrl         String   // CDN/IPFS URL of generated/uploaded poster
+  rarityMultiplier Float    @default(1.0) // 1.0 = GA, 1.5 = Premium, 2.0 = VIP
+  generationPrompt String?  @db.Text // AI prompt used (if generated)
+  isApproved       Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  event      Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  ticketType EventTicketType? @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([eventId, ticketTypeId])
+  @@index([isApproved])
+}
+
+// Track AI image generation requests for audit and retry
+model PosterGenerationRequest {
+  id                 Int       @id @default(autoincrement())
+  eventId            Int
+  venueId            Int
+  ticketTypeId       Int?
+  prompt             String    @db.Text // User's input + system enhancements
+  provider           String    // "replicate", "openai-dalle", etc.
+  status             String    // pending, generating, completed, failed
+  resultImageUrl     String?
+  errorMessage       String?   @db.Text
+  estimatedCostCents Int?
+  createdAt          DateTime  @default(now())
+  completedAt        DateTime?
+
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  venue  Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, status])
+  @@index([venueId])
+  @@index([status])
+  @@index([createdAt])
 }
