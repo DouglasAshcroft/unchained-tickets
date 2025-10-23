@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+//TODO Add Payment Method has no CC/Debit inputs - needs Stripe Elements integration for card collection
+
 interface PaymentMethodsSectionProps {
   stripeCustomerId: string | null;
   hasWallet: boolean;

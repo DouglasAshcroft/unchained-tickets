@@ -3,6 +3,7 @@ import type { UserRole, VenueStaffRole } from '@prisma/client';
 
 interface UpdateProfileData {
   name?: string;
+  email?: string;
   phone?: string;
   avatarUrl?: string;
   bio?: string;
@@ -161,6 +162,7 @@ export class ProfileService {
     const updateData: any = {};
 
     if (data.name !== undefined) updateData.name = data.name;
+    if (data.email !== undefined) updateData.email = data.email;
     if (data.phone !== undefined) updateData.phone = data.phone;
     if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
     if (data.bio !== undefined) updateData.bio = data.bio;

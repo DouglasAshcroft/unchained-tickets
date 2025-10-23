@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+//TODO The user location does not function properly. "Use my current location" doesn't work, and the Home field should auto-populate as user types to standardize the inputs to actual map locations. This will make it easier to geo-locate events near them.
+
 interface LocationSectionProps {
   profile: {
     location: string | null;

@@ -4,6 +4,8 @@
  * Shows top advocates globally
  */
 
+//TODO Global Leaderboard is mocked and fixed - this needs to be tied to actual user stats from the database
+
 "use client";
 
 import { useEffect, useState } from "react";

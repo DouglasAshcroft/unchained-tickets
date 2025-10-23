@@ -15,8 +15,14 @@ interface PersonalInfoSectionProps {
 
 export function PersonalInfoSection({ profile, onUpdate }: PersonalInfoSectionProps) {
   const [editing, setEditing] = useState(false);
+
+  // Check if email is a placeholder (wallet-only or dev user)
+  const isPlaceholderEmail = profile.email.endsWith('@wallet.unchained') ||
+                             profile.email.endsWith('@unchained.local');
+
   const [formData, setFormData] = useState({
     name: profile.name || '',
+    email: profile.email,
     phone: profile.phone || '',
     bio: profile.bio || '',
   });
@@ -34,6 +40,7 @@ export function PersonalInfoSection({ profile, onUpdate }: PersonalInfoSectionPr
   const handleCancel = () => {
     setFormData({
       name: profile.name || '',
+      email: profile.email,
       phone: profile.phone || '',
       bio: profile.bio || '',
     });
@@ -73,15 +80,30 @@ export function PersonalInfoSection({ profile, onUpdate }: PersonalInfoSectionPr
           </div>
         </div>
 
-        {/* Email (read-only) */}
+        {/* Email */}
         <div>
           <label className="block text-sm font-medium text-bone-100 mb-2">Email</label>
-          <input
-            type="email"
-            value={profile.email}
-            disabled
-            className="w-full px-4 py-2 bg-ink-700 border border-grit-500/30 rounded-lg text-grit-400 cursor-not-allowed"
-          />
+          {editing && isPlaceholderEmail ? (
+            <>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-4 py-2 bg-ink-700 border border-grit-500/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-resistance-500 text-bone-100"
+                placeholder="your.email@example.com"
+              />
+              <p className="text-xs text-acid-400 mt-1">
+                Please set your real email address (wallet-only accounts use placeholder emails)
+              </p>
+            </>
+          ) : (
+            <input
+              type="email"
+              value={profile.email}
+              disabled
+              className="w-full px-4 py-2 bg-ink-700 border border-grit-500/30 rounded-lg text-grit-400 cursor-not-allowed"
+            />
+          )}
         </div>
 
         {/* Name */}

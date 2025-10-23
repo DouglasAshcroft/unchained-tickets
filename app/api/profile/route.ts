@@ -38,6 +38,46 @@ export async function PATCH(request: NextRequest) {
     // Validate and sanitize input
     const updateData: any = {};
 
+    // Handle email update (only for placeholder emails)
+    if (body.email !== undefined && body.email !== authUser.email) {
+      const currentUser = await profileService.getUserProfile(userId);
+      if (currentUser) {
+        const isPlaceholderEmail = currentUser.email.endsWith('@wallet.unchained') ||
+                                   currentUser.email.endsWith('@unchained.local');
+
+        if (isPlaceholderEmail) {
+          // Validate email format
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(body.email)) {
+            return NextResponse.json(
+              { error: 'Invalid email format' },
+              { status: 400 }
+            );
+          }
+
+          // Check if email is already taken
+          const { prisma } = await import('@/lib/db/prisma');
+          const existingUser = await prisma.user.findUnique({
+            where: { email: body.email },
+          });
+
+          if (existingUser && existingUser.id !== userId) {
+            return NextResponse.json(
+              { error: 'Email already in use' },
+              { status: 400 }
+            );
+          }
+
+          updateData.email = body.email;
+        } else {
+          return NextResponse.json(
+            { error: 'Cannot update email for non-wallet accounts' },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     if (body.name !== undefined) updateData.name = body.name;
     if (body.phone !== undefined) updateData.phone = body.phone;
     if (body.avatarUrl !== undefined) updateData.avatarUrl = body.avatarUrl;
