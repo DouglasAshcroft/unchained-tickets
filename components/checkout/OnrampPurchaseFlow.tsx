@@ -50,23 +50,30 @@ export function OnrampPurchaseFlow({
   // Check balance when wallet connects
   useEffect(() => {
     async function checkBalance() {
+      console.log('[OnrampPurchaseFlow] Wallet state:', { isConnected, address: address?.slice(0, 10) + '...' });
+
       if (!isConnected || !address) {
+        console.log('[OnrampPurchaseFlow] No wallet connected → guest flow');
         setFundingFlow('guest');
         return;
       }
 
       setIsCheckingBalance(true);
       try {
+        console.log('[OnrampPurchaseFlow] Checking USDC balance...');
         const currentBalance = await getUSDCBalance(address);
         setBalance(currentBalance);
+        console.log('[OnrampPurchaseFlow] Balance:', currentBalance, 'USDC | Required:', totalPrice, 'USDC');
 
         if (currentBalance >= totalPrice) {
+          console.log('[OnrampPurchaseFlow] ✅ Sufficient balance → direct purchase');
           setFundingFlow('direct');
         } else {
+          console.log('[OnrampPurchaseFlow] ⚠️ Insufficient balance → funding flow');
           setFundingFlow('funding');
         }
       } catch (error) {
-        console.error('Error checking balance:', error);
+        console.error('[OnrampPurchaseFlow] Error checking balance:', error);
         setFundingFlow('funding'); // Assume funding needed on error
       } finally {
         setIsCheckingBalance(false);
@@ -245,6 +252,9 @@ export function OnrampPurchaseFlow({
               }
             }}
           />
+          <p className="text-xs text-grit-400 mt-2">
+            ℹ️ Funds will be added to your connected wallet: {address?.slice(0, 6)}...{address?.slice(-4)}
+          </p>
         </div>
       </div>
     );
