@@ -124,6 +124,7 @@ export default function ProfilePage() {
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user, searchParams]);
 
   const fetchProfile = async () => {
