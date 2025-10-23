@@ -38,8 +38,10 @@ class ApiClient {
       ...(options.headers as Record<string, string>),
     };
 
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+    // Fallback to localStorage if singleton token is null (defensive programming)
+    const token = this.token || (typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null);
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     const url = `${this.baseUrl}${endpoint}`;

@@ -65,10 +65,8 @@ export const useAuth = create<AuthState>((set, get) => ({
 
       const { token, user, isNewUser } = await response.json();
 
-      // Store token in localStorage (same as email/password login)
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth_token', token);
-      }
+      // Update ApiClient singleton with token (matches email/password login behavior)
+      api.setToken(token);
 
       set({ user, isAuthenticated: true, isLoading: false });
 

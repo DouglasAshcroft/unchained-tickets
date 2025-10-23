@@ -97,6 +97,15 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
+      // Defensive: Verify token exists before fetching
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      if (!token) {
+        console.error('❌ Profile page: Authenticated but no token in localStorage!');
+        router.push('/');
+        return;
+      }
+      console.log('✅ Profile page: Token verified, fetching profile data');
+
       fetchProfile();
       fetchAdvocacyStats();
       fetchVenueStaff();
@@ -160,11 +169,15 @@ export default function ProfilePage() {
       if (updates.latitude !== undefined) profileUpdates.latitude = updates.latitude;
       if (updates.longitude !== undefined) profileUpdates.longitude = updates.longitude;
 
-      await api.updateProfile(profileUpdates);
+      console.log('📝 Updating profile with:', profileUpdates);
+      const result = await api.updateProfile(profileUpdates);
+      console.log('✅ Profile update response:', result);
+
       await fetchProfile();
+      console.log('✅ Profile refreshed after update');
       return true;
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('❌ Error updating profile:', error);
       return false;
     }
   };

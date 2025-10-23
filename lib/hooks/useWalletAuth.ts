@@ -33,6 +33,15 @@ export function useWalletAuth() {
         console.log('🔐 Auto-authenticating wallet:', address);
 
         const response = await loginWithWallet(address);
+        console.log('✅ Token set, isAuthenticated:', isAuthenticated);
+
+        // Verify token is available before redirect
+        const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+        if (!token) {
+          console.error('❌ Token not in localStorage after login!');
+          throw new Error('Authentication failed - no token');
+        }
+        console.log('✅ Token verified in localStorage');
 
         // If new user, redirect to profile to complete setup
         if (response?.isNewUser) {
