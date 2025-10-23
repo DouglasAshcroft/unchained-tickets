@@ -12,7 +12,7 @@ export function middleware(request: NextRequest) {
     "img-src 'self' data: https: blob:",
     "font-src 'self' https://fonts.gstatic.com",
     // OnchainKit requires these endpoints
-    "connect-src 'self' http://localhost:3000 http://localhost:3001 https://api.coinbase.com https://*.coinbase.com https://eth.merkle.io https://cca-lite.coinbase.com https://mainnet.base.org https://sepolia.base.org wss://ws-feed.exchange.coinbase.com wss://www.walletlink.org",
+    "connect-src 'self' https://unchainedtickets.xyz http://localhost:3000 http://localhost:3001 https://api.coinbase.com https://*.coinbase.com https://eth.merkle.io https://cca-lite.coinbase.com https://mainnet.base.org https://sepolia.base.org wss://ws-feed.exchange.coinbase.com wss://www.walletlink.org",
     "frame-src 'self' https://verify.walletconnect.com https://*.coinbase.com",
     "object-src 'none'",
     "base-uri 'self'",
