@@ -3,6 +3,7 @@
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { api } from '@/lib/api/client';
 import { PersonalInfoSection } from '@/components/profile/PersonalInfoSection';
 import { LocationSection } from '@/components/profile/LocationSection';
@@ -175,9 +176,18 @@ export default function ProfilePage() {
 
       await fetchProfile();
       console.log('✅ Profile refreshed after update');
+
+      // Show success toast
+      toast.success('Profile updated successfully');
+
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error updating profile:', error);
+
+      // Show error toast with specific message
+      const message = error?.message || 'Failed to update profile';
+      toast.error(message);
+
       return false;
     }
   };
@@ -186,9 +196,18 @@ export default function ProfilePage() {
     try {
       await api.updateProfileSettings(settings);
       await fetchProfile();
+
+      // Show success toast
+      toast.success('Settings updated successfully');
+
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating settings:', error);
+
+      // Show error toast with specific message
+      const message = error?.message || 'Failed to update settings';
+      toast.error(message);
+
       return false;
     }
   };

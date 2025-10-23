@@ -15,9 +15,9 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   loginWithWallet: (walletAddress: string) => Promise<{ isNewUser?: boolean }>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
+  register: (email: string, password: string, name?: string) => Promise<User>;
   logout: () => void;
   fetchUser: () => Promise<void>;
   hasRole: (role: UserRoleValue) => boolean;
@@ -34,13 +34,10 @@ export const useAuth = create<AuthState>((set, get) => ({
     try {
       const { user } = await api.login({ email, password });
       set({ user, isAuthenticated: true, isLoading: false });
-      if (typeof window !== 'undefined') {
-        const target =
-          user.role === 'venue' || user.role === 'admin' || user.role === 'dev'
-            ? '/dashboard/venue'
-            : '/events';
-        window.location.replace(target);
-      }
+
+      // Return user for caller to handle redirect
+      // (Redirects should be handled by components using useRouter for consistency)
+      return user;
     } catch (error) {
       set({ isLoading: false });
       throw error;
@@ -82,13 +79,10 @@ export const useAuth = create<AuthState>((set, get) => ({
     try {
       const { user } = await api.register({ email, password, name });
       set({ user, isAuthenticated: true, isLoading: false });
-      if (typeof window !== 'undefined') {
-        const target =
-          user.role === 'venue' || user.role === 'admin' || user.role === 'dev'
-            ? '/dashboard/venue'
-            : '/events';
-        window.location.replace(target);
-      }
+
+      // Return user for caller to handle redirect
+      // (Redirects should be handled by components using useRouter for consistency)
+      return user;
     } catch (error) {
       set({ isLoading: false });
       throw error;

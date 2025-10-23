@@ -1,33 +1,15 @@
 /**
  * Advocate Page - Join the Resistance
  *
- * Email signup to join the advocacy movement
+ * Wallet signup (including email-based wallets via Coinbase) to join the advocacy movement
  */
 
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
 import Link from "next/link";
+import { ConnectWallet } from "@coinbase/onchainkit/wallet";
 
 export default function AdvocatePage() {
-  const [email, setEmail] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const router = useRouter();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-
-    setSubmitting(true);
-
-    // Store email in localStorage for profile intake
-    localStorage.setItem("advocate_email", email);
-
-    // Redirect to profile page for full intake
-    router.push("/profile?new=true");
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-ink-900 to-ink-800">
@@ -46,33 +28,28 @@ export default function AdvocatePage() {
             </p>
           </div>
 
-          {/* Email Signup Form */}
+          {/* Wallet Connect Signup */}
           <div className="max-w-2xl mx-auto">
             <div className="bg-ink-800/50 border border-resistance-500/30 rounded-xl p-8 mb-8">
               <h2 className="text-2xl font-bold mb-4 text-bone-100 text-center">
                 Sign Up, Start Advocating
               </h2>
               <p className="text-grit-300 mb-6 text-center">
-                Enter your email and message your favorite venues for better ticketing
+                Connect with your email or wallet to join the resistance and message your favorite venues for better ticketing
               </p>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  required
-                  className="w-full px-4 py-3 bg-ink-700 border border-grit-500/30 rounded-lg focus:ring-2 focus:ring-resistance-500 focus:border-transparent text-bone-100 placeholder:text-grit-500"
-                />
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full px-6 py-4 bg-resistance-500 text-bone-100 rounded-lg hover:brightness-110 transition-all font-semibold text-lg disabled:opacity-50"
-                >
-                  {submitting ? "Joining..." : "Join the Resistance →"}
-                </button>
-              </form>
+              {/* Coinbase Connect Wallet - supports email-based wallet creation */}
+              <div className="flex justify-center">
+                <ConnectWallet>
+                  <button className="w-full px-6 py-4 bg-resistance-500 text-bone-100 rounded-lg hover:brightness-110 transition-all font-semibold text-lg">
+                    Join the Resistance →
+                  </button>
+                </ConnectWallet>
+              </div>
+
+              <p className="text-xs text-grit-400 mt-4 text-center">
+                You can sign up with email (we'll create a secure wallet for you) or connect your existing wallet
+              </p>
 
               <p className="text-sm text-grit-400 mt-6 text-center">
                 Already have an account?{" "}

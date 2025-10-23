@@ -1,7 +1,5 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import EventCard from '@/components/EventCard';
@@ -49,7 +47,6 @@ export default async function ArtistDetailPage(props: ArtistDetailPageProps) {
 
     return (
       <div className="min-h-screen flex flex-col">
-        <Navbar />
 
         <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
           <Link href="/artists" className="inline-flex items-center text-acid-400 hover:brightness-110 mb-6 transition-all">
@@ -103,7 +100,6 @@ export default async function ArtistDetailPage(props: ArtistDetailPageProps) {
           </section>
         </main>
 
-        <Footer />
       </div>
     );
   } catch (error) {
