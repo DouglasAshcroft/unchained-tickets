@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
 import { Avatar, Name } from '@coinbase/onchainkit/identity';
 import { useIdleTimer } from '@/lib/hooks/useIdleTimer';
+import { useAuth } from '@/lib/hooks/useAuth';
 import Link from 'next/link';
 import {
   SHARE_TEMPLATES,
@@ -17,6 +18,7 @@ import {
 export function WalletMenu() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+  const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [showSocials, setShowSocials] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -28,6 +30,7 @@ export function WalletMenu() {
       if (isConnected) {
         console.log('Auto-disconnecting wallet due to inactivity');
         disconnect();
+        logout(); // Clear auth state
       }
     },
     enabled: isConnected,
@@ -58,12 +61,9 @@ export function WalletMenu() {
 
   const handleDisconnect = () => {
     disconnect();
+    logout(); // Clear auth state
     setIsOpen(false);
     setShowSocials(false);
-    // Clear any localStorage auth tokens
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
-    }
   };
 
   const handleShare = (platform: SocialPlatform) => {

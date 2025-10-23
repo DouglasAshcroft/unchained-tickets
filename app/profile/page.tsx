@@ -150,6 +150,7 @@ export default function ProfilePage() {
       // Filter to only include fields that the API accepts
       const profileUpdates: any = {};
       if (updates.name !== undefined) profileUpdates.name = updates.name;
+      if (updates.email !== undefined) profileUpdates.email = updates.email;
       if (updates.phone !== undefined) profileUpdates.phone = updates.phone;
       if (updates.avatarUrl !== undefined) profileUpdates.avatarUrl = updates.avatarUrl;
       if (updates.bio !== undefined) profileUpdates.bio = updates.bio;
