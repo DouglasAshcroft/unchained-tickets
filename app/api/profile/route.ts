@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/utils/auth';
 import { profileService } from '@/lib/services/ProfileService';
+import { prisma } from '@/lib/db/prisma';
 
 /**
  * GET /api/profile
@@ -56,7 +57,6 @@ export async function PATCH(request: NextRequest) {
           }
 
           // Check if email is already taken
-          const { prisma } = await import('@/lib/db/prisma');
           const existingUser = await prisma.user.findUnique({
             where: { email: body.email },
           });
