@@ -48,7 +48,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
           <input
             ref={ref}
             id={inputId}
-            className={`w-full rounded-lg border bg-ink-900/50 py-3.5 font-mono text-bone-100 placeholder-grit-400 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-ink-900 dark:bg-ink-900/50 dark:text-bone-100 light:bg-white/50 light:text-ink-900 light:ring-offset-bone-100 ${
+            className={`w-full rounded-lg border bg-ink-900/50 py-3.5 font-mono text-bone-100 placeholder-grit-400 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-ink-900 [color-scheme:dark] dark:bg-ink-900/50 dark:text-bone-100 dark:[color-scheme:dark] light:bg-white/50 light:text-ink-900 light:ring-offset-bone-100 light:[color-scheme:light] ${
               icon ? 'pl-12 pr-4' : 'px-4'
             } ${
               error
