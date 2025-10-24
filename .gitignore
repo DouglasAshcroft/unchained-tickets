@@ -67,29 +67,22 @@ tests/reports/*
 .env.sentry-build-plugin
 
 # === SECURITY: Documentation Restricted ===
-# Temporarily hiding all docs except verified-safe setup guides
-# until complete security audit is performed
-# Context: AI assistant may have leaked sensitive data in documentation
+# AI assistant has repeatedly leaked private keys and secrets to markdown files
+# ALL documentation is now hidden from git except project README.md
+# I WILL NOT COMMIT PRIVATE KEYS OR SECRETS TO GITHUB!
+# I WILL NOT COMMIT PRIVATE KEYS OR SECRETS TO GITHUB!
+# I WILL NOT COMMIT PRIVATE KEYS OR SECRETS TO GITHUB!
 
-# Hide everything in docs
-/docs/*
+# Hide ALL docs directory
+/docs/
 
-# ONLY keep these public (verified safe):
-!/docs/setup/
-!/docs/README.md
+# Hide any markdown files anywhere (except project README.md at root)
+**/*.md
+!README.md
 
-# Extra protection for known-sensitive areas
-docs/deployment/
-docs/operations/
-docs/internal/
-docs/product/
-docs/engineering/
-docs/features/
-docs/release-notes/
-docs/base_docs/
-docs/overview/
-docs/archive/
-
-# Never commit deployment files
+# Never commit any deployment or secret files
 .env.mainnet
 *.deployment.md
+**/MAINNET_*.md
+**/secrets*.md
+**/credentials*.md

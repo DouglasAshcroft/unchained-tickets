@@ -26,8 +26,8 @@ module.exports = {
     },
     baseMainnet: {
       url: process.env.BASE_MAINNET_RPC_URL || "https://mainnet.base.org",
-      accounts: process.env.MINTING_WALLET_PRIVATE_KEY
-        ? [process.env.MINTING_WALLET_PRIVATE_KEY]
+      accounts: process.env.DEPLOYER_PRIVATE_KEY || process.env.MINTING_WALLET_PRIVATE_KEY
+        ? [process.env.DEPLOYER_PRIVATE_KEY || process.env.MINTING_WALLET_PRIVATE_KEY]
         : [],
       chainId: 8453,
     },

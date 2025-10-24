@@ -1,0 +1,13 @@
+{
+  "network": "baseMainnet",
+  "chainId": 8453,
+  "contractAddress": "0xB6600348cc80619D606D4b83B0366ce5112D8aA2",
+  "deployer": "0x12E9b03e7E982f7385b8C7D26B0DA6905D610655",
+  "baseURI": "https://unchainedtickets.xyz/api/metadata/",
+  "deployedAt": "2025-10-24T20:00:19.631Z",
+  "blockNumber": 37273336,
+  "transactionHash": "0xa9d58d08405d10a670ffb966eea08474342e8135ba0f6be6b59a839ce8788490",
+  "gasUsed": "0.000057098513493095",
+  "basescanUrl": "https://basescan.org/address/0xB6600348cc80619D606D4b83B0366ce5112D8aA2",
+  "production": true
+}
