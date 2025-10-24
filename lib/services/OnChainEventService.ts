@@ -17,35 +17,60 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { base, baseSepolia } from 'viem/chains';
 import contractAbi from '@/contracts/UnchainedTickets.abi.json';
 
-// Environment configuration
-const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID) || 84532;
-const chain = chainId === 84532 ? baseSepolia : base;
-const rpcUrl = process.env.BASE_RPC_URL || 'https://sepolia.base.org';
-const contractAddress = (process.env.NFT_CONTRACT_ADDRESS || process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS) as Address;
-const mintingPrivateKey = process.env.MINTING_PRIVATE_KEY || process.env.MINTING_WALLET_PRIVATE_KEY;
+// Lazy initialization helpers to avoid errors during Next.js build
+function getBlockchainConfig() {
+  const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID) || 84532;
+  const chain = chainId === 84532 ? baseSepolia : base;
+  const rpcUrl = process.env.BASE_RPC_URL || 'https://sepolia.base.org';
+  const contractAddress = (process.env.NFT_CONTRACT_ADDRESS || process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS) as Address;
+  const mintingPrivateKey = process.env.MINTING_PRIVATE_KEY || process.env.MINTING_WALLET_PRIVATE_KEY;
 
-// Validate configuration
-if (!contractAddress) {
-  throw new Error('NFT_CONTRACT_ADDRESS is not configured');
+  // Validate configuration (only at runtime, not during build)
+  if (!contractAddress) {
+    throw new Error('NFT_CONTRACT_ADDRESS is not configured');
+  }
+
+  if (!mintingPrivateKey) {
+    throw new Error('MINTING_PRIVATE_KEY is not configured');
+  }
+
+  return { chainId, chain, rpcUrl, contractAddress, mintingPrivateKey };
 }
 
-if (!mintingPrivateKey) {
-  throw new Error('MINTING_PRIVATE_KEY is not configured');
+// Lazy-initialized clients (created on first use)
+let _publicClient: ReturnType<typeof createPublicClient> | undefined;
+let _walletClient: ReturnType<typeof createWalletClient> | undefined;
+let _account: ReturnType<typeof privateKeyToAccount> | undefined;
+let _config: ReturnType<typeof getBlockchainConfig> | undefined;
+
+function getClients() {
+  if (!_publicClient || !_walletClient || !_account || !_config) {
+    _config = getBlockchainConfig();
+
+    // @ts-expect-error - viem types have incompatibilities between base and baseSepolia chains
+    _publicClient = createPublicClient({
+      chain: _config.chain,
+      transport: http(_config.rpcUrl),
+    });
+
+    _account = privateKeyToAccount(_config.mintingPrivateKey as `0x${string}`);
+
+    _walletClient = createWalletClient({
+      account: _account,
+      chain: _config.chain,
+      transport: http(_config.rpcUrl),
+    });
+  }
+
+  return {
+    publicClient: _publicClient!,
+    walletClient: _walletClient!,
+    account: _account!,
+    contractAddress: _config!.contractAddress,
+    chainId: _config!.chainId,
+    chain: _config!.chain,
+  };
 }
-
-// Create viem clients
-const publicClient = createPublicClient({
-  chain,
-  transport: http(rpcUrl),
-});
-
-const account = privateKeyToAccount(mintingPrivateKey as `0x${string}`);
-
-const walletClient = createWalletClient({
-  account,
-  chain,
-  transport: http(rpcUrl),
-});
 
 export interface RegisterEventResult {
   success: boolean;
@@ -69,6 +94,9 @@ export async function registerEventOnChain(eventId: number): Promise<RegisterEve
   console.log(`[OnChainEventService] Registering event ${eventId} on blockchain...`);
 
   try {
+    // Get blockchain clients (lazy initialization)
+    const { publicClient, walletClient, account, contractAddress, chainId, chain } = getClients();
+
     // Check if already registered
     const existing = await prisma.eventBlockchainRegistry.findUnique({
       where: { eventId },
@@ -158,6 +186,7 @@ export async function registerEventOnChain(eventId: number): Promise<RegisterEve
     }
 
     // Execute the transaction
+    // @ts-expect-error - viem types have incompatibilities between base and baseSepolia chains
     const hash = await walletClient.writeContract({
       address: contractAddress,
       abi: contractAbi,
@@ -172,6 +201,7 @@ export async function registerEventOnChain(eventId: number): Promise<RegisterEve
         royaltyRecipient,
         royaltyBps,
       ],
+      chain,
     });
 
     console.log(`[OnChainEventService] Transaction sent: ${hash}`);
@@ -226,6 +256,9 @@ export async function registerTiersOnChain(eventId: number): Promise<RegisterTie
   console.log(`[OnChainEventService] Registering tiers for event ${eventId}...`);
 
   try {
+    // Get blockchain clients (lazy initialization)
+    const { publicClient, walletClient, account, contractAddress, chain } = getClients();
+
     // Get blockchain registry
     const registry = await prisma.eventBlockchainRegistry.findUnique({
       where: { eventId },
@@ -312,6 +345,7 @@ export async function registerTiersOnChain(eventId: number): Promise<RegisterTie
         });
 
         // Execute transaction
+        // @ts-expect-error - viem types have incompatibilities between base and baseSepolia chains
         const hash = await walletClient.writeContract({
           address: contractAddress,
           abi: contractAbi,
@@ -325,6 +359,7 @@ export async function registerTiersOnChain(eventId: number): Promise<RegisterTie
             accessAreas,
             includedPerks,
           ],
+          chain,
         });
 
         console.log(`[OnChainEventService]   TX: ${hash}`);
