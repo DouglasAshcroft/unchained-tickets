@@ -1,5 +1,29 @@
 # Unchained Tickets Documentation Index
 
+## ⚠️ Security Notice
+
+**Most documentation is currently hidden pending security audit.**
+
+During rapid AI-assisted development, sensitive credentials were accidentally committed to documentation. While the immediate issue was resolved (wallet burned, funds recovered), we are conducting a thorough audit of all documentation before making it public again.
+
+**Currently Public:**
+- `/docs/setup/` - Setup and configuration guides
+- This README
+
+**Temporarily Hidden:**
+- All deployment documentation
+- Operations and internal documentation
+- Product and engineering documentation
+- Release notes and feature docs
+
+This is a precautionary measure for the hackathon. Full documentation will be restored after security review.
+
+For immediate needs:
+- **Setup:** See `/docs/setup/` directory
+- **Security Audit Status:** See `/docs/setup/SECURITY_AUDIT_TODO.md`
+
+---
+
 Use this index to jump to the right reference quickly. Folders are organized by use case; highlighted documents are the ones you will reach for most often.
 
 ## Overview

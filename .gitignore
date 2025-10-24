@@ -65,3 +65,31 @@ tests/reports/*
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# === SECURITY: Documentation Restricted ===
+# Temporarily hiding all docs except verified-safe setup guides
+# until complete security audit is performed
+# Context: AI assistant may have leaked sensitive data in documentation
+
+# Hide everything in docs
+/docs/*
+
+# ONLY keep these public (verified safe):
+!/docs/setup/
+!/docs/README.md
+
+# Extra protection for known-sensitive areas
+docs/deployment/
+docs/operations/
+docs/internal/
+docs/product/
+docs/engineering/
+docs/features/
+docs/release-notes/
+docs/base_docs/
+docs/overview/
+docs/archive/
+
+# Never commit deployment files
+.env.mainnet
+*.deployment.md
