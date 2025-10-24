@@ -148,9 +148,9 @@ export function ArtistSearchInput({
   }, [highlightedIndex]);
 
   return (
-    <div className="relative w-full">
+    <div className="group relative w-full">
       {label && (
-        <label className="mb-2 block text-sm font-medium text-gray-700">
+        <label className="mb-2 block text-sm font-medium uppercase tracking-wide text-grit-300 dark:text-grit-300 light:text-grit-500">
           {label}
         </label>
       )}
@@ -169,15 +169,18 @@ export function ArtistSearchInput({
         aria-expanded={isOpen}
         aria-autocomplete="list"
         aria-controls="artist-dropdown"
-        className={`w-full rounded-md border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        className={`w-full rounded-lg border bg-ink-900/50 px-4 py-3.5 font-mono text-bone-100 placeholder-grit-400 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-ink-900 dark:bg-ink-900/50 dark:text-bone-100 light:bg-white/50 light:text-ink-900 light:ring-offset-bone-100 ${
           error
-            ? 'border-red-500 focus:ring-red-500'
-            : 'border-gray-300'
+            ? 'border-resistance-500/50 focus:border-resistance-500 focus:ring-resistance-500/50'
+            : 'border-grit-500/30 hover:border-acid-400/50 focus:border-acid-400 focus:ring-acid-400/50'
         }`}
       />
 
       {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
+        <div className="mt-2 flex items-start gap-2">
+          <span className="text-resistance-500">⚠</span>
+          <p className="text-sm text-resistance-400">{error}</p>
+        </div>
       )}
 
       {isOpen && (
@@ -186,10 +189,10 @@ export function ArtistSearchInput({
           id="artist-dropdown"
           role="listbox"
           onMouseDown={handleMouseDown}
-          className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-300 bg-white shadow-lg"
+          className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-lg border border-grit-500/30 bg-ink-800/95 shadow-2xl shadow-acid-400/10 backdrop-blur-sm dark:border-grit-500/30 dark:bg-ink-800/95 light:border-grit-400/30 light:bg-bone-100/95"
         >
           {filteredArtists.length === 0 ? (
-            <div className="px-4 py-3 text-sm text-gray-500">
+            <div className="px-4 py-3 font-mono text-sm text-grit-400">
               No artists found
             </div>
           ) : (
@@ -200,17 +203,17 @@ export function ArtistSearchInput({
                 aria-selected={index === highlightedIndex}
                 onMouseDown={() => handleSelect(artist)}
                 onMouseEnter={() => setHighlightedIndex(index)}
-                className={`cursor-pointer px-4 py-2 hover:bg-blue-50 ${
+                className={`cursor-pointer border-b border-grit-500/10 px-4 py-3 transition-colors last:border-b-0 ${
                   index === highlightedIndex
-                    ? 'bg-blue-50'
-                    : 'bg-white'
+                    ? 'bg-acid-400/10 text-acid-400 dark:bg-acid-400/10 dark:text-acid-400 light:bg-cobalt-500/10 light:text-cobalt-500'
+                    : 'text-bone-100 hover:bg-acid-400/5 dark:text-bone-100 light:text-ink-900'
                 }`}
               >
-                <div className="font-medium text-gray-900">
+                <div className="font-mono font-medium">
                   {artist.name}
                 </div>
                 {artist.genre && (
-                  <div className="text-sm text-gray-500">
+                  <div className="mt-1 font-mono text-xs text-grit-400">
                     {artist.genre}
                   </div>
                 )}

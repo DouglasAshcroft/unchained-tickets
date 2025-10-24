@@ -1,5 +1,6 @@
 'use client';
 
+import { StepHeader, SectionDivider } from '@/components/ui/forms';
 import type { EventFormData, Artist, Venue, TicketTypeForm } from '../../types';
 
 interface ReviewStepProps {
@@ -48,114 +49,128 @@ export function ReviewStep({ formData, selectedArtist, selectedVenue }: ReviewSt
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* Step Description */}
-      <div className="mb-6">
-        <p className="text-gray-600">
-          Review your event details before submitting. Please review all information carefully to ensure accuracy.
-        </p>
-      </div>
+      <StepHeader
+        stepNumber="05"
+        title="Final Check"
+        description="Verify the payload. Review all details before deployment. Once you hit Create Event, we're going live on-chain."
+      />
 
       {/* Event Details Section */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900">Event Details</h3>
-        <div className="space-y-3">
-          <div>
-            <span className="text-sm font-medium text-gray-600">Title: </span>
-            <span className="text-sm text-gray-900">{formData.title}</span>
-          </div>
-          <div>
-            <span className="text-sm font-medium text-gray-600">Artist: </span>
-            <span className="text-sm text-gray-900">
-              {selectedArtist?.name || 'Unknown artist'}
-            </span>
-          </div>
-          <div>
-            <span className="text-sm font-medium text-gray-600">Poster: </span>
-            <span className="text-sm text-gray-900">
-              {formData.posterImageUrl ? formData.posterImageUrl : 'None'}
-            </span>
-          </div>
-          <div>
-            <span className="text-sm font-medium text-gray-600">External Link: </span>
-            <span className="text-sm text-gray-900">
-              {formData.externalLink ? formData.externalLink : 'None'}
-            </span>
+      <div className="space-y-8">
+        <SectionDivider variant="resistance">Event Details</SectionDivider>
+
+        <div className="rounded-xl border border-grit-500/30 bg-ink-800/50 p-6 backdrop-blur-sm dark:border-grit-500/30 dark:bg-ink-800/50 light:border-grit-400/30 light:bg-bone-100/5">
+          <div className="space-y-4">
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-xs uppercase tracking-wider text-grit-400">Title</span>
+              <span className="font-mono text-sm text-bone-100 dark:text-bone-100 light:text-ink-900">{formData.title}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-xs uppercase tracking-wider text-grit-400">Artist</span>
+              <span className="font-mono text-sm text-bone-100 dark:text-bone-100 light:text-ink-900">
+                {selectedArtist?.name || 'Unknown artist'}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-xs uppercase tracking-wider text-grit-400">Poster</span>
+              <span className="font-mono text-sm text-bone-100 dark:text-bone-100 light:text-ink-900">
+                {formData.posterImageUrl ? formData.posterImageUrl : 'None'}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-xs uppercase tracking-wider text-grit-400">External Link</span>
+              <span className="font-mono text-sm text-bone-100 dark:text-bone-100 light:text-ink-900">
+                {formData.externalLink ? formData.externalLink : 'None'}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Schedule Section */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900">Schedule</h3>
-        <div className="space-y-3">
-          <div>
-            <span className="text-sm font-medium text-gray-600">Venue: </span>
-            <span className="text-sm text-gray-900">
-              {selectedVenue?.name || 'Unknown venue'}
-              {selectedVenue?.city && ` (${selectedVenue.city})`}
-            </span>
-          </div>
-          <div>
-            <span className="text-sm font-medium text-gray-600">Start Time: </span>
-            <span className="text-sm text-gray-900">{formatDateTime(formData.startsAt)}</span>
-          </div>
-          <div>
-            <span className="text-sm font-medium text-gray-600">End Time: </span>
-            <span className="text-sm text-gray-900">{formatDateTime(formData.endsAt)}</span>
-          </div>
-          <div>
-            <span className="text-sm font-medium text-gray-600">Doors Open: </span>
-            <span className="text-sm text-gray-900">{formatDateTime(formData.doorsOpen)}</span>
-          </div>
-          <div>
-            <span className="text-sm font-medium text-gray-600">Maps Link: </span>
-            <span className="text-sm text-gray-900">{formData.mapsLink}</span>
+      <div className="space-y-8">
+        <SectionDivider variant="hack">Schedule</SectionDivider>
+
+        <div className="rounded-xl border border-grit-500/30 bg-ink-800/50 p-6 backdrop-blur-sm dark:border-grit-500/30 dark:bg-ink-800/50 light:border-grit-400/30 light:bg-bone-100/5">
+          <div className="space-y-4">
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-xs uppercase tracking-wider text-grit-400">Venue</span>
+              <span className="font-mono text-sm text-bone-100 dark:text-bone-100 light:text-ink-900">
+                {selectedVenue?.name || 'Unknown venue'}
+                {selectedVenue?.city && ` (${selectedVenue.city})`}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-xs uppercase tracking-wider text-grit-400">Start Time</span>
+              <span className="font-mono text-sm text-bone-100 dark:text-bone-100 light:text-ink-900">{formatDateTime(formData.startsAt)}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-xs uppercase tracking-wider text-grit-400">End Time</span>
+              <span className="font-mono text-sm text-bone-100 dark:text-bone-100 light:text-ink-900">{formatDateTime(formData.endsAt)}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-xs uppercase tracking-wider text-grit-400">Doors Open</span>
+              <span className="font-mono text-sm text-bone-100 dark:text-bone-100 light:text-ink-900">{formatDateTime(formData.doorsOpen)}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-xs uppercase tracking-wider text-grit-400">Maps Link</span>
+              <span className="font-mono text-sm text-bone-100 dark:text-bone-100 light:text-ink-900">{formData.mapsLink}</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Tickets Section */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900">Tickets</h3>
-        <div className="mb-4">
-          <span className="text-sm font-medium text-gray-600">
-            {formData.ticketTypes.length} ticket tier{formData.ticketTypes.length !== 1 ? 's' : ''}
-          </span>
-          <span className="ml-4 text-sm text-gray-600">
-            Total capacity: {totalCapacity}
-          </span>
-        </div>
+      <div className="space-y-8">
+        <SectionDivider variant="acid">Tickets</SectionDivider>
 
-        <div className="space-y-4">
-          {formData.ticketTypes.map((ticket: TicketTypeForm) => (
-            <div key={ticket.id} className="rounded-md border border-gray-200 bg-gray-50 p-4">
-              <div className="mb-2 font-medium text-gray-900">{ticket.name}</div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="text-gray-600">Price: </span>
-                  <span className="text-gray-900">{formatPrice(ticket.price, ticket.currency)}</span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Capacity: </span>
-                  <span className="text-gray-900">{ticket.capacity} tickets</span>
-                </div>
-                {ticket.description && (
-                  <div className="col-span-2">
-                    <span className="text-gray-600">Description: </span>
-                    <span className="text-gray-900">{ticket.description}</span>
+        <div className="rounded-xl border border-grit-500/30 bg-ink-800/50 p-6 backdrop-blur-sm dark:border-grit-500/30 dark:bg-ink-800/50 light:border-grit-400/30 light:bg-bone-100/5">
+          <div className="mb-6 flex items-center gap-4">
+            <span className="font-mono text-sm text-grit-300 dark:text-grit-300 light:text-grit-500">
+              {formData.ticketTypes.length} ticket tier{formData.ticketTypes.length !== 1 ? 's' : ''}
+            </span>
+            <span className="font-mono text-sm text-grit-300 dark:text-grit-300 light:text-grit-500">
+              Total capacity: {totalCapacity}
+            </span>
+          </div>
+
+          <div className="space-y-4">
+            {formData.ticketTypes.map((ticket: TicketTypeForm) => (
+              <div key={ticket.id} className="rounded-lg border border-grit-500/20 bg-ink-900/30 p-4 dark:border-grit-500/20 dark:bg-ink-900/30 light:border-grit-400/20 light:bg-bone-100/20">
+                <div className="mb-3 font-mono text-sm font-medium text-acid-400 dark:text-acid-400 light:text-cobalt-500">{ticket.name}</div>
+                <div className="grid grid-cols-2 gap-3 font-mono text-sm">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs uppercase tracking-wider text-grit-400">Price</span>
+                    <span className="text-bone-100 dark:text-bone-100 light:text-ink-900">{formatPrice(ticket.price, ticket.currency)}</span>
                   </div>
-                )}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs uppercase tracking-wider text-grit-400">Capacity</span>
+                    <span className="text-bone-100 dark:text-bone-100 light:text-ink-900">{ticket.capacity} tickets</span>
+                  </div>
+                  {ticket.description && (
+                    <div className="col-span-2 flex flex-col gap-1">
+                      <span className="text-xs uppercase tracking-wider text-grit-400">Description</span>
+                      <span className="text-bone-100 dark:text-bone-100 light:text-ink-900">{ticket.description}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Helper Message */}
-      <div className="rounded-lg bg-blue-50 p-4">
-        <p className="text-sm text-blue-800">
-          ✓ Everything looks good? Click &quot;Create Event&quot; to publish your event!
+      <div className="rounded-xl border border-hack-green/30 bg-hack-green/5 p-6 backdrop-blur-sm dark:border-hack-green/30 dark:bg-hack-green/5 light:border-cobalt-500/30 light:bg-cobalt-500/5">
+        <p className="flex items-start gap-3 font-mono text-sm text-hack-green dark:text-hack-green light:text-cobalt-600">
+          <svg className="mt-0.5 h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>
+            Everything looks good? Click <strong className="uppercase tracking-wider">&quot;Create Event&quot;</strong> to deploy your event on-chain!
+          </span>
         </p>
       </div>
     </div>
