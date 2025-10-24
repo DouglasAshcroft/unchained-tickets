@@ -219,9 +219,39 @@ export default function NewEventPage() {
 
       return api.createEvent(payload);
     },
-    onSuccess: (event) => {
-      toast.success("Event created! You can keep editing anytime.");
-      router.push(`/events/${event.id}`);
+    onSuccess: async (event) => {
+      toast.success("Event created! Registering on blockchain...");
+
+      try {
+        // Register event on blockchain
+        const eventResult = await api.registerEventOnChain(event.id);
+
+        if (!eventResult.success) {
+          console.error('Failed to register event on blockchain:', eventResult.error);
+          toast.error(`Event created but blockchain registration failed: ${eventResult.error}`);
+          router.push(`/events/${event.id}`);
+          return;
+        }
+
+        toast.success(`Event registered on blockchain (ID: ${eventResult.onChainEventId})`);
+
+        // Register ticket tiers on blockchain
+        const tiersResult = await api.registerTiersOnChain(event.id);
+
+        const failedTiers = tiersResult.filter(t => !t.success);
+        if (failedTiers.length > 0) {
+          console.error('Some tiers failed to register:', failedTiers);
+          toast.error(`${failedTiers.length} tier(s) failed to register on blockchain`);
+        } else {
+          toast.success(`All ${tiersResult.length} tiers registered on blockchain`);
+        }
+
+        router.push(`/events/${event.id}`);
+      } catch (error) {
+        console.error('Blockchain registration error:', error);
+        toast.error('Event created but blockchain registration encountered an error');
+        router.push(`/events/${event.id}`);
+      }
     },
     onError: (error: any) => {
       const message =

@@ -341,6 +341,30 @@ class ApiClient {
     return this.request<any[]>('/api/profile/venue-staff');
   }
 
+  // Blockchain registration endpoints
+  async registerEventOnChain(eventId: number) {
+    return this.request<{
+      success: boolean;
+      onChainEventId?: number;
+      txHash?: string;
+      error?: string;
+    }>(`/api/events/${eventId}/register-on-chain`, {
+      method: 'POST',
+    });
+  }
+
+  async registerTiersOnChain(eventId: number) {
+    return this.request<Array<{
+      success: boolean;
+      tierName: string;
+      onChainTierId?: number;
+      txHash?: string;
+      error?: string;
+    }>>(`/api/events/${eventId}/register-tiers`, {
+      method: 'POST',
+    });
+  }
+
   // Health check
   async healthCheck() {
     return this.request<any>('/api/health');
