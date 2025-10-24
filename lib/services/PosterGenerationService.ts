@@ -248,14 +248,18 @@ export async function generatePosterVariants(
 
 /**
  * Call Stability.ai API to generate image
- * Uses Stable Diffusion XL model for high-quality poster generation
+ * Uses v2beta API with Stable Diffusion 3.5 Large (Ultra/Core) for high-quality poster generation
  */
-async function generateWithStabilityAI(prompt: string, requestId: number): Promise<string> {
+async function generateWithStabilityAI(
+  prompt: string,
+  requestId: number,
+  model: 'ultra' | 'core' = 'core'
+): Promise<string> {
   const apiKey = process.env.STABILITY_API_KEY;
 
   // For MVP/dev mode, return a placeholder
-  // In production, this would make actual API call
-  if (!apiKey || apiKey.includes('your_') || apiKey.includes('sk-')) {
+  // Check if API key is invalid or placeholder
+  if (!apiKey || apiKey === 'your_api_key_here' || apiKey.length < 20) {
     console.log(`[PosterGeneration] DEV MODE - Would generate with prompt: ${prompt.substring(0, 100)}...`);
     // Return a data URI placeholder for development
     return generatePlaceholderImage(requestId);
@@ -264,12 +268,15 @@ async function generateWithStabilityAI(prompt: string, requestId: number): Promi
   try {
     // Split prompt into main prompt and negative prompt
     const [mainPrompt, negativePromptPart] = prompt.split('. Negative prompt: ');
-    const negativePrompt = negativePromptPart || 'text, words, letters, watermark, logo, signature, blurry, low quality';
+    const negativePrompt = negativePromptPart || 'text, words, letters, watermark, logo, signature, blurry, low quality, distorted faces';
 
-    // Call Stability.ai API
-    // Using SDXL 1.0 model for high-quality poster generation
+    // Generate a random seed for reproducibility (can be stored for variants)
+    const seed = Math.floor(Math.random() * 4294967295);
+
+    // Call Stability.ai v2beta API
+    // Using SD 3.5 Large model (Ultra for quality, Core for speed)
     const response = await fetch(
-      'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image',
+      `https://api.stability.ai/v2beta/stable-image/generate/${model}`,
       {
         method: 'POST',
         headers: {
@@ -278,44 +285,34 @@ async function generateWithStabilityAI(prompt: string, requestId: number): Promi
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          text_prompts: [
-            {
-              text: mainPrompt,
-              weight: 1,
-            },
-            {
-              text: negativePrompt,
-              weight: -1,
-            },
-          ],
-          cfg_scale: 7, // How strictly to follow the prompt (7 is balanced)
-          height: 1024,
-          width: 1024,
-          samples: 1, // Generate 1 image
-          steps: 50, // More steps = higher quality (30-50 recommended)
-          style_preset: 'digital-art', // Good for poster art
+          prompt: mainPrompt,
+          negative_prompt: negativePrompt,
+          aspect_ratio: '1:1', // Square posters work best for NFTs
+          seed: seed,
+          output_format: 'png', // PNG for high quality, JPEG for smaller size
         }),
       }
     );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('[PosterGeneration] Stability.ai API error:', errorData);
+      console.error('[PosterGeneration] Stability.ai v2beta API error:', errorData);
       throw new Error(`Stability.ai API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
 
-    // Stability.ai returns base64-encoded images
-    if (data.artifacts && data.artifacts.length > 0) {
-      const base64Image = data.artifacts[0].base64;
+    // v2beta returns base64-encoded image directly
+    if (data.image) {
+      const base64Image = data.image;
+      console.log(`[PosterGeneration] Generated with model=${model}, seed=${seed}`);
       // Return as data URI - in production, you may want to upload to cloud storage
       return `data:image/png;base64,${base64Image}`;
     }
 
-    throw new Error('No image returned from Stability.ai API');
+    throw new Error('No image returned from Stability.ai v2beta API');
   } catch (error) {
-    console.error('[PosterGeneration] Stability.ai API error:', error);
+    console.error('[PosterGeneration] Stability.ai v2beta API error:', error);
     // Return placeholder on error for graceful degradation
     return generatePlaceholderImage(requestId);
   }
@@ -351,78 +348,232 @@ function generatePlaceholderImage(requestId: number): string {
 }
 
 /**
- * Refine an existing generation with a new prompt
+ * Generate image-to-image using an existing poster as input
+ * Used for refinement iterations
  */
-export async function refineGeneration(
+async function generateWithImageToImage(
+  prompt: string,
+  baseImageUrl: string,
+  strength: number = 0.5,
   requestId: number,
-  newPrompt: string
-): Promise<GenerateResult> {
-  try {
-    const request = await prisma.posterGenerationRequest.findUnique({
-      where: { id: requestId },
-      include: {
-        event: {
-          include: {
-            artists: {
-              include: {
-                artist: true,
-              },
-            },
-          },
-        },
-      },
-    });
+  model: 'ultra' | 'core' = 'core'
+): Promise<string> {
+  const apiKey = process.env.STABILITY_API_KEY;
 
-    if (!request) {
-      return { success: false, error: 'Generation request not found' };
+  // For MVP/dev mode, return a placeholder
+  if (!apiKey || apiKey === 'your_api_key_here' || apiKey.length < 20) {
+    console.log(`[PosterGeneration] DEV MODE - Would refine with prompt: ${prompt.substring(0, 100)}...`);
+    return generatePlaceholderImage(requestId);
+  }
+
+  try {
+    // Split prompt into main and negative
+    const [mainPrompt, negativePromptPart] = prompt.split('. Negative prompt: ');
+    const negativePrompt = negativePromptPart || 'text, words, letters, watermark, logo, signature, blurry, low quality, distorted faces';
+
+    // Extract base64 data from data URI if needed
+    let imageBase64 = baseImageUrl;
+    if (baseImageUrl.startsWith('data:')) {
+      imageBase64 = baseImageUrl.split(',')[1]; // Remove 'data:image/png;base64,' prefix
     }
 
-    // Create new request with refined prompt
-    const newRequest = await prisma.posterGenerationRequest.create({
-      data: {
-        eventId: request.eventId,
-        venueId: request.venueId,
-        ticketTypeId: request.ticketTypeId,
-        prompt: newPrompt,
-        provider: request.provider,
-        status: 'pending',
-        estimatedCostCents: 1,
+    // Generate seed for reproducibility
+    const seed = Math.floor(Math.random() * 4294967295);
+
+    // Call Stability.ai v2beta API with image-to-image
+    const response = await fetch(
+      `https://api.stability.ai/v2beta/stable-image/generate/${model}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          prompt: mainPrompt,
+          negative_prompt: negativePrompt,
+          image: imageBase64, // Base64 input image
+          strength: strength, // 0.0 = identical to input, 1.0 = ignore input
+          aspect_ratio: '1:1',
+          seed: seed,
+          output_format: 'png',
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[PosterGeneration] Image-to-image API error:', errorData);
+      throw new Error(`Image-to-image API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    if (data.image) {
+      const base64Image = data.image;
+      console.log(`[PosterGeneration] Refined with model=${model}, strength=${strength}, seed=${seed}`);
+      return `data:image/png;base64,${base64Image}`;
+    }
+
+    throw new Error('No image returned from image-to-image API');
+  } catch (error) {
+    console.error('[PosterGeneration] Image-to-image error:', error);
+    return generatePlaceholderImage(requestId);
+  }
+}
+
+/**
+ * Calculate refinement strength based on instruction complexity
+ * Returns value between 0.3 (minor tweaks) and 0.7 (major changes)
+ */
+function calculateRefinementStrength(instructions: string): number {
+  const lowerInstructions = instructions.toLowerCase();
+
+  // Keywords indicating major changes
+  const majorKeywords = ['completely', 'totally', 'different', 'change', 'replace', 'new style'];
+  // Keywords indicating minor changes
+  const minorKeywords = ['slightly', 'a bit', 'little', 'subtle', 'tweak', 'adjust'];
+
+  const hasMajorKeywords = majorKeywords.some(kw => lowerInstructions.includes(kw));
+  const hasMinorKeywords = minorKeywords.some(kw => lowerInstructions.includes(kw));
+
+  // Count specific changes (color, composition, style changes)
+  const colorMentions = (lowerInstructions.match(/color|blue|red|purple|dark|light|bright/g) || []).length;
+  const compositionMentions = (lowerInstructions.match(/add|remove|include|foreground|background/g) || []).length;
+
+  // Calculate strength
+  if (hasMajorKeywords) {
+    return 0.7; // Major changes
+  } else if (hasMinorKeywords) {
+    return 0.3; // Minor tweaks
+  } else if (colorMentions + compositionMentions > 3) {
+    return 0.6; // Multiple specific changes
+  } else {
+    return 0.5; // Balanced refinement (default)
+  }
+}
+
+/**
+ * Build refined prompt by combining original prompt with refinement instructions
+ */
+function buildRefinementPrompt(
+  originalPrompt: string,
+  refinementInstructions: string
+): { prompt: string; strength: number } {
+  // Remove the negative prompt part from original
+  const [mainPrompt] = originalPrompt.split('. Negative prompt: ');
+
+  // Combine original with refinement instructions
+  const refinedPrompt = `${mainPrompt}, ${refinementInstructions.trim()}`;
+
+  // Calculate appropriate strength
+  const strength = calculateRefinementStrength(refinementInstructions);
+
+  // Re-add negative prompt
+  const negativePrompt = 'text, words, letters, watermark, logo, signature, blurry, low quality, distorted faces';
+  const fullPrompt = `${refinedPrompt}. Negative prompt: ${negativePrompt}`;
+
+  return { prompt: fullPrompt, strength };
+}
+
+/**
+ * Refine an existing poster variant with plain English instructions
+ * Uses image-to-image generation to preserve original while making changes
+ */
+export async function refineGeneration(
+  baseVariantId: number,
+  refinementInstructions: string,
+  strengthOverride?: number,
+  model: 'ultra' | 'core' = 'core'
+): Promise<GenerateResult> {
+  try {
+    // Get the base variant to refine
+    const baseVariant = await prisma.eventPosterVariant.findUnique({
+      where: { id: baseVariantId },
+      include: {
+        ticketType: true,
       },
     });
 
-    // Generate new image
-    const imageUrl = await generateWithStabilityAI(newPrompt, newRequest.id);
+    if (!baseVariant) {
+      return { success: false, error: 'Base variant not found' };
+    }
 
-    // Update request
+    if (!baseVariant.generationPrompt) {
+      return { success: false, error: 'Base variant has no generation prompt' };
+    }
+
+    // Build refined prompt and calculate strength
+    const { prompt: refinedPrompt, strength: calculatedStrength } = buildRefinementPrompt(
+      baseVariant.generationPrompt,
+      refinementInstructions
+    );
+
+    // Use override strength if provided, otherwise use calculated
+    const strength = strengthOverride !== undefined ? strengthOverride : calculatedStrength;
+
+    // Create generation request record
+    const request = await prisma.posterGenerationRequest.create({
+      data: {
+        eventId: baseVariant.eventId,
+        venueId: 1, // TODO: Get from baseVariant or event
+        ticketTypeId: baseVariant.ticketTypeId,
+        prompt: refinedPrompt,
+        provider: 'stability-ai',
+        status: 'pending',
+        estimatedCostCents: model === 'ultra' ? 4 : 3, // Ultra: $0.04, Core: $0.03
+      },
+    });
+
+    // Generate refined image using image-to-image
+    const refinedImageUrl = await generateWithImageToImage(
+      refinedPrompt,
+      baseVariant.imageUrl,
+      strength,
+      request.id,
+      model
+    );
+
+    // Update request status
     await prisma.posterGenerationRequest.update({
-      where: { id: newRequest.id },
+      where: { id: request.id },
       data: {
         status: 'completed',
-        resultImageUrl: imageUrl,
+        resultImageUrl: refinedImageUrl,
         completedAt: new Date(),
       },
     });
 
-    // Get ticket type for rarity multiplier
-    const ticketType = request.ticketTypeId
-      ? await prisma.eventTicketType.findUnique({ where: { id: request.ticketTypeId } })
-      : null;
-
-    const tierName = ticketType?.name || 'General Admission';
+    // Get tier info for rarity multiplier
+    const tierName = baseVariant.ticketType?.name || 'General Admission';
     const rarityMultiplier = TIER_ENHANCEMENTS[tierName as keyof typeof TIER_ENHANCEMENTS]?.rarityMultiplier || 1.0;
 
-    // Create new variant
+    // Count existing refinements for this variant chain
+    const existingRefinements = await prisma.eventPosterVariant.count({
+      where: {
+        eventId: baseVariant.eventId,
+        ticketTypeId: baseVariant.ticketTypeId,
+        variantName: {
+          contains: 'Refined',
+        },
+      },
+    });
+
+    // Create new refined variant
     const variant = await prisma.eventPosterVariant.create({
       data: {
-        eventId: request.eventId,
-        ticketTypeId: request.ticketTypeId,
-        variantName: `${tierName} - Refined`,
-        imageUrl,
+        eventId: baseVariant.eventId,
+        ticketTypeId: baseVariant.ticketTypeId,
+        variantName: `${tierName} - Refined ${existingRefinements > 0 ? `v${existingRefinements + 1}` : ''}`.trim(),
+        imageUrl: refinedImageUrl,
         rarityMultiplier,
-        generationPrompt: newPrompt,
+        generationPrompt: refinedPrompt,
         isApproved: false,
       },
     });
+
+    console.log(`[PosterGeneration] Refined variant ${baseVariant.id} → ${variant.id} with strength=${strength}`);
 
     return {
       success: true,

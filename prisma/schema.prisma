@@ -804,12 +804,21 @@ model EventPosterVariant {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
+  // Refinement tracking (for iterative improvements)
+  parentVariantId      Int?                  // Link to original variant that was refined
+  parentVariant        EventPosterVariant?   @relation("VariantRefinements", fields: [parentVariantId], references: [id], onDelete: SetNull)
+  refinedVariants      EventPosterVariant[]  @relation("VariantRefinements")
+  refinementPrompt     String?               @db.Text // Refinement instructions if this is a refined version
+  refinementCount      Int                   @default(0) // How many iterations from original (0 = original, 1+ = refined)
+  refinementStrength   Float?                // img2img strength used (0.0-1.0)
+
   event      Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
   ticketType EventTicketType? @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
 
   @@index([eventId])
   @@index([eventId, ticketTypeId])
   @@index([isApproved])
+  @@index([parentVariantId])
 }
 
 // Track AI image generation requests for audit and retry
@@ -819,13 +828,26 @@ model PosterGenerationRequest {
   venueId            Int
   ticketTypeId       Int?
   prompt             String    @db.Text // User's input + system enhancements
-  provider           String    // "replicate", "openai-dalle", etc.
+  provider           String    // "stability-ai", "replicate", "openai-dalle", etc.
   status             String    // pending, generating, completed, failed
   resultImageUrl     String?
   errorMessage       String?   @db.Text
   estimatedCostCents Int?
   createdAt          DateTime  @default(now())
   completedAt        DateTime?
+
+  // v2beta API parameters for reproducibility
+  model              String?   // 'ultra', 'core', 'sd3'
+  aspectRatio        String?   // '1:1', '16:9', '2:3', etc.
+  seed               Int?      // Random seed for reproducibility
+  outputFormat       String?   // 'png', 'jpeg'
+
+  // Refinement tracking
+  parentRequestId        Int?                      // Link to original request that was refined
+  parentRequest          PosterGenerationRequest?  @relation("RequestRefinements", fields: [parentRequestId], references: [id], onDelete: SetNull)
+  refinements            PosterGenerationRequest[] @relation("RequestRefinements")
+  refinementInstructions String?                   @db.Text // Plain English instructions for refinement
+  refinementStrength     Float?                    // img2img strength (0.0-1.0)
 
   event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   venue  Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
@@ -834,6 +856,7 @@ model PosterGenerationRequest {
   @@index([venueId])
   @@index([status])
   @@index([createdAt])
+  @@index([parentRequestId])
 }
 
 // Tracks on-chain event registration for NFT minting

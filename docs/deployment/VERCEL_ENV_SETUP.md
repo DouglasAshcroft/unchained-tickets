@@ -182,11 +182,11 @@ NEXT_PUBLIC_CHAIN_ID=8453
 NEXT_PUBLIC_NETWORK=mainnet
 NEXT_PUBLIC_DEV_MODE=false
 NEXT_PUBLIC_BASE_RPC_URL=https://mainnet.base.org
-
+---------------------------------------------------------------------------
 # Your MAINNET smart contract address
 NFT_CONTRACT_ADDRESS=0xYOUR_MAINNET_CONTRACT_ADDRESS
 NEXT_PUBLIC_NFT_CONTRACT_ADDRESS=0xYOUR_MAINNET_CONTRACT_ADDRESS
-
+-----------------------------------------------------------------------------
 # MAINNET minting wallet (must have MINTER_ROLE on mainnet contract)
 # CRITICAL: Keep this wallet funded with ETH for gas!
 MINTING_PRIVATE_KEY=0xYOUR_MAINNET_MINTER_PRIVATE_KEY

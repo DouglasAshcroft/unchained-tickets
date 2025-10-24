@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
+import PosterRefinementDialog from './PosterRefinementDialog';
 
 interface PosterStyle {
   id: string;
@@ -55,6 +56,7 @@ export default function PosterWorkflowManager({
   const [loading, setLoading] = useState(false);
   const [selectedTiers, setSelectedTiers] = useState<number[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [refiningVariant, setRefiningVariant] = useState<PosterVariant | null>(null);
 
   // Load available styles
   useEffect(() => {
@@ -535,30 +537,42 @@ export default function PosterWorkflowManager({
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2">
-                      {!variant.isApproved ? (
-                        <>
-                          <button
-                            onClick={() => handleApproveVariant(variant.id)}
-                            className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
-                          >
-                            Approve
-                          </button>
+                    <div className="space-y-2">
+                      {/* Primary actions */}
+                      <div className="flex gap-2">
+                        {!variant.isApproved ? (
+                          <>
+                            <button
+                              onClick={() => handleApproveVariant(variant.id)}
+                              className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleRejectVariant(variant.id)}
+                              className="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-300 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        ) : (
                           <button
                             onClick={() => handleRejectVariant(variant.id)}
-                            className="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-300 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                            className="w-full bg-red-600/20 hover:bg-red-600/30 text-red-400 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
                           >
-                            Delete
+                            Remove Approval
                           </button>
-                        </>
-                      ) : (
-                        <button
-                          onClick={() => handleRejectVariant(variant.id)}
-                          className="w-full bg-red-600/20 hover:bg-red-600/30 text-red-400 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
-                        >
-                          Remove Approval
-                        </button>
-                      )}
+                        )}
+                      </div>
+
+                      {/* Refine button */}
+                      <button
+                        onClick={() => setRefiningVariant(variant)}
+                        className="w-full bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-300 py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                      >
+                        <span>✨</span>
+                        Refine This Poster
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -577,6 +591,18 @@ export default function PosterWorkflowManager({
           View All Variants ({variants.length})
         </button>
       )}
+
+      {/* Refinement Dialog */}
+      <PosterRefinementDialog
+        isOpen={refiningVariant !== null}
+        onClose={() => setRefiningVariant(null)}
+        variant={refiningVariant}
+        onRefinementComplete={async (newVariant) => {
+          // Reload variants to show the new refined version
+          await loadVariants();
+          toast.success('New refined variant added to your posters!');
+        }}
+      />
     </div>
   );
 }
