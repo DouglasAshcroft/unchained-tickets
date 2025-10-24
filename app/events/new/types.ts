@@ -80,6 +80,27 @@ export type ArtistOption = {
   genre?: string | null;
 };
 
+// Alias types for component compatibility
+export type Artist = {
+  id: number;
+  name: string;
+  slug: string;
+  genre: string | null;
+};
+
+export type Venue = {
+  id: number;
+  name: string;
+  slug: string;
+  city?: string | null;
+  state?: string | null;
+  capacity?: number | null;
+};
+
+export type EventFormData = FormState & {
+  doorsOpen: string;
+};
+
 // Wizard steps definition
 export const WIZARD_STEPS: StepDefinition[] = [
   {

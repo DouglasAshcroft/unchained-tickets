@@ -6,8 +6,8 @@ export interface Venue {
   id: number;
   name: string;
   slug: string;
-  city: string | null;
-  state: string | null;
+  city?: string | null;
+  state?: string | null;
 }
 
 export interface VenueSearchInputProps {
@@ -155,7 +155,7 @@ export function VenueSearchInput({
   const formatLocation = (venue: Venue): string | null => {
     if (!venue.city && !venue.state) return null;
     if (venue.city && venue.state) return `${venue.city}, ${venue.state}`;
-    return venue.city || venue.state;
+    return venue.city || venue.state || null;
   };
 
   return (
