@@ -23,7 +23,7 @@ function getBlockchainConfig() {
   const chain = chainId === 84532 ? baseSepolia : base;
   const rpcUrl = process.env.BASE_RPC_URL || 'https://sepolia.base.org';
   const contractAddress = (process.env.NFT_CONTRACT_ADDRESS || process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS) as Address;
-  const mintingPrivateKey = process.env.MINTING_PRIVATE_KEY || process.env.MINTING_WALLET_PRIVATE_KEY;
+  let mintingPrivateKey = process.env.MINTING_PRIVATE_KEY || process.env.MINTING_WALLET_PRIVATE_KEY;
 
   // Validate configuration (only at runtime, not during build)
   if (!contractAddress) {
@@ -34,7 +34,22 @@ function getBlockchainConfig() {
     throw new Error('MINTING_PRIVATE_KEY is not configured');
   }
 
-  return { chainId, chain, rpcUrl, contractAddress, mintingPrivateKey };
+  // Ensure private key has 0x prefix and is valid hex
+  mintingPrivateKey = mintingPrivateKey.trim();
+  if (!mintingPrivateKey.startsWith('0x')) {
+    mintingPrivateKey = `0x${mintingPrivateKey}`;
+  }
+
+  // Validate private key format (should be 0x followed by 64 hex characters)
+  const hexPattern = /^0x[0-9a-fA-F]{64}$/;
+  if (!hexPattern.test(mintingPrivateKey)) {
+    throw new Error(
+      `MINTING_PRIVATE_KEY is invalid. Expected format: 0x followed by 64 hex characters (32 bytes). ` +
+      `Got: ${mintingPrivateKey.substring(0, 10)}... (length: ${mintingPrivateKey.length})`
+    );
+  }
+
+  return { chainId, chain, rpcUrl, contractAddress, mintingPrivateKey: mintingPrivateKey as `0x${string}` };
 }
 
 // Lazy-initialized clients (created on first use)
@@ -53,7 +68,7 @@ function getClients() {
       transport: http(_config.rpcUrl),
     });
 
-    _account = privateKeyToAccount(_config.mintingPrivateKey as `0x${string}`);
+    _account = privateKeyToAccount(_config.mintingPrivateKey);
 
     _walletClient = createWalletClient({
       account: _account,
