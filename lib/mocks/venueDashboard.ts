@@ -7,6 +7,12 @@ export type VenueDashboardEvent = {
   tiers: string[];
   posterStatus?: 'pending' | 'approved' | 'needs_revision';
   grossSales: number;
+  // Blockchain registration status
+  blockchainStatus?: 'not_registered' | 'event_registered' | 'fully_registered';
+  onChainEventId?: number;
+  registrationTxHash?: string;
+  tiersRegisteredCount?: number;
+  totalTiersCount?: number;
 };
 
 export type VenueDashboardChecklistItem = {

@@ -264,6 +264,28 @@ function EventColumn({ title, description, events, accent }: EventColumnProps) {
                   Poster · {event.posterStatus.replace('_', ' ')}
                 </span>
               )}
+              {event.blockchainStatus && (
+                <span
+                  className={`rounded-full border px-2 py-0.5 uppercase tracking-widest ${
+                    event.blockchainStatus === 'fully_registered'
+                      ? 'border-hack-green/40 text-hack-green'
+                      : event.blockchainStatus === 'event_registered'
+                      ? 'border-acid-400/40 text-acid-400'
+                      : 'border-grit-500/40 text-grit-400'
+                  }`}
+                  title={
+                    event.blockchainStatus === 'fully_registered'
+                      ? `On-chain ID: ${event.onChainEventId} • ${event.tiersRegisteredCount}/${event.totalTiersCount} tiers registered`
+                      : event.blockchainStatus === 'event_registered'
+                      ? `On-chain ID: ${event.onChainEventId} • Tiers: ${event.tiersRegisteredCount}/${event.totalTiersCount}`
+                      : 'Not yet registered on blockchain'
+                  }
+                >
+                  {event.blockchainStatus === 'fully_registered' && '⛓️ On-Chain'}
+                  {event.blockchainStatus === 'event_registered' && '⛓️ Partial'}
+                  {event.blockchainStatus === 'not_registered' && '⛓️ Pending'}
+                </span>
+              )}
               {event.grossSales > 0 && (
                 <span className="rounded-full border border-grit-500/40 px-2 py-0.5 uppercase tracking-widest">
                   {currencyFormatter.format(event.grossSales)} gross
