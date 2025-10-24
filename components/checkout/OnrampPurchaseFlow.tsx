@@ -44,8 +44,36 @@ export function OnrampPurchaseFlow({
     'checking'
   );
   const [isProcessing, setIsProcessing] = useState(false);
+  const [mintingHealthy, setMintingHealthy] = useState<boolean | null>(null);
+  const [mintingError, setMintingError] = useState<string | null>(null);
 
   const minimumOnramp = parseFloat(process.env.NEXT_PUBLIC_COINBASE_ONRAMP_MINIMUM_USD || '10.00');
+
+  // Check minting health when component mounts
+  useEffect(() => {
+    async function checkMintingHealth() {
+      try {
+        const response = await fetch('/api/checkout/minting-health');
+        const data = await response.json();
+
+        if (data.healthy && data.ready) {
+          console.log('[OnrampPurchaseFlow] ✅ Minting is operational');
+          setMintingHealthy(true);
+          setMintingError(null);
+        } else {
+          console.warn('[OnrampPurchaseFlow] ⚠️ Minting not operational:', data.message);
+          setMintingHealthy(false);
+          setMintingError(data.message || 'Minting service unavailable');
+        }
+      } catch (error) {
+        console.error('[OnrampPurchaseFlow] Failed to check minting health:', error);
+        setMintingHealthy(false);
+        setMintingError('Unable to verify minting status');
+      }
+    }
+
+    checkMintingHealth();
+  }, []);
 
   // Check balance when wallet connects
   useEffect(() => {
@@ -102,6 +130,9 @@ export function OnrampPurchaseFlow({
 
     setIsProcessing(true);
 
+    // Show minting in progress toast
+    const mintingToast = toast.loading('🎫 Minting your NFT ticket on-chain...');
+
     try {
       const response = await fetch('/api/checkout/create-charge', {
         method: 'POST',
@@ -119,17 +150,60 @@ export function OnrampPurchaseFlow({
         }),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create charge');
+      const data = await response.json();
+
+      // Dismiss the loading toast
+      toast.dismiss(mintingToast);
+
+      if (!response.ok || !data.success) {
+        // Minting failed - show clear error
+        console.error('[OnrampPurchaseFlow] Minting failed:', data.error);
+        toast.error(
+          data.message || 'NFT minting failed. Please contact support with your charge ID: ' + data.chargeId,
+          { duration: 8000 }
+        );
+        return;
       }
 
-      const data = await response.json();
-      toast.success('Purchase successful!');
-      onSuccess(data.chargeId, { email, walletAddress: address, isNewUser: false });
+      // Success! Show transaction hash and success message
+      console.log('[OnrampPurchaseFlow] ✅ NFT minted successfully!');
+      console.log('[OnrampPurchaseFlow] Token ID:', data.tokenId);
+      console.log('[OnrampPurchaseFlow] TX Hash:', data.txHash);
+
+      toast.success(
+        `🎉 NFT Ticket Minted! Token ID: ${data.tokenId}`,
+        { duration: 6000 }
+      );
+
+      // Show transaction link
+      const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID) || 84532;
+      const explorerUrl = chainId === 84532
+        ? `https://sepolia.basescan.org/tx/${data.txHash}`
+        : `https://basescan.org/tx/${data.txHash}`;
+
+      toast.success(
+        <div>
+          View on Block Explorer: <a href={explorerUrl} target="_blank" rel="noopener noreferrer" className="underline">
+            {data.txHash.slice(0, 10)}...
+          </a>
+        </div>,
+        { duration: 10000 }
+      );
+
+      onSuccess(data.chargeId, {
+        email,
+        walletAddress: address,
+        isNewUser: false,
+        tokenId: data.tokenId,
+        txHash: data.txHash,
+      });
     } catch (error) {
-      console.error('Purchase error:', error);
-      toast.error(error instanceof Error ? error.message : 'Purchase failed');
+      console.error('[OnrampPurchaseFlow] Purchase error:', error);
+      toast.dismiss(mintingToast);
+      toast.error(
+        error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.',
+        { duration: 6000 }
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -184,6 +258,18 @@ export function OnrampPurchaseFlow({
           </p>
         </div>
 
+        {mintingHealthy === false && (
+          <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-2xl">⚠️</span>
+              <span className="font-semibold text-orange-400">NFT Minting Unavailable</span>
+            </div>
+            <p className="text-sm text-grit-300">
+              {mintingError || 'NFT minting service is currently unavailable. Please try again later or contact support.'}
+            </p>
+          </div>
+        )}
+
         <EmailInput
           value={email}
           onChange={setEmail}
@@ -193,13 +279,13 @@ export function OnrampPurchaseFlow({
 
         <button
           onClick={handleDirectPurchase}
-          disabled={isProcessing || !email}
+          disabled={isProcessing || !email || mintingHealthy === false}
           className="w-full py-4 px-6 rounded-lg bg-gradient-to-r from-acid-400 to-hack-green text-ink-900 font-bold text-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
         >
           {isProcessing ? (
             <>
               <div className="w-5 h-5 border-2 border-ink-900 border-t-transparent rounded-full animate-spin" />
-              Processing Purchase...
+              Minting NFT Ticket...
             </>
           ) : (
             <>🎫 Purchase NFT Ticket - ${totalPrice.toFixed(2)}</>

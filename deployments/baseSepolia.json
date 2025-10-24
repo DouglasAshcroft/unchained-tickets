@@ -1,11 +1,11 @@
 {
   "network": "baseSepolia",
   "chainId": 84532,
-  "contractAddress": "0xD468503fb9973c317606B7CBB04A1477C2dd0c2a",
+  "contractAddress": "0xeDAE8268830E998Ff359Fdd62CE33E3131731Aa3",
   "deployer": "0x5B33aA418a6d455AADc391841788e8F72Df5ECd9",
   "baseURI": "https://unchainedtickets.xyz/api/metadata/",
-  "deployedAt": "2025-10-23T04:46:45.277Z",
-  "blockNumber": 32713258,
-  "transactionHash": "0x13cb625206bb0ec3d4437b6daa221dd90672b7db149c3b27f1d1f8c8fb5ca8e3",
-  "basescanUrl": "https://sepolia.basescan.org/address/0xD468503fb9973c317606B7CBB04A1477C2dd0c2a"
+  "deployedAt": "2025-10-23T22:32:58.923Z",
+  "blockNumber": 32745245,
+  "transactionHash": "0xa9c414c281babb5705e48251c6950db128b1c12bca42b058bde5850acea43e6a",
+  "basescanUrl": "https://sepolia.basescan.org/address/0xeDAE8268830E998Ff359Fdd62CE33E3131731Aa3"
 }

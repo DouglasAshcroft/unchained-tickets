@@ -66,6 +66,7 @@ export async function GET(
     let ticketTypeId: number | null = null;
     let tierName = 'General Admission';
     let rarityMultiplier = 1.0;
+    let isGenesisTicket = false;
 
     try {
       // Try to find ticket type from Charge record (most reliable)
@@ -85,6 +86,13 @@ export async function GET(
       if (charge?.ticket?.ticketType) {
         ticketTypeId = charge.ticket.ticketType.id;
         tierName = charge.ticket.ticketType.name;
+        isGenesisTicket = charge.ticket.isGenesisTicket || false;
+
+        // Genesis tickets get 10x rarity multiplier
+        if (isGenesisTicket) {
+          rarityMultiplier = 10.0;
+          tierName = 'Genesis Archive';
+        }
       }
     } catch (error) {
       console.warn('[Metadata API] Could not determine ticket type, using default:', error);
@@ -94,25 +102,29 @@ export async function GET(
     let posterImageUrl = sanitizePosterImageUrl(event.posterImageUrl);
     let isRevealed = false;
 
-    if (ticketState >= 1) { // USED or SOUVENIR state
+    // Genesis tickets are always revealed
+    if (isGenesisTicket || ticketState >= 1) { // Genesis or USED or SOUVENIR state
       const collectiblePoster = await getApprovedPosterForTicketType(eventId, ticketTypeId);
 
       if (collectiblePoster) {
         posterImageUrl = collectiblePoster;
         isRevealed = true;
 
-        // Get rarity multiplier from the variant
-        const variant = await prisma.eventPosterVariant.findFirst({
-          where: {
-            eventId,
-            ticketTypeId,
-            isApproved: true,
-          },
-        });
+        // Get rarity multiplier from the variant (unless it's a Genesis ticket)
+        if (!isGenesisTicket) {
+          const variant = await prisma.eventPosterVariant.findFirst({
+            where: {
+              eventId,
+              ticketTypeId,
+              isApproved: true,
+            },
+          });
 
-        if (variant) {
-          rarityMultiplier = variant.rarityMultiplier;
+          if (variant) {
+            rarityMultiplier = variant.rarityMultiplier;
+          }
         }
+        // Genesis tickets already have 10x multiplier set above
       }
     } else {
       // ACTIVE state - show mystery/unrevealed poster
@@ -121,16 +133,20 @@ export async function GET(
 
     // Build metadata with proof-of-attendance gating
     const metadata = {
-      name: isRevealed
-        ? `${event.title} - Collectible ${tierName} Poster`
-        : isSouvenir
-          ? `${event.title} - Collectible Ticket`
-          : `${event.title} - Ticket`,
-      description: ticketState === 0
-        ? `NFT ticket for ${event.title} at ${event.venue?.name || 'TBA'}. Admit one to the event on ${new Date(event.startsAt).toLocaleDateString()}. Attend the event to reveal your exclusive collectible poster!`
+      name: isGenesisTicket
+        ? `${event.title} - Genesis Archive Ticket #1`
         : isRevealed
-          ? `Collectible ${tierName} poster for ${event.title} on ${new Date(event.startsAt).toLocaleDateString()}. This exclusive artwork commemorates your attendance at this event. Rarity multiplier: ${rarityMultiplier}x`
-          : `Commemorative NFT ticket for ${event.title}. This event has concluded and this ticket is now a collectible souvenir.`,
+          ? `${event.title} - Collectible ${tierName} Poster`
+          : isSouvenir
+            ? `${event.title} - Collectible Ticket`
+            : `${event.title} - Ticket`,
+      description: isGenesisTicket
+        ? `Genesis Archive Ticket #1 for ${event.title} on ${new Date(event.startsAt).toLocaleDateString()}. The first NFT ticket minted for this event, preserved in Unchained's company history as a soulbound collectible. This ultra-rare artifact commemorates the beginning of this event's journey. Rarity: ${rarityMultiplier}x`
+        : ticketState === 0
+          ? `NFT ticket for ${event.title} at ${event.venue?.name || 'TBA'}. Admit one to the event on ${new Date(event.startsAt).toLocaleDateString()}. Attend the event to reveal your exclusive collectible poster!`
+          : isRevealed
+            ? `Collectible ${tierName} poster for ${event.title} on ${new Date(event.startsAt).toLocaleDateString()}. This exclusive artwork commemorates your attendance at this event. Rarity multiplier: ${rarityMultiplier}x`
+            : `Commemorative NFT ticket for ${event.title}. This event has concluded and this ticket is now a collectible souvenir.`,
       image: posterImageUrl,
       external_url: event.externalLink || `${process.env.NEXT_PUBLIC_APP_URL}/events/${event.id}`,
       attributes: [
@@ -178,6 +194,10 @@ export async function GET(
           value: isRevealed ? 'Yes' : 'No',
         },
         {
+          trait_type: 'Genesis Archive',
+          value: isGenesisTicket ? 'Yes' : 'No',
+        },
+        {
           trait_type: 'Rarity Multiplier',
           value: rarityMultiplier,
           display_type: 'number',
@@ -192,10 +212,11 @@ export async function GET(
         token_id: tokenId,
         venue: event.venue?.name,
         date: event.startsAt,
-        category: isRevealed ? 'Collectible Poster' : 'Event Ticket',
+        category: isGenesisTicket ? 'Genesis Archive' : isRevealed ? 'Collectible Poster' : 'Event Ticket',
         tier: tierName,
         rarity_multiplier: rarityMultiplier,
         revealed: isRevealed,
+        genesis_archive: isGenesisTicket,
       },
     };
 

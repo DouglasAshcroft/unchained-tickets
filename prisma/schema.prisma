@@ -222,6 +222,7 @@ model Event {
   impressionLogs            EventImpression[]
   posterVariants            EventPosterVariant[]
   posterGenerationRequests  PosterGenerationRequest[]
+  blockchainRegistry        EventBlockchainRegistry?
 
   // Performance indexes
   @@index([title])
@@ -261,15 +262,17 @@ model Ticket {
   updatedAt       DateTime               @updatedAt
   ticketTypeId    Int?
   reservedSeatId  Int?                   @unique
-  charges         Charge[]
-  mints           NFTMint[]
-  payments        Payment[]
-  event           Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  reservedSeat    EventReservedSeat?     @relation(fields: [reservedSeatId], references: [id])
-  ticketType      EventTicketType?       @relation(fields: [ticketTypeId], references: [id])
-  user            User?                  @relation(fields: [userId], references: [id])
-  perkRedemptions TicketPerkRedemption[]
-  scans           TicketScan[]
+  isGenesisTicket         Boolean                      @default(false) // Genesis Archive ticket (company history)
+  charges                 Charge[]
+  mints                   NFTMint[]
+  payments                Payment[]
+  event                   Event                        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  reservedSeat            EventReservedSeat?           @relation(fields: [reservedSeatId], references: [id])
+  ticketType              EventTicketType?             @relation(fields: [ticketTypeId], references: [id])
+  user                    User?                        @relation(fields: [userId], references: [id])
+  perkRedemptions         TicketPerkRedemption[]
+  scans                   TicketScan[]
+  genesisBlockchainRecord EventBlockchainRegistry?     @relation("GenesisTicket")
 
   @@unique([eventId, seatSection, seatRow, seat])
   @@index([eventId])
@@ -277,6 +280,7 @@ model Ticket {
   @@index([status])
   @@index([eventId, status])
   @@index([ticketTypeId])
+  @@index([isGenesisTicket])
 }
 
 model EventTicketType {
@@ -293,11 +297,12 @@ model EventTicketType {
   isActive      Boolean             @default(true)
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
-  event          Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  tickets        Ticket[]
-  reservedSeats  EventReservedSeat[]
-  perks          TicketPerk[]
-  posterVariants EventPosterVariant[]
+  event               Event                         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets             Ticket[]
+  reservedSeats       EventReservedSeat[]
+  perks               TicketPerk[]
+  posterVariants      EventPosterVariant[]
+  tierRegistrations   EventTierBlockchainRegistry[]
 
   @@index([eventId])
   @@index([pricingType])
@@ -829,4 +834,44 @@ model PosterGenerationRequest {
   @@index([venueId])
   @@index([status])
   @@index([createdAt])
+}
+
+// Tracks on-chain event registration for NFT minting
+model EventBlockchainRegistry {
+  id                 Int                              @id @default(autoincrement())
+  eventId            Int                              @unique
+  onChainEventId     Int                              // Maps to blockchain event ID
+  contractAddress    String
+  registrationTxHash String
+  registeredAt       DateTime
+  chainId            Int
+  genesisTicketId    String?                          @unique // Points to first test ticket (company archive)
+  createdAt          DateTime                         @default(now())
+  updatedAt          DateTime                         @updatedAt
+
+  event              Event                            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  genesisTicket      Ticket?                          @relation("GenesisTicket", fields: [genesisTicketId], references: [id])
+  tierRegistrations  EventTierBlockchainRegistry[]
+
+  @@index([onChainEventId])
+  @@index([contractAddress, chainId])
+  @@index([registeredAt])
+}
+
+// Tracks on-chain tier registration for each ticket type
+model EventTierBlockchainRegistry {
+  id                  Int                      @id @default(autoincrement())
+  registryId          Int
+  ticketTypeId        Int
+  onChainTierId       Int                      // Tier ID in the smart contract
+  registrationTxHash  String
+  registeredAt        DateTime
+  createdAt           DateTime                 @default(now())
+
+  registry            EventBlockchainRegistry  @relation(fields: [registryId], references: [id], onDelete: Cascade)
+  ticketType          EventTicketType          @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([registryId, ticketTypeId])
+  @@index([onChainTierId])
+  @@index([registeredAt])
 }

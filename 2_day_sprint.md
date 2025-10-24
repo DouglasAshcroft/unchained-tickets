@@ -1,37 +1,40 @@
 🚀 2-DAY PRODUCTION DEPLOYMENT PLAN - HACKATHON READY
 OVERVIEW
-Transform your testnet prototype into a fully functional Base mainnet alpha in 48 hours.
+ Transform your testnet prototype into a fully functional Base mainnet alpha in 48 hours.
+
 DAY 1: FOUNDATION & CONTRACT (14-16 hours)
 PHASE 1: Database Connection (2 hours) - CRITICAL
 Goal: Get Vercel production database working Tasks:
-Use Vercel's Supabase Integration (Recommended)
-Keep the empty database Vercel created
-Update .env locally to use Vercel's POSTGRES_PRISMA_URL
-Run migrations: npx prisma migrate deploy --schema=prisma/schema.prisma
-Run seed: npx prisma db seed
-Verify in Vercel Supabase dashboard
-Configure Vercel Environment Variables
-Add DATABASE_URL = (copy from Vercel's POSTGRES_PRISMA_URL)
-Add DIRECT_URL = (copy from Vercel's POSTGRES_URL_NON_POOLING)
-Update schema.prisma: add directUrl = env("DIRECT_URL")
-Trigger Vercel redeploy
-Expected Result: https://unchainedtickets.xyz/events shows seeded events
+[X] Use Vercel's Supabase Integration (Recommended)
+[X] Keep the empty database Vercel created
+[X] Update .env locally to use Vercel's POSTGRES_PRISMA_URL
+[X] Run migrations: npx prisma migrate deploy --schema=prisma/schema.prisma
+[X]  Run seed: npx prisma db seed
+[X] Verify in Vercel Supabase dashboard
+[X] Configure Vercel Environment Variables
+[X] Add DATABASE_URL = (copy from Vercel's POSTGRES_PRISMA_URL)
+[X] Add DIRECT_URL = (copy from Vercel's POSTGRES_URL_NON_POOLING)
+[X] Update schema.prisma: add directUrl = env("DIRECT_URL")
+[X] Trigger Vercel redeploy
+[X] Expected Result: https://unchainedtickets.xyz/events shows seeded events
+
 PHASE 2: Contract Deployment Setup (3 hours)
 Goal: Prepare for Base mainnet deployment Tasks:
-Install Hardhat (you have config but not the tool)
-npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox @openzeppelin/contracts
-Create Deployment Script (scripts/deploy-mainnet.cjs)
-Deploy UnchainedTickets contract
+[X] Install Hardhat (you have config but not the tool)
+[X] npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox @openzeppelin/contracts
+[X] Create Deployment Script (scripts/deploy-mainnet.cjs)
+[X] Deploy UnchainedTickets contract
 Set base URI to: https://unchainedtickets.xyz/api/metadata/
 Verify on Basescan
-Save contract address
-Fund Minting Wallet
-Send 0.05 ETH to your minting wallet on Base mainnet
+[X] Save contract address
+[X] Fund Minting Wallet
+[X] Send 0.05 ETH to your minting wallet on Base mainnet
 This covers ~100 mints + buffer
-Test Deployment on Sepolia First
-Deploy to Sepolia testnet
-Test minting flow
-Verify contract interactions work
+[X] Test Deployment on Sepolia First
+[X] Deploy to Sepolia testnet
+[X] Test minting flow
+[X] Verify contract interactions work
+
 DO NOT PROCEED TO MAINNET IF SEPOLIA FAILS
 Expected Result: Working contract on Sepolia, ready for mainnet
 PHASE 3: Base Mainnet Deployment (2 hours)
@@ -40,27 +43,30 @@ Deploy to Base Mainnet
 npx hardhat run scripts/deploy-mainnet.cjs --network baseMainnet
 Verify Contract on Basescan
 npx hardhat verify --network baseMainnet <CONTRACT_ADDRESS> "https://unchainedtickets.xyz/api/metadata/"
-Update Vercel Environment Variables
+[] Update Vercel Environment Variables
 NFT_CONTRACT_ADDRESS = (new mainnet address)
 NEXT_PUBLIC_NETWORK = "mainnet"
 NEXT_PUBLIC_CHAIN_ID = "8453"
+
 Redeploy
 Initialize Contract in Database
 npm run tsx scripts/ops/add-contract-to-db.ts
 Expected Result: Contract deployed, verified, configured
+
 PHASE 4: Coinbase Commerce Setup (3 hours)
 Goal: Enable crypto payments Tasks:
-Coinbase Commerce Dashboard
-Log into commerce.coinbase.com
-Get production API key
-Create webhook: https://unchainedtickets.xyz/api/webhooks/coinbase
-Save webhook secret
+[X] Coinbase Commerce Dashboard
+[X] Log into commerce.coinbase.com
+[X] Get production API key
+[] Create webhook: https://unchainedtickets.xyz/api/webhooks/coinbase
+[] Save webhook secret
 Update Vercel Environment Variables
-COINBASE_COMMERCE_API_KEY = (your production key)
-COINBASE_WEBHOOK_SECRET = (from webhook settings)
+[X] COINBASE_COMMERCE_API_KEY = (your production key)
+[X] COINBASE_WEBHOOK_SECRET = (from webhook settings)
 Mark both as "Sensitive"
+
 Redeploy
-Test Webhook Locally
+[] Test Webhook Locally
 Use Coinbase Commerce "Test Webhook" button
 Check Vercel function logs for success
 Verify webhook signature validation works

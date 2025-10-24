@@ -1,7 +1,7 @@
 import { createPublicClient, createWalletClient, http, type Address, type Hash } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
-import contractArtifact from '@/contracts/UnchainedTickets.json';
+import contractAbi from '@/contracts/UnchainedTickets.abi.json';
 
 // Lazy initialization to avoid errors during build
 let publicClient: any = null;
@@ -84,7 +84,7 @@ export async function mintTicket(
     try {
       await publicClient.simulateContract({
         address: CONTRACT_ADDRESS,
-        abi: contractArtifact.abi,
+        abi: contractAbi,
         functionName: 'mintTicketWithTier',
         args: [
           BigInt(request.eventId),
@@ -94,6 +94,7 @@ export async function mintTicket(
           request.row,
           request.seat,
         ],
+        account: walletClient.account, // Need to specify account for onlyOwner functions
       });
     } catch (simulateError) {
       console.error('[NFTMintingService] Simulation failed:', simulateError);
@@ -108,7 +109,7 @@ export async function mintTicket(
     // Write the transaction
     const hash = await walletClient.writeContract({
       address: CONTRACT_ADDRESS,
-      abi: contractArtifact.abi,
+      abi: contractAbi,
       functionName: 'mintTicketWithTier',
       args: [
         BigInt(request.eventId),
@@ -181,7 +182,7 @@ export async function getTicketState(tokenId: bigint): Promise<number> {
 
     const state = await publicClient.readContract({
       address: CONTRACT_ADDRESS,
-      abi: contractArtifact.abi,
+      abi: contractAbi,
       functionName: 'getTicketState',
       args: [tokenId],
     });
@@ -210,7 +211,7 @@ export async function useTicket(
     try {
       await publicClient.simulateContract({
         address: CONTRACT_ADDRESS,
-        abi: contractArtifact.abi,
+        abi: contractAbi,
         functionName: 'useTicket',
         args: [tokenId, holder, transformToSouvenir],
       });
@@ -225,7 +226,7 @@ export async function useTicket(
     // Execute transaction
     const hash = await walletClient.writeContract({
       address: CONTRACT_ADDRESS,
-      abi: contractArtifact.abi,
+      abi: contractAbi,
       functionName: 'useTicket',
       args: [tokenId, holder, transformToSouvenir],
     });
@@ -266,7 +267,7 @@ export async function batchTransformToSouvenirs(
     try {
       await publicClient.simulateContract({
         address: CONTRACT_ADDRESS,
-        abi: contractArtifact.abi,
+        abi: contractAbi,
         functionName: 'batchTransformToSouvenirs',
         args: [tokenIds],
       });
@@ -281,7 +282,7 @@ export async function batchTransformToSouvenirs(
     // Execute transaction
     const hash = await walletClient.writeContract({
       address: CONTRACT_ADDRESS,
-      abi: contractArtifact.abi,
+      abi: contractAbi,
       functionName: 'batchTransformToSouvenirs',
       args: [tokenIds],
     });
@@ -316,7 +317,7 @@ export async function getTokenURI(tokenId: bigint): Promise<string> {
 
     const uri = await publicClient.readContract({
       address: CONTRACT_ADDRESS,
-      abi: contractArtifact.abi,
+      abi: contractAbi,
       functionName: 'uri',
       args: [tokenId],
     });
@@ -337,7 +338,7 @@ export async function ownsTicket(address: Address, tokenId: bigint): Promise<boo
 
     const balance = await publicClient.readContract({
       address: CONTRACT_ADDRESS,
-      abi: contractArtifact.abi,
+      abi: contractAbi,
       functionName: 'balanceOf',
       args: [address, tokenId],
     });

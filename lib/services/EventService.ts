@@ -43,18 +43,36 @@ export class EventService {
         genre: link.artist.genre,
       }));
 
-    const ticketStatusesConsideredSold = new Set<TicketStatus>([
-      'minted',
-      'transferred',
-      'used',
-      'revoked',
-    ]);
+    // Calculate actual remaining capacity based on ticket type capacity limits
+    const ticketTypes = event.ticketTypes || [];
+    let totalCapacity = 0;
+    let totalSold = 0;
 
-    const totalTickets = event.tickets?.length ?? 0;
+    for (const ticketType of ticketTypes) {
+      if (!ticketType.isActive || ticketType.capacity === null) {
+        // Skip inactive or unlimited capacity tiers
+        continue;
+      }
+
+      totalCapacity += ticketType.capacity;
+
+      // Count tickets for this specific tier (excluding canceled and Genesis tickets)
+      // Genesis tickets are archive/test tickets and should NOT count against capacity
+      const tierTickets = event.tickets?.filter(
+        (ticket) =>
+          ticket.ticketTypeId === ticketType.id &&
+          ticket.status !== 'canceled' &&
+          !ticket.isGenesisTicket  // NEVER count Genesis tickets
+      ) ?? [];
+
+      totalSold += tierTickets.length;
+    }
+
+    const availableTickets = Math.max(totalCapacity - totalSold, 0);
+    const totalTickets = totalSold; // Only count sold tickets as "total"
     const soldTickets = event.tickets?.filter((ticket) =>
-      ticketStatusesConsideredSold.has(ticket.status)
+      ticket.status === 'minted' || ticket.status === 'transferred' || ticket.status === 'used'
     ).length ?? 0;
-    const availableTickets = Math.max(totalTickets - soldTickets, 0);
 
     return {
       ...event,
