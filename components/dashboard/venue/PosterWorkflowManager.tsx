@@ -597,7 +597,7 @@ export default function PosterWorkflowManager({
         isOpen={refiningVariant !== null}
         onClose={() => setRefiningVariant(null)}
         variant={refiningVariant}
-        onRefinementComplete={async (newVariant) => {
+        onRefinementComplete={async (_newVariant) => {
           // Reload variants to show the new refined version
           await loadVariants();
           toast.success('New refined variant added to your posters!');
