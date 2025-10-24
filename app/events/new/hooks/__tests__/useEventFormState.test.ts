@@ -1,29 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useEventFormState } from '../useEventFormState';
-
-// Mock data for testing
-const mockTicketType = {
-  id: 'ticket-123',
-  name: 'VIP Pass',
-  description: 'Premium access',
-  pricingType: 'general_admission' as const,
-  price: '99.99',
-  currency: 'USD',
-  capacity: '100',
-  salesStart: '',
-  salesEnd: '',
-  isActive: true,
-  perks: [],
-};
-
-const mockPerk = {
-  id: 'perk-456',
-  name: 'Free Drink',
-  description: 'One complimentary beverage',
-  instructions: 'Redeem at bar',
-  quantity: '1',
-};
 
 describe('useEventFormState', () => {
   describe('initialization', () => {

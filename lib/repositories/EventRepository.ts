@@ -166,6 +166,7 @@ export class EventRepository {
             seat: true,
             ticketTypeId: true,
             reservedSeatId: true,
+            isGenesisTicket: true,
           },
         },
         ticketTypes: {

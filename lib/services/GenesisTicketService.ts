@@ -64,7 +64,7 @@ export async function mintGenesisTicket(
         success: true,
         ticketId: existingRegistry.genesisTicket.id,
         tokenId: existingMint?.tokenId,
-        txHash: existingMint?.txHash,
+        txHash: existingMint?.txHash ?? undefined,
       };
     }
 
@@ -160,7 +160,7 @@ export async function mintGenesisTicket(
       await prisma.$transaction([
         prisma.ticket.update({
           where: { id: ticket.id },
-          data: { status: 'cancelled' },
+          data: { status: 'canceled' },
         }),
         prisma.charge.update({
           where: { id: charge.id },

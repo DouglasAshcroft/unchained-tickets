@@ -12,7 +12,7 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
-import { createPublicClient, createWalletClient, http, parseEther, Address } from 'viem';
+import { createPublicClient, createWalletClient, http, Address } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { base, baseSepolia } from 'viem/chains';
 import contractAbi from '@/contracts/UnchainedTickets.abi.json';

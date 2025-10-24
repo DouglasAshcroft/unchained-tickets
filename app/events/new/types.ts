@@ -79,3 +79,32 @@ export type ArtistOption = {
   slug: string;
   genre?: string | null;
 };
+
+// Wizard steps definition
+export const WIZARD_STEPS: StepDefinition[] = [
+  {
+    id: 'basics',
+    title: 'Basics',
+    description: 'Name your event and add optional branding links.',
+  },
+  {
+    id: 'schedule',
+    title: 'Schedule & Venue',
+    description: 'Set the timeline and choose where the event happens.',
+  },
+  {
+    id: 'tickets',
+    title: 'Tickets & Seating',
+    description: 'Define ticket tiers, pricing, and reserve a seat map if needed.',
+  },
+  {
+    id: 'posters',
+    title: 'Collectible Posters',
+    description: 'Generate or upload exclusive poster art for each ticket tier.',
+  },
+  {
+    id: 'review',
+    title: 'Review & Publish',
+    description: 'Double-check details and decide whether to publish now or later.',
+  },
+];

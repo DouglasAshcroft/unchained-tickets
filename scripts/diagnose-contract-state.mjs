@@ -41,7 +41,7 @@ async function main() {
     console.log('Event Data:', eventData);
     console.log('');
 
-    const [maxSupply, eventTimestamp, eventEndTimestamp, transferable, active, metadataURI, souvenirMetadataURI, royaltyBps, royaltyRecipient] = eventData;
+    const [maxSupply, eventTimestamp, eventEndTimestamp, transferable, active, metadataURI, _souvenirMetadataURI, royaltyBps, royaltyRecipient] = eventData;
 
     console.log('  Max Supply:', maxSupply.toString());
     console.log('  Event Timestamp:', eventTimestamp.toString(), '(', new Date(Number(eventTimestamp) * 1000).toISOString(), ')');

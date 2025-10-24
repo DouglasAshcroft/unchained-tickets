@@ -14,7 +14,7 @@ interface OnrampPurchaseFlowProps {
   ticketTier: string;
   quantity: number;
   totalPrice: number;
-  onSuccess: (transactionId: string, metadata?: { email?: string; walletAddress?: string; isNewUser?: boolean }) => void;
+  onSuccess: (transactionId: string, metadata?: { email?: string; walletAddress?: string; isNewUser?: boolean; tokenId?: string; txHash?: string }) => void;
   onClose: () => void;
 }
 

@@ -1,4 +1,4 @@
-import { EventStatus, TicketStatus } from '@prisma/client';
+import { EventStatus } from '@prisma/client';
 import { eventRepository } from '@/lib/repositories/EventRepository';
 import { venueRepository } from '@/lib/repositories/VenueRepository';
 import { artistRepository } from '@/lib/repositories/ArtistRepository';

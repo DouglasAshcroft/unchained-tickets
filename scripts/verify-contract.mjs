@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { createPublicClient, http, parseAbi } from 'viem';
+import { createPublicClient, http } from 'viem';
 import { baseSepolia } from 'viem/chains';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -16,7 +16,7 @@ let CONTRACT_ADDRESS;
 try {
   const deployment = JSON.parse(readFileSync(deploymentPath, 'utf-8'));
   CONTRACT_ADDRESS = deployment.contractAddress;
-} catch (error) {
+} catch {
   console.error('❌ Could not load deployment file:', deploymentPath);
   console.error('   Run deployment first: npx hardhat run scripts/deploy/deploy-sepolia.cjs --network baseSepolia');
   process.exit(1);
@@ -144,7 +144,7 @@ async function verifyContract() {
   // 5. Try to simulate a mint
   console.log('5️⃣  Attempting contract simulation...');
   try {
-    const { request } = await publicClient.simulateContract({
+    const { request: _request } = await publicClient.simulateContract({
       address: CONTRACT_ADDRESS,
       abi: contractAbi,
       functionName: 'mintTicketWithTier',
