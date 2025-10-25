@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('[POST /api/events] Received body:', JSON.stringify(body, null, 2));
     const eventInput = EventCreateSchema.parse(body);
 
     const event = await eventService.createEvent(eventInput);
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(event, { status: 201 });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
+      console.error('[POST /api/events] Validation error:', JSON.stringify(error.issues, null, 2));
       return NextResponse.json(
         { error: 'Invalid input', details: error.issues },
         { status: 400 }

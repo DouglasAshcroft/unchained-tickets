@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import ThemeToggle from '@/components/ThemeToggle';
 import { RBAC } from '@/lib/constants/roles';
 import { WalletControls } from './WalletControls';
+import { VenueSwitcher } from './VenueSwitcher';
 
 const NavbarComponent = function Navbar() {
   const { isAuthenticated, hasAnyRole } = useAuth();
@@ -81,9 +82,12 @@ const NavbarComponent = function Navbar() {
             )}
           </div>
 
-          {/* Theme Toggle & Wallet Connect */}
+          {/* Theme Toggle, Venue Switcher & Wallet Connect */}
           <div className="flex items-center space-x-2 sm:space-x-3">
             <ThemeToggle />
+            <div className="hidden md:block">
+              <VenueSwitcher />
+            </div>
             <div className="hidden sm:block">
               <WalletControls />
             </div>

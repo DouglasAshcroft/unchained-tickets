@@ -65,6 +65,14 @@ const nextConfig: NextConfig = {
             key: 'Cross-Origin-Opener-Policy',
             value: 'same-origin-allow-popups',
           },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.coinbase.com https://*.coinbase.com blob:",
+              "worker-src 'self' blob:",
+              "child-src 'self' blob:",
+            ].join('; '),
+          },
         ],
       },
     ];
