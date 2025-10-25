@@ -1,0 +1,173 @@
+title = "Unchained Tickets Secret Scanner Configuration"
+
+# Extend the default gitleaks rules
+[extend]
+useDefault = true
+
+# Custom rules for Unchained Tickets
+
+[[rules]]
+id = "ethereum-private-key"
+description = "Ethereum private key (0x + 64 hex characters)"
+regex = '''0x[a-fA-F0-9]{64}'''
+tags = ["key", "ethereum", "crypto", "critical"]
+
+[[rules]]
+id = "ethereum-wallet-address"
+description = "Ethereum wallet address with nearby private key context"
+regex = '''(?i)(private.{0,20}key|key).{0,50}0x[a-fA-F0-9]{40}'''
+tags = ["ethereum", "wallet", "high"]
+
+[[rules]]
+id = "mnemonic-phrase"
+description = "BIP39 mnemonic seed phrase (12 or 24 words)"
+regex = '''(?i)(mnemonic|seed.phrase).{0,50}(\b[a-z]+\s){11,23}[a-z]+'''
+tags = ["mnemonic", "seed", "wallet", "critical"]
+
+[[rules]]
+id = "coinbase-api-key"
+description = "Coinbase API key"
+regex = '''organizations/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/apiKeys/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}'''
+tags = ["api", "coinbase", "high"]
+
+[[rules]]
+id = "coinbase-api-key-name"
+description = "Coinbase API key name"
+regex = '''COINBASE_API_KEY_NAME\s*=\s*["\']?[a-f0-9-]{36,}["\']?'''
+tags = ["api", "coinbase", "medium"]
+
+[[rules]]
+id = "coinbase-private-key"
+description = "Coinbase CDP API private key"
+regex = '''COINBASE_API_KEY_PRIVATE_KEY\s*=\s*["\']?[A-Za-z0-9+/=]{100,}["\']?'''
+tags = ["api", "coinbase", "critical"]
+
+[[rules]]
+id = "stripe-secret-key"
+description = "Stripe secret key"
+regex = '''sk_(test|live)_[0-9a-zA-Z]{24,}'''
+tags = ["api", "stripe", "payment", "critical"]
+
+[[rules]]
+id = "stripe-restricted-key"
+description = "Stripe restricted key"
+regex = '''rk_(test|live)_[0-9a-zA-Z]{24,}'''
+tags = ["api", "stripe", "high"]
+
+[[rules]]
+id = "jwt-secret"
+description = "JWT secret token"
+regex = '''JWT_SECRET\s*=\s*["\']?[a-zA-Z0-9+/=]{32,}["\']?'''
+tags = ["jwt", "auth", "critical"]
+
+[[rules]]
+id = "openai-api-key"
+description = "OpenAI API key"
+regex = '''sk-[a-zA-Z0-9]{48}'''
+tags = ["api", "openai", "high"]
+
+[[rules]]
+id = "stability-ai-key"
+description = "Stability AI API key"
+regex = '''STABILITY_AI_KEY\s*=\s*["\']?[a-zA-Z0-9]{32,}["\']?'''
+tags = ["api", "stability", "high"]
+
+[[rules]]
+id = "serper-api-key"
+description = "Serper API key (Google Search)"
+regex = '''SERPER_API_KEY\s*=\s*["\']?[a-zA-Z0-9]{32,64}["\']?'''
+tags = ["api", "serper", "medium"]
+
+[[rules]]
+id = "database-url-with-password"
+description = "PostgreSQL database URL with password"
+regex = '''postgres(ql)?://[^:\s]+:[^@\s]+@[^/\s]+/[^\s]+'''
+tags = ["database", "credentials", "critical"]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API key pattern"
+regex = '''(?i)(api.{0,20}key|apikey|api.key).{0,20}[:=]\s*["\']?[a-zA-Z0-9_\-]{32,}["\']?'''
+tags = ["api", "medium"]
+
+[[rules]]
+id = "generic-secret"
+description = "Generic secret pattern"
+regex = '''(?i)(secret|password|passwd|pwd).{0,20}[:=]\s*["\']?[^"\'\s<]{16,}["\']?'''
+tags = ["secret", "medium"]
+
+[[rules]]
+id = "base-rpc-url-with-key"
+description = "Base RPC URL with embedded API key"
+regex = '''https?://[^/]+\.base\.org/[a-zA-Z0-9]{20,}'''
+tags = ["rpc", "blockchain", "medium"]
+
+# Allowlist - patterns that should NOT trigger alerts
+
+[allowlist]
+description = "Allowlist for false positives and safe patterns"
+
+# File patterns to ignore
+paths = [
+    '''\.env\.example$''',
+    '''\.env\.production\.example$''',
+    '''\.env\.local\.example$''',
+    '''contracts/.*\.sol$''',            # Solidity contract addresses are not secrets
+    '''node_modules/''',                  # Third-party dependencies
+    '''\.git/''',                         # Git metadata
+    '''package-lock\.json$''',            # Dependency lock file
+    '''\.next/''',                        # Next.js build output
+    '''/build/''',                        # Build artifacts
+    '''/dist/''',                         # Distribution files
+    '''coverage/''',                      # Test coverage reports
+]
+
+# Regex patterns to ignore (known safe values)
+regexes = [
+    # Zero addresses and common test values
+    '''0x0000000000000000000000000000000000000000''',
+    '''0x1111111111111111111111111111111111111111''',
+
+    # Placeholders in documentation
+    '''<YOUR_.*>''',
+    '''<NEW_.*>''',
+    '''YOUR_[A-Z_]+''',
+    '''example\.com''',
+    '''test\.example''',
+    '''localhost''',
+
+    # Common test/example patterns
+    '''sk_(test|live)_example''',
+    '''0xdeadbeef''',
+    '''0xabcd''',
+    '''password123''',              # Obviously fake password
+    '''secret123''',                # Obviously fake secret
+
+    # Contract deployment addresses (public, not secrets)
+    '''0xB6600348cc80619D606D4b83B0366ce5112D8aA2''',  # Mainnet contract
+    '''0xeDAE8268830E998Ff359Fdd62CE33E3131731Aa3''',  # Testnet contract
+
+    # Common variable names (not values)
+    '''const\s+privateKey''',
+    '''let\s+apiKey''',
+    '''process\.env\.''',
+
+    # TypeScript types
+    '''type\s+.*Key''',
+    '''interface\s+.*Secret''',
+]
+
+# Specific commits to ignore (if needed)
+# commits = [
+#   "commit-hash-here",
+# ]
+
+# Stop words - if these appear near a secret, it's likely a false positive
+stopwords = [
+    "example",
+    "test",
+    "demo",
+    "placeholder",
+    "your_key_here",
+    "replace_me",
+]

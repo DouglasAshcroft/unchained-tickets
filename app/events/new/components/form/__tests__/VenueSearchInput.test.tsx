@@ -79,7 +79,8 @@ describe('VenueSearchInput', () => {
       );
 
       const input = screen.getByPlaceholderText(/search by venue name/i);
-      expect(input).toHaveClass('border-red-500');
+      // Check for error border styling (design system uses resistance color)
+      expect(input).toHaveClass('border-resistance-500/50');
     });
   });
 
@@ -319,7 +320,8 @@ describe('VenueSearchInput', () => {
       fireEvent.keyDown(input, { key: 'ArrowDown' });
 
       const firstItem = screen.getByText('Madison Square Garden').closest('[role="option"]');
-      expect(firstItem).toHaveClass('bg-blue-50');
+      // Check for highlighted state (design system uses acid color)
+      expect(firstItem).toHaveClass('bg-acid-400/10');
     });
 
     it('should navigate up with ArrowUp key', async () => {
@@ -347,7 +349,8 @@ describe('VenueSearchInput', () => {
       fireEvent.keyDown(input, { key: 'ArrowUp' });
 
       const firstItem = screen.getByText('Madison Square Garden').closest('[role="option"]');
-      expect(firstItem).toHaveClass('bg-blue-50');
+      // Check for highlighted state (design system uses acid color)
+      expect(firstItem).toHaveClass('bg-acid-400/10');
     });
 
     it('should select highlighted venue with Enter key', async () => {
@@ -425,7 +428,8 @@ describe('VenueSearchInput', () => {
       fireEvent.keyDown(input, { key: 'ArrowDown' });
 
       const firstItem = screen.getByText('Madison Square Garden').closest('[role="option"]');
-      expect(firstItem).toHaveClass('bg-blue-50');
+      // Check for highlighted state (design system uses acid color)
+      expect(firstItem).toHaveClass('bg-acid-400/10');
     });
 
     it('should wrap to last item when navigating up from first item', async () => {
@@ -449,7 +453,8 @@ describe('VenueSearchInput', () => {
       fireEvent.keyDown(input, { key: 'ArrowUp' }); // Should wrap to last
 
       const lastItem = screen.getByText('Madison Theater').closest('[role="option"]');
-      expect(lastItem).toHaveClass('bg-blue-50');
+      // Check for highlighted state (design system uses acid color)
+      expect(lastItem).toHaveClass('bg-acid-400/10');
     });
   });
 

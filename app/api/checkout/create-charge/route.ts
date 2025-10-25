@@ -24,6 +24,16 @@ export async function POST(request: NextRequest) {
       onrampSessionId
     } = body;
 
+    // Enhanced diagnostic logging
+    console.log('[create-charge] ========================================');
+    console.log('[create-charge] Incoming purchase request:');
+    console.log('[create-charge]   Event ID:', eventId);
+    console.log('[create-charge]   Ticket Tier:', ticketTier);
+    console.log('[create-charge]   Quantity:', quantity);
+    console.log('[create-charge]   Wallet:', walletAddress);
+    console.log('[create-charge]   Payment Method:', paymentMethod);
+    console.log('[create-charge] ========================================');
+
     if (!eventId || !ticketTier || !quantity || quantity <= 0 || !totalPrice) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
@@ -51,6 +61,16 @@ export async function POST(request: NextRequest) {
     const canMintOnChain = Boolean(rpcUrl && mintingPrivateKey && mintingContractAddress);
     // Unused during Phase 1, will be needed in Phase 3.1 for NFT minting
     // const _maxMintRetries = Number(process.env.MINT_MAX_RETRIES ?? '3');
+
+    // Log environment configuration
+    console.log('[create-charge] Environment Configuration:');
+    console.log('[create-charge]   Dev Mode:', isDevMode);
+    console.log('[create-charge]   Chain ID:', process.env.NEXT_PUBLIC_CHAIN_ID);
+    console.log('[create-charge]   Network:', process.env.NEXT_PUBLIC_NETWORK);
+    console.log('[create-charge]   RPC URL:', rpcUrl?.substring(0, 30) + '...');
+    console.log('[create-charge]   Contract Address:', mintingContractAddress);
+    console.log('[create-charge]   Private Key Set:', Boolean(mintingPrivateKey));
+    console.log('[create-charge]   Can Mint On-Chain:', canMintOnChain);
 
     if (isDevMode) {
       // Look up the ticket type based on tier name
@@ -202,6 +222,7 @@ export async function POST(request: NextRequest) {
 
         try {
           // Look up on-chain event ID and tier ID
+          console.log('[create-charge] Checking blockchain registry for event:', eventId);
           const blockchainRegistry = await prisma.eventBlockchainRegistry.findUnique({
             where: { eventId },
             include: {
@@ -213,22 +234,37 @@ export async function POST(request: NextRequest) {
 
           if (!blockchainRegistry) {
             console.error('[create-charge] ❌ Event not registered on blockchain');
+            console.error('[create-charge] ❌ Event ID:', eventId);
+            console.error('[create-charge] ❌ This event must be registered before minting can work');
+            console.error('[create-charge] ❌ Run: npx tsx scripts/register-event-with-genesis.ts', eventId);
             return NextResponse.json({
               success: false,
               error: 'Event not registered on blockchain. Cannot mint NFT.',
-              message: '❌ This event is not set up for NFT minting.',
+              message: '❌ This event is not set up for NFT minting. Contact support.',
             }, { status: 500 });
           }
+
+          console.log('[create-charge] ✅ Blockchain registry found');
+          console.log('[create-charge]   On-chain Event ID:', blockchainRegistry.onChainEventId);
+          console.log('[create-charge]   Contract:', blockchainRegistry.contractAddress);
+          console.log('[create-charge]   Chain ID:', blockchainRegistry.chainId);
 
           const tierRegistration = blockchainRegistry.tierRegistrations[0];
           if (!tierRegistration) {
             console.error('[create-charge] ❌ Ticket tier not registered on blockchain');
+            console.error('[create-charge] ❌ Ticket Type ID:', ticket.ticketTypeId);
+            console.error('[create-charge] ❌ Ticket Tier Name:', ticketTier);
+            console.error('[create-charge] ❌ Run: POST /api/events/' + eventId + '/register-tiers');
             return NextResponse.json({
               success: false,
               error: 'Ticket tier not registered on blockchain. Cannot mint NFT.',
-              message: '❌ This ticket type is not set up for NFT minting.',
+              message: '❌ This ticket type is not set up for NFT minting. Contact support.',
             }, { status: 500 });
           }
+
+          console.log('[create-charge] ✅ Tier registration found');
+          console.log('[create-charge]   On-chain Tier ID:', tierRegistration.onChainTierId);
+          console.log('[create-charge]   Ticket Type ID:', tierRegistration.ticketTypeId);
 
           const onChainEventId = blockchainRegistry.onChainEventId;
           const onChainTierId = tierRegistration.onChainTierId;

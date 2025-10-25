@@ -75,10 +75,14 @@ tests/reports/*
 
 # Hide ALL docs directory
 /docs/
+/unchained-tickets/docs
 
 # Hide any markdown files anywhere (except project README.md at root)
 **/*.md
 !README.md
+
+# Hide entire scripts directory (contains hardcoded testnet private key)
+/scripts/
 
 # Never commit any deployment or secret files
 .env.mainnet

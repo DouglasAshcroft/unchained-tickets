@@ -220,6 +220,13 @@ export default function NewEventPage() {
       return api.createEvent(payload);
     },
     onSuccess: async (event) => {
+      // Only register on blockchain if status is 'published'
+      if (formData.status === 'draft') {
+        toast.success("Event saved as draft!");
+        router.push(`/events/${event.id}`);
+        return;
+      }
+
       toast.success("Event created! Registering on blockchain...");
 
       try {
@@ -228,7 +235,9 @@ export default function NewEventPage() {
 
         if (!eventResult.success) {
           console.error('Failed to register event on blockchain:', eventResult.error);
-          toast.error(`Event created but blockchain registration failed: ${eventResult.error}`);
+          toast.error(`Blockchain registration failed. Event saved as draft.`);
+          // Auto-revert to draft status on blockchain failure
+          await api.updateEvent(event.id, { status: 'draft' });
           router.push(`/events/${event.id}`);
           return;
         }
@@ -249,7 +258,13 @@ export default function NewEventPage() {
         router.push(`/events/${event.id}`);
       } catch (error) {
         console.error('Blockchain registration error:', error);
-        toast.error('Event created but blockchain registration encountered an error');
+        toast.error('Blockchain registration failed. Event saved as draft.');
+        // Auto-revert to draft status on error
+        try {
+          await api.updateEvent(event.id, { status: 'draft' });
+        } catch (updateError) {
+          console.error('Failed to revert status:', updateError);
+        }
         router.push(`/events/${event.id}`);
       }
     },
@@ -441,6 +456,9 @@ export default function NewEventPage() {
             formData={formData as any}
             selectedArtist={selectedArtist as any}
             selectedVenue={selectedVenue as any}
+            handlers={{
+              onStatusChange: (status) => updateField('status', status),
+            }}
           />
         );
       default:

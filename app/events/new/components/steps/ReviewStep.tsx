@@ -1,20 +1,45 @@
 'use client';
 
+import { useMemo } from 'react';
 import { StepHeader, SectionDivider } from '@/components/ui/forms';
+import { StatusSelector } from '@/components/common/StatusSelector';
+import { validateBlockchainReadiness } from '@/lib/utils/blockchainValidation';
 import type { EventFormData, Artist, Venue, TicketTypeForm } from '../../types';
 
 interface ReviewStepProps {
   formData: EventFormData;
   selectedArtist: Artist | null;
   selectedVenue: Venue | null;
+  handlers?: {
+    onStatusChange?: (status: 'draft' | 'published') => void;
+  };
 }
 
-export function ReviewStep({ formData, selectedArtist, selectedVenue }: ReviewStepProps) {
+export function ReviewStep({ formData, selectedArtist, selectedVenue, handlers }: ReviewStepProps) {
   // Calculate total ticket capacity
   const totalCapacity = formData.ticketTypes.reduce((sum: number, ticket) => {
     const capacity = parseInt(ticket.capacity, 10);
     return sum + (isNaN(capacity) ? 0 : capacity);
   }, 0);
+
+  // Validate blockchain readiness
+  const validation = useMemo(() => {
+    const eventData = {
+      startsAt: new Date(formData.startsAt),
+      venueId: formData.venueId ? parseInt(formData.venueId, 10) : null,
+      venue: selectedVenue ? { id: selectedVenue.id, name: selectedVenue.name } : null,
+      primaryArtistId: formData.primaryArtistId ? parseInt(formData.primaryArtistId, 10) : null,
+      primaryArtist: selectedArtist ? {
+        id: selectedArtist.id,
+        name: selectedArtist.name,
+        genre: selectedArtist.genre,
+      } : null,
+      ticketTypes: formData.ticketTypes.map(() => ({ isActive: true })),
+      posterImageUrl: formData.posterImageUrl,
+    };
+
+    return validateBlockchainReadiness(eventData);
+  }, [formData, selectedArtist, selectedVenue]);
 
   // Format currency
   const formatPrice = (price: string, currency: string): string => {
@@ -162,6 +187,59 @@ export function ReviewStep({ formData, selectedArtist, selectedVenue }: ReviewSt
         </div>
       </div>
 
+      {/* Publication Status Section */}
+      <div className="space-y-8">
+        <SectionDivider variant="resistance">Publication Status</SectionDivider>
+
+        {/* Blockchain Readiness Checklist */}
+        <div className="rounded-xl border border-grit-500/30 bg-ink-800/50 p-6 backdrop-blur-sm">
+          <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-grit-300 mb-4">
+            Blockchain Readiness
+          </h3>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm">
+              <span className={validation.checks.hasVenue ? 'text-hack-green' : 'text-signal-500'}>
+                {validation.checks.hasVenue ? '✅' : '❌'}
+              </span>
+              <span className="text-grit-300">Venue selected</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className={validation.checks.hasArtist ? 'text-hack-green' : 'text-signal-500'}>
+                {validation.checks.hasArtist ? '✅' : '❌'}
+              </span>
+              <span className="text-grit-300">Artist selected</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className={validation.checks.hasGenre ? 'text-hack-green' : 'text-signal-500'}>
+                {validation.checks.hasGenre ? '✅' : '❌'}
+              </span>
+              <span className="text-grit-300">Genre set</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className={validation.checks.isFutureDate ? 'text-hack-green' : 'text-signal-500'}>
+                {validation.checks.isFutureDate ? '✅' : '❌'}
+              </span>
+              <span className="text-grit-300">Future date</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className={validation.checks.hasActiveTickets ? 'text-hack-green' : 'text-signal-500'}>
+                {validation.checks.hasActiveTickets ? '✅' : '❌'}
+              </span>
+              <span className="text-grit-300">Ticket types configured</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Status Selector */}
+        {handlers?.onStatusChange && (
+          <StatusSelector
+            value={formData.status}
+            onChange={handlers.onStatusChange}
+            validationState={validation}
+          />
+        )}
+      </div>
+
       {/* Helper Message */}
       <div className="rounded-xl border border-hack-green/30 bg-hack-green/5 p-6 backdrop-blur-sm dark:border-hack-green/30 dark:bg-hack-green/5 light:border-cobalt-500/30 light:bg-cobalt-500/5">
         <p className="flex items-start gap-3 font-mono text-sm text-hack-green dark:text-hack-green light:text-cobalt-600">
@@ -169,7 +247,7 @@ export function ReviewStep({ formData, selectedArtist, selectedVenue }: ReviewSt
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span>
-            Everything looks good? Click <strong className="uppercase tracking-wider">&quot;Create Event&quot;</strong> to deploy your event on-chain!
+            Please review all information carefully before creating the event.
           </span>
         </p>
       </div>

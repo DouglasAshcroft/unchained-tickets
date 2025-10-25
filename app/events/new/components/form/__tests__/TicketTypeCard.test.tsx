@@ -92,7 +92,8 @@ describe('TicketTypeCard', () => {
 
       render(<TicketTypeCard ticket={ticket} index={2} errors={{}} handlers={handlers} />);
 
-      expect(screen.getByText(/ticket tier #3/i)).toBeInTheDocument();
+      // Check for tier number in header (component shows "Tier #3")
+      expect(screen.getByText(/tier #3/i)).toBeInTheDocument();
     });
 
     it('should show remove button', () => {
@@ -247,7 +248,8 @@ describe('TicketTypeCard', () => {
       render(<TicketTypeCard ticket={ticket} index={0} errors={errors} handlers={handlers} />);
 
       const nameInput = screen.getByLabelText(/ticket name/i);
-      expect(nameInput).toHaveClass('border-red-500');
+      // Check for error border styling (design system uses resistance color)
+      expect(nameInput).toHaveClass('border-resistance-500/50');
     });
   });
 
@@ -392,7 +394,8 @@ describe('TicketTypeCard', () => {
 
       render(<TicketTypeCard ticket={ticket} index={0} errors={{}} handlers={handlers} />);
 
-      const header = screen.getByText(/ticket tier #1/i);
+      // Component shows "Tier #1" in the header
+      const header = screen.getByText(/tier #1/i);
       fireEvent.click(header);
 
       // Form fields should be hidden
@@ -405,7 +408,8 @@ describe('TicketTypeCard', () => {
 
       const { container } = render(<TicketTypeCard ticket={ticket} index={0} errors={{}} handlers={handlers} />);
 
-      const header = screen.getByText(/ticket tier #1/i).closest('div');
+      // Component shows "Tier #1" in the header
+      const header = screen.getByText(/tier #1/i).closest('div');
       expect(header).toBeInTheDocument();
 
       // Should have some indicator (chevron icon)
