@@ -3,6 +3,17 @@ import { render } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import { ComponentType } from 'react';
 
+// Setup localStorage mock before imports
+const localStorageMock = {
+  getItem: vi.fn(() => null),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+  length: 0,
+  key: vi.fn(() => null),
+};
+Object.defineProperty(global, 'localStorage', { value: localStorageMock, writable: true });
+
 // Import components directly
 import EventCard from '../../components/EventCard';
 import { SearchBar } from '../../components/SearchBar';

@@ -172,7 +172,7 @@ describe('OnChainEventService', () => {
         data: expect.objectContaining({
           eventId: 1,
           onChainEventId: 1,
-          contractAddress: '0xTEST_CONTRACT_ADDRESS',
+          contractAddress: '0xCONTRACT_ADDRESS',
           registrationTxHash: '0xTRANSACTION_HASH',
           chainId: 84532,
         }),

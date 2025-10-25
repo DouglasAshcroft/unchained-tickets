@@ -1,8 +1,22 @@
 import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
-import { afterEach, vi } from 'vitest';
+import { afterEach, vi, beforeAll } from 'vitest';
 
 // Note: happy-dom provides its own TextEncoder/TextDecoder, so we don't need polyfills
+
+// Setup localStorage mock for tests
+beforeAll(() => {
+  const localStorageMock = {
+    getItem: vi.fn((_key: string) => null),
+    setItem: vi.fn((_key: string, _value: string) => {}),
+    removeItem: vi.fn((_key: string) => {}),
+    clear: vi.fn(() => {}),
+    length: 0,
+    key: vi.fn((_index: number) => null),
+  };
+
+  global.localStorage = localStorageMock as any;
+});
 
 // Mock Next.js modules that aren't available in test environment
 vi.mock('next/headers', () => ({

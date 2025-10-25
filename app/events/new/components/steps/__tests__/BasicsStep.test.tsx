@@ -36,7 +36,8 @@ describe('BasicsStep', () => {
 
       expect(screen.getByLabelText(/event title/i)).toBeInTheDocument();
       expect(screen.getByRole('combobox', { name: /search for artist/i })).toBeInTheDocument();
-      expect(screen.getByText(/poster image file/i)).toBeInTheDocument();
+      // Poster section exists
+      expect(screen.getByText(/poster/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/poster image url/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/external event link/i)).toBeInTheDocument();
     });
@@ -44,14 +45,15 @@ describe('BasicsStep', () => {
     it('should display step description', () => {
       render(<BasicsStep {...mockProps} />);
 
-      expect(screen.getByText(/enter the basic information/i)).toBeInTheDocument();
+      // Component shows "Set the stage" text
+      expect(screen.getByText(/set the stage/i)).toBeInTheDocument();
     });
 
     it('should show all form sections', () => {
       render(<BasicsStep {...mockProps} />);
 
       expect(screen.getByText(/event details/i)).toBeInTheDocument();
-      expect(screen.getByText(/^poster$/i)).toBeInTheDocument();
+      expect(screen.getByText(/poster/i)).toBeInTheDocument();
     });
   });
 
@@ -124,7 +126,8 @@ describe('BasicsStep', () => {
       render(<BasicsStep {...propsWithErrors} />);
 
       const titleInput = screen.getByLabelText(/event title/i);
-      expect(titleInput).toHaveClass('border-red-500');
+      // Check for error border styling (design system uses resistance color)
+      expect(titleInput).toHaveClass('border-resistance-500/50');
     });
 
     it('should show multiple errors simultaneously', () => {

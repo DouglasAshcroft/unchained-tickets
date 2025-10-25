@@ -13,14 +13,14 @@ class ApiClient {
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.getItem) {
       this.token = localStorage.getItem('auth_token');
     }
   }
 
   setToken(token: string | null) {
     this.token = token;
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
       if (token) {
         localStorage.setItem('auth_token', token);
       } else {
