@@ -7,6 +7,7 @@ interface EventFilters {
   state?: string;
   genre?: string;
   featured?: boolean;
+  venueId?: number;
 }
 
 // Pagination interface for future use
@@ -41,22 +42,31 @@ interface UpdateEventData {
 
 export class EventRepository {
   async findMany(filters: EventFilters = {}) {
-    const { search } = filters;
+    const { search, venueId } = filters;
+
+    // Build where clause
+    const where: any = {};
+
+    // Add venue filter if provided
+    if (venueId !== undefined) {
+      where.venueId = venueId;
+    }
+
+    // Add search filter if provided
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { venue: { name: { contains: search, mode: "insensitive" } } },
+        {
+          primaryArtist: {
+            name: { contains: search, mode: "insensitive" },
+          },
+        },
+      ];
+    }
 
     const events = await prisma.event.findMany({
-      where: search
-        ? {
-            OR: [
-              { title: { contains: search, mode: "insensitive" } },
-              { venue: { name: { contains: search, mode: "insensitive" } } },
-              {
-                primaryArtist: {
-                  name: { contains: search, mode: "insensitive" },
-                },
-              },
-            ],
-          }
-        : {},
+      where: Object.keys(where).length > 0 ? where : {},
       select: {
         id: true,
         title: true,
@@ -72,6 +82,16 @@ export class EventRepository {
             slug: true,
             city: true,
             state: true,
+          },
+        },
+        ticketTypes: {
+          select: {
+            id: true,
+            name: true,
+            priceCents: true,
+          },
+          where: {
+            isActive: true,
           },
         },
       },

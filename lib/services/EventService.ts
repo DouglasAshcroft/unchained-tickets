@@ -11,6 +11,7 @@ import { prisma } from '@/lib/db/prisma';
 
 interface EventFilters {
   search?: string;
+  venueId?: number;
 }
 
 const normalizeNullableString = (value?: string | null) => {

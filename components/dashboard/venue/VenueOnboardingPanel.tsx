@@ -28,6 +28,16 @@ const percentFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
+interface EventForPosterGeneration {
+  id: number;
+  title: string;
+  ticketTypes: Array<{
+    id: number;
+    name: string;
+    priceCents: number | null;
+  }>;
+}
+
 export function VenueOnboardingPanel({
   venueId,
   venueSlug,
@@ -40,12 +50,37 @@ export function VenueOnboardingPanel({
 }: VenueOnboardingPanelProps) {
   const [collapsed, setCollapsed] = useState(onboardingProgress >= 1);
   const [expandedWorkflow, setExpandedWorkflow] = useState<'seat_map' | 'poster_workflow' | null>(null);
+  const [events, setEvents] = useState<EventForPosterGeneration[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+  const [loadingEvents, setLoadingEvents] = useState(false);
 
   useEffect(() => {
     if (onboardingProgress < 1) {
       setCollapsed(false);
     }
   }, [onboardingProgress]);
+
+  // Fetch events when poster workflow is expanded
+  useEffect(() => {
+    if (expandedWorkflow === 'poster_workflow' && events.length === 0) {
+      setLoadingEvents(true);
+      fetch(`/api/events?venueId=${venueId}`)
+        .then(res => res.json())
+        .then(data => {
+          setEvents(data.events || []);
+          // Auto-select first event if available
+          if (data.events && data.events.length > 0) {
+            setSelectedEventId(data.events[0].id);
+          }
+        })
+        .catch(error => {
+          console.error('Failed to fetch events:', error);
+        })
+        .finally(() => {
+          setLoadingEvents(false);
+        });
+    }
+  }, [expandedWorkflow, venueId, events.length]);
 
   const completedCount = useMemo(
     () => checklist.filter((item) => item.complete).length,
@@ -112,11 +147,44 @@ export function VenueOnboardingPanel({
 
           {/* Poster Workflow Manager - shown when poster_workflow is expanded */}
           {expandedWorkflow === 'poster_workflow' && (
-            <div className="rounded-xl border border-indigo-500/30 bg-ink-900/70 p-6 shadow-ink">
-              <PosterWorkflowManager
-                eventId={0} // TODO: Get from selected event
-                venueId={venueId}
-              />
+            <div className="rounded-xl border border-indigo-500/30 bg-ink-900/70 p-6 shadow-ink space-y-6">
+              {/* Event Selector */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-bone-100">
+                  Select Event for Poster Generation
+                </label>
+                {loadingEvents ? (
+                  <div className="text-sm text-grit-400">Loading events...</div>
+                ) : events.length === 0 ? (
+                  <div className="rounded-lg border border-resistance-500/30 bg-resistance-500/5 p-4">
+                    <p className="text-sm text-bone-100">No events found</p>
+                    <p className="text-xs text-grit-400 mt-1">
+                      Create an event first to generate collectible posters
+                    </p>
+                  </div>
+                ) : (
+                  <select
+                    value={selectedEventId ?? ''}
+                    onChange={(e) => setSelectedEventId(Number(e.target.value))}
+                    className="w-full rounded-lg border border-grit-500/30 bg-ink-800 px-4 py-3 text-bone-100 focus:border-acid-400 focus:outline-none focus:ring-2 focus:ring-acid-400/50"
+                  >
+                    {events.map(event => (
+                      <option key={event.id} value={event.id}>
+                        {event.title} ({event.ticketTypes?.length || 0} ticket tiers)
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {/* Poster Workflow Manager */}
+              {selectedEventId && events.length > 0 && (
+                <PosterWorkflowManager
+                  eventId={selectedEventId}
+                  venueId={venueId}
+                  event={events.find(e => e.id === selectedEventId)}
+                />
+              )}
             </div>
           )}
         </div>

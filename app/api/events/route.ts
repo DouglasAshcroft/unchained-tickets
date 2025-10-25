@@ -7,8 +7,10 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get('search') || undefined;
+    const venueIdParam = searchParams.get('venueId');
+    const venueId = venueIdParam ? parseInt(venueIdParam, 10) : undefined;
 
-    const events = await eventService.getEvents({ search });
+    const events = await eventService.getEvents({ search, venueId });
 
     return NextResponse.json(events);
   } catch (error: any) {
